@@ -1,0 +1,29 @@
+Displays possible flags for the given command
+k6 run --help
+
+K6 run script.js //run basic test
+
+Sets number of virtual users
+k6 run test.js --vus 10 --duration 30s
+
+Sets the duration of the test
+k6 run test.js --duration 10m
+
+Instructs k6 to iterate the default function a number of times	
+k6 run test.js -i 3
+
+Sets an environment variable to pass to the script	
+k6 run test.js -e DOMAIN=test.k6.io
+
+run test Dynamically configure scripts with environment variables
+k6 run main.js -e WORKLOAD=breaking 
+
+dashboard real time
+K6_WEB_DASHBOARD=true k6 run script.js 
+
+Generate report from the command line
+K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run script.js
+K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run OMNI/main.js -e WORKLOAD=breaking
+
+Export test result to HTML and CSV
+K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run --out csv=test_result.csv OMNI/main.js -e WORKLOAD=breaking
