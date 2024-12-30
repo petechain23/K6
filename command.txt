@@ -37,6 +37,6 @@ k6 cloud test.js
 
 --------------------GIT--------------------
 git status
-git commit
+git commit -m "message"
 git push
 git pull
