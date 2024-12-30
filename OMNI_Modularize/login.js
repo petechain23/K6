@@ -1,10 +1,10 @@
 import { sleep, check, group } from 'k6'
 import http from 'k6/http'
 
-let counter = 0;
-let usernames = ['dat-tran-niteco@outlook.com','dat.tran@niteco.se','dat.tran-bbi@yopmail.com','dat.tran-bjs@yopmail.com','dat.tran-bsr@yopmail.com'];
-let passwords = ['A@a123456789','A@a123456789','A@a123456789','A@a123456789','A@a123456789'];
-let rand = Math.floor(Math.random() * usernames.length);
+// let counter = 0;
+// let usernames = ['dat-tran-niteco@outlook.com','dat.tran@niteco.se','dat.tran-bbi@yopmail.com','dat.tran-bjs@yopmail.com','dat.tran-bsr@yopmail.com'];
+// let passwords = ['A@a123456789','A@a123456789','A@a123456789','A@a123456789','A@a123456789'];
+// let rand = Math.floor(Math.random() * usernames.length);
 // let username = usernames[rand];
 // let password = passwords[rand];
 
@@ -28,35 +28,23 @@ const authUrl = 'admin/auth'
 //     }
 //   };
 
-export const options = {
-  cloud: {
-    distribution: { 'amazon:us:ashburn': { loadZone: 'amazon:us:ashburn', percent: 100 } },
-    apm: [],
-  },
-  thresholds: {
-    'http_req_duration{url:https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth}': [
-      { threshold: 'p(99)<=300', abortOnFail: false },
-    ],
-    'http_req_failed{url:https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth}': [
-      { threshold: 'rate<=0.01', abortOnFail: false },
-    ],
-  },
-  scenarios: {
-    Scenario_1: {
-      executor: 'ramping-vus',
-      gracefulStop: '1s',
-      stages: [
-        { target: 5, duration: '5s' },
-        { target: 5, duration: '50s' },
-        { target: 0, duration: '5s' },
-      ],
-      gracefulRampDown: '1s',
-      exec: 'scenario_1',
-    },
-  },
-}
+// export const options = {
+//   scenarios: {
+//     Authen_login: {
+//       executor: 'ramping-vus',
+//       gracefulStop: '1s',
+//       stages: [
+//         { target: 5, duration: '5s' },
+//         { target: 5, duration: '10' },
+//         { target: 0, duration: '5s' },
+//       ],
+//       gracefulRampDown: '1s',
+//       exec: 'login',
+//     },
+//   },
+// }
 
-export function scenario_1() {
+export function login() {
   const payload = JSON.stringify({
     email: `${username}`,
     password: `${password}`,
@@ -83,7 +71,7 @@ export function scenario_1() {
         // 'verify is correct first name': (r) => r.json().user.first_name.includes ('dat'),
       });
       // console.log('show log headers', response.headers);
-      return response.headers['Set-Cookie'];
+      // return response.headers['Set-Cookie'];
       //console.log('show log Saved-Cookie', response.cookies);
     },
   )
@@ -99,20 +87,3 @@ export function scenario_1() {
     },
   )
 }
-
-// export default function () {
-//   let cookie = scenario_1();
-//   let params = {
-//       headers: {
-//           Cookie: cookie,
-//       },
-//   };
-
-//   // Perform a request to an authenticated route
-//   let response = http.get(`${baseUrl}/${authUrl}`, params);
-//   check(response, {
-//       'verify status equals 200': (r) => r.status === 200,
-//   });
-//   console.log('show log check cookies', response.cookies);
-//   sleep(1);
-// }
