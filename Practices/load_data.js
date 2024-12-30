@@ -22,30 +22,33 @@ export default function () {
 
   // Loop through all username/password pairs
   for (const userPwdPair of csvData) {
-    // console.log(JSON.stringify(userPwdPair));
+    console.log(JSON.stringify(userPwdPair));
   }
 
   // Pick a random username/password pair
   const randomUser = csvData[Math.floor(Math.random() * csvData.length)];
-  // console.log('Random user: ', JSON.stringify(randomUser));
+  console.log('Random user: ', JSON.stringify(randomUser));
 
   const params = {
-    // login: randomUser.username,
-    // password: randomUser.password,
+    login: randomUser.username,
+    password: randomUser.password,
   };
-  // console.log('Random user: ', JSON.stringify(params));
+  console.log('Random user: ', JSON.stringify(params));
 
-  const res = http.post('https://test.k6.io/login.php', params);
+//   const baseUrl = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
+//   const authUrl = 'admin/auth'
+  // const res = http.post('https://test.k6.io/login.php', params);
+  const res = http.post('https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth', params);
   check(res, {
-    'login succeeded': (r) => r.status === 200 && r.body.indexOf('successfully authorized') !== -1,
+    'login succeeded': (r) => r.status === 200 //&& r.body.indexOf('successfully authorized') !== -1,
   });
   sleep(1);
 }
 
 export let options = {
   stages: [
-      { duration: '5s', target: 1 },
-      { duration: '20s', target: 2 },
+      { duration: '10s', target: 3 },
+      { duration: '50s', target: 3 },
       // { duration: '60s', target: 2000 },
       // { duration: '60s', target: 3000 },
       { duration: '5s', target: 0 },

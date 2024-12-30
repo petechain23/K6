@@ -27,3 +27,9 @@ K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run OMNI/main.
 
 Export test result to HTML and CSV
 K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run --out csv=test_result.csv OMNI/main.js -e WORKLOAD=breaking
+
+Export test result to CSV
+k6 run --out csv=test_results.csv script.js
+
+RunRun cloud test
+k6 cloud test.js

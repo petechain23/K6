@@ -21,7 +21,7 @@ export default function () {
 
 export function handleSummary(data) {
     return {
-        'TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+        'TestSummaryReport.html': htmlReport(data, { debug: true }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     }
 }

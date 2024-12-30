@@ -7,21 +7,26 @@ let passwords = ['A@a123456789','A@a123456789','A@a123456789','A@a123456789','A@
 let rand = Math.floor(Math.random() * usernames.length);
 let username = usernames[rand];
 let password = passwords[rand];
-//console.log(`VU#${__VU} - username: ${username}, password: ${password}`);
 
-const baseUrl = 'https://hei-oms-apac-qa-id-storefront.azurewebsites.net';
+// let username = 'dat.tran@niteco.se';
+// let password = 'A@a123456789';
+
+// console.log(`VU#${__VU} - username: ${username}, password: ${password}`);
+
+const baseUrl = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
 const authUrl = 'admin/auth'
 
-const payload = JSON.stringify({
-    email: `${username}`,
-    password: `${password}`,
-  });
+// const payload = JSON.stringify({
+//     email: `${username}`,
+//     password: `${password}`,
+//   });
+//   console.info(`VU#${__VU} - username: ${username}, password: ${password}`);
 
-const params = {
-    headers: {
-      "Content-Type": "application/json",
-    }
-  };
+// const params = {
+//     headers: {
+//       "Content-Type": "application/json",
+//     }
+//   };
 
 export const options = {
   cloud: {
@@ -30,10 +35,10 @@ export const options = {
   },
   thresholds: {
     'http_req_duration{url:https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth}': [
-      { threshold: 'p(99)<=300', abortOnFail: true },
+      { threshold: 'p(99)<=300', abortOnFail: false },
     ],
     'http_req_failed{url:https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth}': [
-      { threshold: 'rate<=0.01', abortOnFail: true },
+      { threshold: 'rate<=0.01', abortOnFail: false },
     ],
   },
   scenarios: {
@@ -41,28 +46,73 @@ export const options = {
       executor: 'ramping-vus',
       gracefulStop: '1s',
       stages: [
-        { target: 1, duration: '5s' },
-        { target: 5, duration: '2m' },
+        { target: 5, duration: '5s' },
+        { target: 5, duration: '50s' },
         { target: 0, duration: '5s' },
       ],
-      gracefulRampDown: '10s',
+      gracefulRampDown: '1s',
       exec: 'scenario_1',
     },
   },
 }
 
 export function scenario_1() {
-  let response
+  const payload = JSON.stringify({
+    email: `${username}`,
+    password: `${password}`,
+  });
+  console.log(`VU#${__VU} - username: ${username}`);
+  
+  const params = {
+    headers: {
+      "Content-Type": "application/json",
+    }
+  };
 
+  let response;
   group(
-    'page_1 - https://hei-oms-apac-qa-id-storefront.azurewebsites.net/distributors/auth/login?back_to=L2Rpc3RyaWJ1dG9ycy9vcmRlcnM%3D',
+    'page_1 - login page',
     function () {
       response = http.post(`${baseUrl}/${authUrl}`, payload, params);
-      
+      //console.log('show log response body', response.body);
       check(response, {
-        'body contains user': response => response.body.includes('user'),
-        'status equals 200': response => response.status.toString() === '200',
-      })
-    }
+        'verify status equals 200': (response) => response.status.toString() === '200',
+        'verify is correct user': (r) => r.json().user.email === username,
+        // 'verify VU#': (r) => r.body.includes (`${__VU}`),
+        // 'verify username': (r) => r.body.includes (`${username}`),
+        // 'verify is correct first name': (r) => r.json().user.first_name.includes ('dat'),
+      });
+      // console.log('show log headers', response.headers);
+      return response.headers['Set-Cookie'];
+      //console.log('show log Saved-Cookie', response.cookies);
+    },
+  )
+  group(
+    'page_2 - logout',
+    function () {
+      let response = http.del(`${baseUrl}/${authUrl}`, params);
+      check(response, {
+        'verify status equals 200': (response) => response.status.toString() === '200',
+        'verify logout successfully': (r2) => r2.body.includes('OK'),
+      });
+      //console.log('show log Saved-Cookie is removed', response.cookies);
+    },
   )
 }
+
+// export default function () {
+//   let cookie = scenario_1();
+//   let params = {
+//       headers: {
+//           Cookie: cookie,
+//       },
+//   };
+
+//   // Perform a request to an authenticated route
+//   let response = http.get(`${baseUrl}/${authUrl}`, params);
+//   check(response, {
+//       'verify status equals 200': (r) => r.status === 200,
+//   });
+//   console.log('show log check cookies', response.cookies);
+//   sleep(1);
+// }
