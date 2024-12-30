@@ -33,3 +33,10 @@ k6 run --out csv=test_results.csv script.js
 
 RunRun cloud test
 k6 cloud test.js
+
+
+--------------------GIT--------------------
+git status
+git commit
+git push
+git pull
