@@ -17,12 +17,11 @@ export const options = {
 
 export default function () {
     login();
-    // coinflip(baseUrl);
 }
 
-// export function handleSummary(data) {
-//     return {
-//         'TestSummaryReport.html': htmlReport(data, { debug: true }), //true
-//         stdout: textSummary(data, { indent: " ", enableColors: true }),
-//     }
-// }
+export function handleSummary(data) {
+    return {
+        'TestSummaryReport.html': htmlReport(data, { debug: true }), //true
+        stdout: textSummary(data, { indent: " ", enableColors: true }),
+    }
+}

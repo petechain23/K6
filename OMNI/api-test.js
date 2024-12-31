@@ -267,21 +267,21 @@ export default function () {
       r.body.includes('user'),
   });
 
-  // const res1 = http.post(`${baseUrl}/${createUrl}`, payloadCreateOrder, params);
-  // sleep(1);
+  const res1 = http.post(`${baseUrl}/${createUrl}`, payloadCreateOrder, params);
+  sleep(1);
 
   // Log the request body
-  // console.log(res1.body);
+  console.log(res1.body);
 
-  // check(res1, {
-  //   "response code was 200": (res) =>
-  //     res.status == 200,
-  // });
+  check(res1, {
+    "response code was 200": (res) =>
+      res.status == 200,
+  });
 
-  // check(res1, {
-  //   'verify Create success': (r) =>
-  //     r.body.includes('order'),
-  // });
+  check(res1, {
+    'verify Create success': (r) =>
+      r.body.includes('order'),
+  });
 }
 
 export function handleSummary(data) {
