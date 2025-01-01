@@ -42,7 +42,7 @@
 //     },
 //   }
 
-  
+
 //1
 // export const sharedWorkload = {
 //     scenarios: {
@@ -71,7 +71,7 @@ export const ramupWorkload = {
     gracefulStop: '5s',
     stages: [
         { target: 5, duration: '5s' },
-        { target: 10, duration: '10m' },
+        { target: 10, duration: '1m' },
         { target: 5, duration: '5s' },
     ],
     gracefulRampDown: '5s'
@@ -79,14 +79,22 @@ export const ramupWorkload = {
 
 //3
 export const thresholdsSettings = {
+    // thresholds: {
+    //     'http_req_duration{url:https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth}': [
+    //       { threshold: 'p(99)<=300', abortOnFail: true },
+    //     ],
+    //     'http_req_failed{url:https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth}': [
+    //       { threshold: 'rate<=0.01', abortOnFail: true },
+    //     ],
+    //   }
+
+
     thresholds: {
-        'http_req_duration{url:https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth}': [
-          { threshold: 'p(99)<=300', abortOnFail: false },
-        ],
-        'http_req_failed{url:https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/auth}': [
-          { threshold: 'rate<=0.01', abortOnFail: false },
-        ],
-      }
+        http_req_duration: [{ threshold: 'p(99)<=100', abortOnFail: true }],
+        http_req_failed: [{ threshold: 'rate<=0.01', abortOnFail: true }]
+
+    }
+
     // http_req_failed: ["rate<0.1"],
     // http_req_duration: ["p(99)<3000"]
 }
