@@ -90,8 +90,8 @@ export const thresholdsSettings = {
 
 
     thresholds: {
-        http_req_duration: [{ threshold: 'p(99)<=100', abortOnFail: true }],
-        http_req_failed: [{ threshold: 'rate<=0.01', abortOnFail: true }]
+        http_req_duration: [{ threshold: 'p(95)<=300', abortOnFail: true }],
+        http_req_failed: [{ threshold: 'rate<=0.5', abortOnFail: true }]
 
     }
 

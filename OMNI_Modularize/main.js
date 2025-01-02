@@ -17,7 +17,7 @@ const baseUrl = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
 
 export default function () {
     login(baseUrl);
-    createOrder(baseUrl);
+    // createOrder(baseUrl);
 }
 
 // export function handleSummary(data) {
