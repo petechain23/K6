@@ -36,6 +36,7 @@ k6 cloud test.js
 
 
 --------------------GIT--------------------
+git config --global user.name "petechain23"
 git status
 git commit -m "message"
 git push
