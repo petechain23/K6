@@ -6,7 +6,7 @@ import { thresholdsSettings, sharedWorkload, ramupWorkload } from "./config.js";
 import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 
-export { setup, teardown }
+export { setup , teardown }
 
 export const options = {
     scenarios: {
@@ -18,20 +18,9 @@ export const options = {
 // const baseUrl = "https://test.k6.io";
 const baseUrl = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
 
-export default function (data) {
-    
-    // const credential = data[Math.floor(Math.random() * data.length)];
-    const credential = JSON.stringify(data.payloads);
-    console.log('credential: ', credential);
-    // console.log('UserName: ', credential.email);
-    // console.log('PWD: ', credential.password);
-    login(credential);
+export default function () {
+    login(baseUrl);
     // createOrder(baseUrl);
-
-    // console.log('Random user3: ', loginRes);
-    // if (loginRes.status === 200) {
-    //     createOrder(credential);
-    // }
 }
 
 // export function handleSummary(data) {

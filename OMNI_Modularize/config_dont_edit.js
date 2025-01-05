@@ -1,10 +1,3 @@
-let counter = 0;
-let usernames = ['dat-tran-niteco@outlook.com', 'dat.tran@niteco.se', 'dat.tran-bbi@yopmail.com', 'dat.tran-bjs@yopmail.com', 'dat.tran-bsr@yopmail.com'];
-let passwords = ['A@a123456789', 'A@a123456789', 'A@a123456789', 'A@a123456789', 'A@a123456789'];
-let rand = Math.floor(Math.random() * usernames.length);
-let username = usernames[rand];
-let password = passwords[rand];
-
 //define configuration
 // export const smokeWorkload = {
 //     executor: 'shared-iterations',
@@ -65,12 +58,6 @@ let password = passwords[rand];
 //       }
 // }
 
-export const payload = {
-    email: username,
-    password: password,
-};
-console.log(`VU#${__VU} - username: ${username}`);
-
 export const sharedWorkload = {
     executor: 'shared-iterations',
     vus: 2,
@@ -81,13 +68,13 @@ export const sharedWorkload = {
 //1.1
 export const ramupWorkload = {
     executor: 'ramping-vus',
-    gracefulStop: '1s',
+    gracefulStop: '5s',
     stages: [
-        { target: 1, duration: '1s' },
-        { target: 2, duration: '5s' },
-        { target: 1, duration: '1s' },
+        { target: 5, duration: '5s' },
+        { target: 10, duration: '30m' },
+        { target: 5, duration: '5s' },
     ],
-    gracefulRampDown: '1s'
+    gracefulRampDown: '5s'
 }
 
 //3
