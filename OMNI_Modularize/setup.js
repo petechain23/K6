@@ -1,10 +1,17 @@
-// import { SharedArray } from 'k6/data';
-// import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
+// import { payload } from './config.js';
+// export { payload };
 
-import { payload } from './config.js';
+// import { payload, outletId, variant_id, randomQty } from './config.js';
+// export { payload, outletId, variant_id, randomQty };
 
-export { payload };
+import { payload, sharedArrayOutletId, sharedArrayVariantId, randomQty } from './config.js';
+export { payload, sharedArrayOutletId, sharedArrayVariantId, randomQty };
 
 export function setup() {
-    return { payloads: payload};
+    return {
+        payloads: payload,
+        outletIds: sharedArrayOutletId,
+        variant_ids: sharedArrayVariantId,
+        randomQtys: randomQty
+    };
 }

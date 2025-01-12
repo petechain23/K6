@@ -2,7 +2,7 @@
 export const smokeWorkload = {
     executor: 'shared-iterations',
     iterations: 5,
-    vus: 1
+    vus: 3
 }
 
 export const thresholdsSettings = {
