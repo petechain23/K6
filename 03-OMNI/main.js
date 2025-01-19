@@ -1,5 +1,5 @@
 import { login } from "./login.js";
-import { orderCreate , orderEdit } from "./orders.js";
+// import { orderCreate , orderEdit } from "./orders.js";
 // import { invoices } from "./invoices.js";
 import { thresholdsSettings, breakingWorkload, smokeWorkload } from "./config.js";
 import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
@@ -17,7 +17,7 @@ const baseUrl = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
 
 export default function () {
     login(baseUrl);
-    orderEdit(baseUrl);
+    // orderEdit(baseUrl);
     // orderCreate(baseUrl);
     // invoices(baseUrl);
 }

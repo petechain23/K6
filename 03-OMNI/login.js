@@ -11,9 +11,9 @@ import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 // not using SharedArray here will mean that the code in the function call (that is what loads and
 // parses the csv) will be executed per each VU which also means that there will be a complete copy
 // per each VU
-const csvData = new SharedArray('credental', function () {
+const csvData = new SharedArray('credentals', function () {
   // Load CSV file and parse it using Papa Parse
-  return papaparse.parse(open('./credental.csv'), { header: true }).data;
+  return papaparse.parse(open('../../02-K6 Files/credentals.csv'), { header: true }).data;
 });
 
 export function login(baseUrl) {
@@ -22,7 +22,7 @@ export function login(baseUrl) {
 
   // Loop through all username/password pairs
   for (const userPwdPair of csvData) {
-    // console.log(JSON.stringify(userPwdPair));
+    console.log(JSON.stringify(userPwdPair));
   }
 
   // Pick a random username/password pair

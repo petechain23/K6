@@ -18,13 +18,13 @@ let password = 'A@a123456789';
 //load Outlet master data
 const csvData = new SharedArray('outletId', function () {
     // Load CSV file and parse it using Papa Parse
-    return papaparse.parse(open('../K6_Files/outlet_id.csv'), { header: true }).data;
+    return papaparse.parse(open('../../02-K6 Files/outlet_id.csv'), { header: true }).data;
 });
 
 //load variant_id
 const csvData2 = new SharedArray('variant_id', function () {
     // Load CSV file and parse it using Papa Parse
-    return papaparse.parse(open('../K6_Files/variant_id.csv'), { header: true }).data;
+    return papaparse.parse(open('../../02-K6 Files/variant_id.csv'), { header: true }).data;
 });
 
 // const baseUrl = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';

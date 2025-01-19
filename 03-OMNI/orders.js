@@ -9,7 +9,7 @@ import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 // per each VU
 const csvData = new SharedArray('order ID', function () {
     // Load CSV file and parse it using Papa Parse
-    return papaparse.parse(open('./orderId.csv'), { header: true }).data;
+    return papaparse.parse(open('../../02-K6 Files/orderId.csv'), { header: true }).data;
   });
 
 // Create custom trends

@@ -17,13 +17,13 @@ let password = passwords[rand];
 //load Outlet master data
 const sharedArrayOutletId = new SharedArray('outletId', function () {
     // Load CSV file and parse it using Papa Parse
-    return papaparse.parse(open('../K6_Files/outlet_id.csv'), { header: true }).data;
+    return papaparse.parse(open('../../02-K6 Files/outlet_id.csv'), { header: true }).data;
 });
 
 //load variant_id
 const sharedArrayVariantId = new SharedArray('variant_id', function () {
     // Load CSV file and parse it using Papa Parse
-    return papaparse.parse(open('../K6_Files/variant_id.csv'), { header: true }).data;
+    return papaparse.parse(open('../../02-K6 Files/variant_id.csv'), { header: true }).data;
 });
 
 // //Pick a random outletId
