@@ -1,3 +1,5 @@
+import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
+import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 import { SharedArray } from 'k6/data';
 import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { thresholdsSettings, sharedWorkload, ramupWorkload } from "./config.js";
@@ -35,18 +37,25 @@ export default function (data) {
     // console.log('Random Qty: ', randomQty);
 
     const credential = JSON.stringify(data.payloads);
-    console.log('credential: ', credential);
+    // console.log('credential: ', credential);
     const oID = data.outletIds;
-    console.log('oID: ', oID);
+    // console.log('oID: ', oID);
     const vID = data.variant_ids;
-    console.log('vID: ', vID);
+    // console.log('vID: ', vID);
     const qTY = data.randomQtys;
-    console.log('qTY: ', qTY);
+    // console.log('qTY: ', qTY);
     const loginRes = login(credential); // console.log('Status: ', JSON.parse(loginRes.status));
     // console.log('Random user3: ', JSON.parse(loginRes.body));
     
     if (JSON.parse(loginRes.status) === 200) {
         console.log('OK NHA!!!')
         // createOrder(baseUrl, oID, vID, qTY);
+    }
+}
+
+export function handleSummary(data) {
+    return {
+        '../../03-K6-Test-Reprots/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+        stdout: textSummary(data, { indent: " ", enableColors: true }),
     }
 }

@@ -1,7 +1,7 @@
 import { SharedArray } from 'k6/data';
 import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
-import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
-import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
+// import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
+// import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 
 // Load credentials
 let counter = 0;
@@ -100,9 +100,9 @@ export const thresholdsSettings = {
     // http_req_duration: ["p(99)<3000"]
 }
 
-export function handleSummary(data) {
-    return {
-        '../Reprots/TestSummaryReport.html': htmlReport(data, { debug: true }), //true
-        stdout: textSummary(data, { indent: " ", enableColors: true }),
-    }
-}
+// export function handleSummary(data) {
+//     return {
+//         '../../03-K6-Test-Reprots/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+//         stdout: textSummary(data, { indent: " ", enableColors: true }),
+//     }
+// }
