@@ -1,7 +1,5 @@
 import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
-import { SharedArray } from 'k6/data';
-import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { thresholdsSettings, sharedWorkload, ramupWorkload } from "./config.js";
 import { setup } from './setup.js';
 import { teardown } from './teardown.js';
@@ -55,7 +53,7 @@ export default function (data) {
 
 export function handleSummary(data) {
     return {
-        '../../03-K6-Test-Reprots/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+        '../../03-K6 Test Reprots/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     }
 }
