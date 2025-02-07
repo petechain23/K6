@@ -53,7 +53,7 @@ export default function (data) {
 
 export function handleSummary(data) {
     return {
-        '../../03-K6 Test Reprots/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+        '../../03-K6 Test Reports/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     }
 }
