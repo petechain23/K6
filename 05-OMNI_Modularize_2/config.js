@@ -18,7 +18,7 @@ export const masterData = new SharedArray('masterData', function () {
 
 // Load order_id for edit order
 export const orderId = new SharedArray('orderId', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-edit_order.csv'), { header: true }).data.filter(row => row.order_Id) //.map(row => row.outletId);
+    return papaparse.parse(open('../../02-K6 Files/mm-qa-edit_order.csv'), { header: true }).data.filter(row => row.order_Id)
 });
 
 export const sharedWorkload = {

@@ -1,4 +1,4 @@
-import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
+import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 import { sharedWorkload, ramupWorkload, thresholdsSettings} from './config.js';
 import { setup } from './setup.js';
@@ -27,9 +27,9 @@ export default function () {
     }
     // Way 1:
     try {
-        // login(testData.cookies);
-        orderCreate(testData.cookies);
-        orderEdit(testData.cookies);
+        login(testData.cookies);
+        // orderCreate(testData.cookies);
+        // orderEdit(testData.cookies);
         // inventory(testData.cookies);
         // fetchPromotions(testData.cookies);
         // exportOrders(testData.cookies);
@@ -51,16 +51,9 @@ export default function () {
     // }
 }
 
-// export function handleSummary(data) {
-//     return {
-//         '../../03-K6 Test Reports/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
-//         stdout: textSummary(data, { indent: " ", enableColors: true }),
-//     }
-// }
-
 export function handleSummary(data) {
     return {
-        'TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+        '../../03-K6-Test-Reprots/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     }
 }
