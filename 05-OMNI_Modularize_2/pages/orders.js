@@ -1,6 +1,6 @@
 import { sleep, check, group } from 'k6'
 import http from 'k6/http'
-import { BASE_URL, createUrl, masterData } from '../config.js';
+import { BASE_URL, ORDER_CREATE_URL, masterData } from '../config.js';
 
 export function orderCreate(cookies) {
     // //Pick a random outletId
@@ -54,8 +54,8 @@ export function orderCreate(cookies) {
         location_id: 'sloc_01HV3J179CG8PSS92N3446W6RQ'
     });
 
-    // const res = http.post(`${BASE_URL}/${createUrl}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
-    const res = http.post(`${BASE_URL}/${createUrl}`, payloadCreateOrder, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    // const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
+    const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, payloadCreateOrder, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
     console.log('Create Order Response status: ', res.status);
     const body = JSON.parse(res.body)
     console.log('Create Order - Response id: ', body.order.id);

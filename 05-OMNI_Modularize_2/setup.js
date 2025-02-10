@@ -1,5 +1,5 @@
 import http from 'k6/http';
-import { BASE_URL, authUrl, users } from './config.js';
+import { BASE_URL, AUTH_URL, users } from './config.js';
 
 export function setup() {
     // console.log('setup - Setting up test environment with session cookies...');
@@ -10,7 +10,7 @@ export function setup() {
     
     const payload = JSON.stringify({ email: user.username, password: user.password });
 
-    const loginRes = http.post(`${BASE_URL}/${authUrl}`, payload, { headers: { "Content-Type": "application/json" } });
+    const loginRes = http.post(`${BASE_URL}/${AUTH_URL}`, payload, { headers: { "Content-Type": "application/json" } });
 
     if (loginRes.status !== 200) {
         console.error(`setup - Login failed: ${loginRes.status} - ${loginRes.body}`);

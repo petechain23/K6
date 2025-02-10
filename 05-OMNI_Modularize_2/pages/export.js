@@ -1,13 +1,114 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { BASE_URL, masterData } from '../config.js';
+import { BASE_URL, ORDER_EXPORT_URL } from '../config.js';
 
-export function fetchExportData(sessionCookie) {
-    for (const { outletID } of masterData) {
-        const res = http.get(`${BASE_URL}/api/export?outletID=${outletID}`, { 
-            headers: { 'Cookie': `session=${sessionCookie}` } 
-        });
-        check(res, { [`Export completed for Outlet ${outletID}`]: (r) => r.status === 200 });
-        sleep(1);
-    }
+export function exportOrders(cookies) {
+    // //Pick a random Depot
+    // const randomDepot = masterData[Math.floor(Math.random() * masterData.length)];
+    // const depot_id = randomDepot.depotId;
+    // console.log('Random Depot: ', depot_id);
+
+    const payloadExportOrders = JSON.stringify({
+      dry_run: false,
+      type: 'line-items-orders-export',
+      context: {
+        list_config: {
+          skip: 0,
+          take: 100,
+          order: {
+            order_created_at: 'DESC'
+          },
+          select: [
+            'line_item_id',
+            'order_id',
+            'order_display_id',
+            'order_status',
+            'order_created_at',
+            'order_currency_code',
+            'order_fulfillment_status',
+            'order_payment_status',
+            'order_extended_status',
+            'order_external_number',
+            'order_source_system',
+            'order_promotion_code',
+            'order_coupon_code',
+            'order_current_invoiced_number',
+            'order_historical_invoiced_number',
+            'address_address_1',
+            'address_address_2',
+            'address_country_code',
+            'address_city',
+            'address_postal_code',
+            'store_depot_name',
+            'outlet_outlet_id',
+            'outlet_outlet_name',
+            'outlet_external_id',
+            'outlet_customer_type',
+            'outlet_business_organizational_segment',
+            'outlet_channels',
+            'outlet_sub_channels',
+            'outlet_business_segments',
+            'outlet_classifications',
+            'depot_external_id',
+            'delivery_date',
+            'order_subtotal',
+            'order_shipping_total',
+            'order_discount_total',
+            'order_gift_card_total',
+            'order_refunded_total',
+            'order_tax_total',
+            'order_total',
+            'order_region_id',
+            'customer_id',
+            'customer_first_name',
+            'customer_last_name',
+            'customer_email',
+            'variant_sku',
+            'product_title',
+            'line_item_quantity',
+            'line_item_total',
+            'line_item_total_volume',
+            'uom',
+            'product_volume',
+            'order_external_doc_number',
+            'order_invoiced_date',
+            'brand_name',
+            'product_pack_size',
+            'variant_sku_type',
+            'geographical_location_region',
+            'order_invoiced_status',
+            'depot_business_unit',
+            'outlet_sale_area',
+            'contact_external_id',
+            'order_cancellation_reason',
+            'order_cancellation_reason_others_description'
+          ],
+          relations: [
+            'customer',
+            'shipping_address'
+          ],
+          export_type: 'csv'
+        },
+        filterable_fields: {
+          created_at: {
+            gt: '2025-02-10T00:00:00.000Z',
+            lt: '2025-02-10T23:59:59.999Z'
+          },
+          depot_id: [
+            'depot_01HES9APM60R2D27MW39GHT6YC'
+          ]
+        }
+      }
+});
+
+    // const res = http.post(`${BASE_URL}/${createUrl}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
+    const res = http.post(`${BASE_URL}/${ORDER_EXPORT_URL}`, payloadExportOrders, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    console.log('Export Orders Response status: ', res.status);
+    const body = JSON.parse(res.body)
+    console.log('Export Order - Response id: ', body.batch_job.id);
+    check(res, { 
+        'verify export response status': (r) => r.status === 201,
+        // 'verify export orders successfully': (r2) => r2.body.batch_job.status === 'created'
+    });
+    sleep(2);
 }

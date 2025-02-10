@@ -1,3 +1,4 @@
+import { sleep, check, group } from 'k6'
 import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 import { sharedWorkload, ramupWorkload, thresholdsSettings} from './config.js';
@@ -5,10 +6,10 @@ import { setup } from './setup.js';
 import { teardown } from './teardown.js';
 import { login } from './pages/login.js';
 import { orderCreate } from './pages/orders.js';
-import { orderEdit } from './pages/orders_edit copy.js';
+import { orderEdit } from './pages/orders_edit.js';
+import { exportOrders } from './pages/export.js';
 // import { inventory } from './inventory.js';
 // import { fetchPromotions } from './promotion.js';
-// import { exportOrders } from './export.js';
 
 export const options = {
     scenarios: {
@@ -32,7 +33,8 @@ export default function () {
         // orderEdit(testData.cookies);
         // inventory(testData.cookies);
         // fetchPromotions(testData.cookies);
-        // exportOrders(testData.cookies);
+        sleep(10);
+        exportOrders(testData.cookies);
     } finally {
         teardown(testData);  // Ensure cleanup runs at the end
     }

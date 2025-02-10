@@ -2,9 +2,10 @@ import { SharedArray } from 'k6/data';
 import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 
 export const BASE_URL = 'https://hei-oms-apac-qa-mm-backend.azurewebsites.net';
-export const authUrl = 'admin/auth'
-export const createUrl = 'admin/orders/create'
-export const editUrl = 'admin/orders/edit'
+export const AUTH_URL = 'admin/auth'
+export const ORDER_CREATE_URL = 'admin/orders/create'
+export const ORDER_EDIT_URL = 'admin/orders/edit'
+export const ORDER_EXPORT_URL = 'admin/batch-jobs'
 
 // Load credentials from CSV
 export const users = new SharedArray('users', function () {
@@ -32,14 +33,14 @@ export const ramupWorkload = {
     executor: 'ramping-vus',
     gracefulStop: '5s',
     stages: [
-        { target: 5, duration: '10s' },
-        { target: 10, duration: '20s' },
-        { target: 10, duration: '10m' },
-        { target: 10, duration: '10m' },
-        { target: 10, duration: '10m' },
-        { target: 10, duration: '10m' },
-        { target: 10, duration: '10m' },
-        { target: 5, duration: '10s' },
+        { target: 2, duration: '10s' },
+        { target: 4, duration: '20s' },
+        { target: 4, duration: '1m' },
+        // { target: 10, duration: '10m' },
+        // { target: 10, duration: '10m' },
+        // { target: 10, duration: '10m' },
+        // { target: 10, duration: '10m' },
+        // { target: 5, duration: '10s' },
     ],
     gracefulRampDown: '5s'
 }
