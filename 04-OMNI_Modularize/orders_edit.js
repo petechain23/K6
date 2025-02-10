@@ -73,9 +73,6 @@ const csvData2 = new SharedArray('order_Id', function () {
 // // const sku_1867 = 'variant_01H6DTJPTN4HQYKAGN9KRVZ4YY';
 // // const sku_10163 = 'variant_01H5PMESX1AR52H7BJ4CTHHE80';
 
-// MM-QA
-// const outletId = 'outlet_01HDFWZ7GB2KSMRPWWKZ2ZRVCJ';
-
 // export const options = {
 //   discardResponseBodies: true,
 //   scenarios: {
@@ -257,6 +254,7 @@ export default function () {
     function () {
       const response = http.post(`${baseUrl}/${editUrl}/${order_Id}`, payloadEditOrder, params);
       const body = JSON.parse(response.body)
+      console.log('status: ',  response.status.toString());
       console.log('order_Id: ', body.order.id);
       console.log('display_id: ', body.order.display_id);
       check(response, {
