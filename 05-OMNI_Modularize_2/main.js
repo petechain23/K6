@@ -1,8 +1,11 @@
+import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
+import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 import { sharedWorkload, ramupWorkload, thresholdsSettings} from './config.js';
 import { setup } from './setup.js';
 import { teardown } from './teardown.js';
 import { login } from './pages/login.js';
-import { orders } from './pages/orders.js';
+import { orderCreate } from './pages/orders.js';
+import { orderEdit } from './pages/orders_edit copy.js';
 // import { inventory } from './inventory.js';
 // import { fetchPromotions } from './promotion.js';
 // import { exportOrders } from './export.js';
@@ -25,7 +28,8 @@ export default function () {
     // Way 1:
     try {
         // login(testData.cookies);
-        orders(testData.cookies);
+        orderCreate(testData.cookies);
+        orderEdit(testData.cookies);
         // inventory(testData.cookies);
         // fetchPromotions(testData.cookies);
         // exportOrders(testData.cookies);
@@ -47,15 +51,16 @@ export default function () {
     // }
 }
 
-export function handleSummary(data) {
-    return {
-        'externally-controlled_TestSummaryReport.html(2)': htmlReport(data, { debug: false }) //true
-    }
-  }
-
 // export function handleSummary(data) {
 //     return {
-//         'TestSummaryReport.html': htmlReport(data), 
+//         '../../03-K6 Test Reports/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
 //         stdout: textSummary(data, { indent: " ", enableColors: true }),
-//     };
+//     }
 // }
+
+export function handleSummary(data) {
+    return {
+        'TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+        stdout: textSummary(data, { indent: " ", enableColors: true }),
+    }
+}

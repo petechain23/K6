@@ -2,7 +2,7 @@ import { sleep, check, group } from 'k6'
 import http from 'k6/http'
 import { BASE_URL, createUrl, masterData } from '../config.js';
 
-export function orders(cookies) {
+export function orderCreate(cookies) {
     // //Pick a random outletId
     const randomOutlet = masterData[Math.floor(Math.random() * masterData.length)];
     const outletId = randomOutlet.outletId;
@@ -58,12 +58,12 @@ export function orders(cookies) {
     const res = http.post(`${BASE_URL}/${createUrl}`, payloadCreateOrder, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
     console.log('Create Order Response status: ', res.status);
     const body = JSON.parse(res.body)
-    console.log('Create Order Response id: ', body.order.id);
-    console.log('Create Order Response display_id: ', body.order.display_id);
+    console.log('Create Order - Response id: ', body.order.id);
+    console.log('Create Order - Response display_id: ', body.order.display_id);
     check(res, { 
         'verify response status': (r) => r.status === 200,
         'verify orders successfully': (r2) => r2.body.includes('display_id'),
         'verify promotion code included': (r2) => r2.body.includes('PROMO00258_216')
     });
-    sleep(1);
+    sleep(2);
 }

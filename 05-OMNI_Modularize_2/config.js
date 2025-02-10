@@ -4,6 +4,7 @@ import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 export const BASE_URL = 'https://hei-oms-apac-qa-mm-backend.azurewebsites.net';
 export const authUrl = 'admin/auth'
 export const createUrl = 'admin/orders/create'
+export const editUrl = 'admin/orders/edit'
 
 // Load credentials from CSV
 export const users = new SharedArray('users', function () {
@@ -13,6 +14,11 @@ export const users = new SharedArray('users', function () {
 // Load master data (Outlet IDs)
 export const masterData = new SharedArray('masterData', function () {
     return papaparse.parse(open('../../02-K6 Files/mm-qa-create_order.csv'), { header: true }).data.filter(row => row.outletId) //.map(row => row.outletId);
+});
+
+// Load order_id for edit order
+export const orderId = new SharedArray('orderId', function () {
+    return papaparse.parse(open('../../02-K6 Files/mm-qa-edit_order.csv'), { header: true }).data.filter(row => row.order_Id) //.map(row => row.outletId);
 });
 
 export const sharedWorkload = {
@@ -28,8 +34,11 @@ export const ramupWorkload = {
     stages: [
         { target: 5, duration: '10s' },
         { target: 10, duration: '20s' },
-        // { target: 20, duration: '10m' },
-        // { target: 30, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 10, duration: '10m' },
         { target: 5, duration: '10s' },
     ],
     gracefulRampDown: '5s'
