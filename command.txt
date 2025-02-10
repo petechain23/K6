@@ -30,6 +30,7 @@ K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run --out csv=test_result.csv OMNI/m
 
 Export test result to CSV
 k6 run --out csv=test_results.csv script.js
+k6 run --out csv=today_test_result.csv 'd:\Testing\03-Perfomance Testing\01-K6 Load Test\04-OMNI_Modularize\orders_edit.js'
 
 RunRun cloud test
 k6 cloud test.js
