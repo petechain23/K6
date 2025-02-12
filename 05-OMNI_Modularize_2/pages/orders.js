@@ -14,16 +14,16 @@ export function orderCreate(cookies) {
         items: [
             {
                 variant_id: 'variant_01HES9RPQATXAMZQVSGGT1X7KS',
-                quantity: 4,
+                quantity: 2, //4
                 metadata: {}
             },
             {
                 variant_id: 'variant_01HES9RPQATXAMZQVSGGT1X7KS',
-                quantity: 1,
+                quantity: 2, //1
                 metadata: {
-                    promotionCodes: 'PROMO00258_216',
-                    item_category: 'YSRG',
-                    promotionOverride: false
+                    // promotionCodes: 'PROMO00258_216',
+                    // item_category: 'YSRG',
+                    // promotionOverride: false
                 }
             }
         ],

@@ -35,12 +35,12 @@ export const ramupWorkload = {
     stages: [
         { target: 2, duration: '10s' },
         { target: 4, duration: '20s' },
-        { target: 4, duration: '1m' },
-        // { target: 10, duration: '10m' },
-        // { target: 10, duration: '10m' },
-        // { target: 10, duration: '10m' },
-        // { target: 10, duration: '10m' },
-        // { target: 5, duration: '10s' },
+        { target: 7, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 5, duration: '10s' },
     ],
     gracefulRampDown: '5s'
 }
