@@ -7,7 +7,7 @@ export function orderCreate(cookies) {
     const randomOutlet = masterData[Math.floor(Math.random() * masterData.length)];
     const outletId = randomOutlet.outletId;
     // console.log('Random Outlet: ', outletId);
-
+    // MM-prod 1413 Orders/DAY
     const payloadCreateOrder = JSON.stringify({
         order_type: 'standard',
         email: 'generic.outlet.contact1@hnk-oms.com',
