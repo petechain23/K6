@@ -29,16 +29,28 @@ export const sharedWorkload = {
     maxDuration: '20s'
 }
 
+// export const constant = {
+//     executor: 'constant-vus',
+//     vus: 40,
+//     duration: '30s',
+// }
+
 export const ramupWorkload = {
     executor: 'ramping-vus',
     gracefulStop: '5s',
     stages: [
-        { target: 2, duration: '10s' },
-        { target: 4, duration: '20s' },
-        { target: 7, duration: '10m' },
+        { target: 1, duration: '5s' },
+        { target: 5, duration: '30s' },
         { target: 10, duration: '10m' },
-        { target: 10, duration: '10m' },
-        { target: 10, duration: '10m' },
+        { target: 10, duration: '30m' },
+        { target: 10, duration: '30m' },
+        { target: 10, duration: '30m' },
+        { target: 20, duration: '30m' },
+        { target: 20, duration: '30m' },
+        { target: 20, duration: '30m' },
+        { target: 10, duration: '30m' },
+        { target: 10, duration: '30m' },
+        { target: 10, duration: '30m' },
         { target: 10, duration: '10m' },
         { target: 5, duration: '10s' },
     ],

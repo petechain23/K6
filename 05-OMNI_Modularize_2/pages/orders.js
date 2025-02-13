@@ -61,9 +61,9 @@ export function orderCreate(cookies) {
     console.log('Create Order - Response id: ', body.order.id);
     console.log('Create Order - Response display_id: ', body.order.display_id);
     check(res, { 
-        'verify response status': (r) => r.status === 200,
-        'verify orders successfully': (r2) => r2.body.includes('display_id'),
-        'verify promotion code included': (r2) => r2.body.includes('PROMO00258_216')
+        'Create Order - verify response status': (r) => r.status === 200,
+        'Create Order - verify orders successfully': (r2) => r2.body.includes('display_id'),
+        'Create Order - verify promotion code included': (r2) => r2.body.includes('PROMO00258_216')
     });
     sleep(2);
 }

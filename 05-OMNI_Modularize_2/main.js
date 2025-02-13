@@ -33,29 +33,30 @@ export default function () {
         orderEdit(testData.cookies);
         // inventory(testData.cookies);
         // fetchPromotions(testData.cookies);
-        sleep(120);
+        sleep(180);
         exportOrders(testData.cookies);
-    } finally {
+    }
+    finally {
         teardown(testData);  // Ensure cleanup runs at the end
     }
 
     // Way 2:
     // const sessionCookies = login(testData.cookies);
-    // // orders(sessionCookies);
     // try {
-    //     orders(sessionCookies);
-    //     // fetchInventory(sessionCookies);
-    //     // fetchPromotions(sessionCookies);
-    //     // exportOrders(sessionCookies);
-    // }
-    // finally { 
-    //     teardown(sessionCookies);
+    //     orderCreate(sessionCookies);
+    //     orderEdit(sessionCookies);
+    //     // inventory(testData.cookies);
+    //     // fetchPromotions(testData.cookies);
+    //     sleep(600);
+    //     exportOrders(sessionCookies);
+    // } finally {
+    //     teardown(testData);  // Ensure cleanup runs at the end
     // }
 }
 
 export function handleSummary(data) {
     return {
-        '../../03-K6-Test-Reports/TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+        'TestSummaryReport3.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     }
 }

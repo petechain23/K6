@@ -33,7 +33,7 @@ export function orderEdit(cookies) {
         }
       },
       {
-        variant_id: 'variant_01HES9RP89SFJV2YSWWW03DKWE',
+        variant_id: 'variant_01HES9RS8GRDQW2Q6CWVCKPKBT',
         quantity: 1,
         metadata: {
           // item_category: 'YVGO'
@@ -49,8 +49,8 @@ export function orderEdit(cookies) {
   console.log('Edit Order - display_id: ', body.order.display_id);
   check(res, {
     // 'verify status equals 200': (res) => res.status.toString() === '200',
-    'verify response status': (r) => r.status === 200,
-    'verify update successfully': (r2) => r2.body.includes('editing order')
+    'Edit Order - verify response status': (r) => r.status === 200,
+    'Edit Order - verify update successfully': (r2) => r2.body.includes('editing order')
     // 'verify promotion code included': (r2) => r2.body.includes('PROMO00258_216'), //$.order.items[*].promotion_codes[0]
   });
   sleep(2);

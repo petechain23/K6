@@ -1,11 +1,21 @@
-// import http from 'k6/http';
-// import { BASE_URL, masterData } from './config.js';
+import http from 'k6/http';
+import { BASE_URL, AUTH_URL, users } from './config.js';
 
 export function teardown(cookies) {
     if (!cookies) {
-        console.error('teardown - No session cookies available for cleanup.');
+        console.error('Teardown - No session cookies available for cleanup.');
         return;
     }
-    // console.log(`teardown - Clearing session cookies: ${JSON.stringify(cookies)}`);
-    console.log('teardown - Cleanup completed.');
+    // console.log(`Teardown - Clearing session cookies: ${JSON.stringify(cookies)}`);
+    http.del(`${BASE_URL}/${AUTH_URL}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    console.log('Teardown - Cleanup completed.');
+
+    // function () {
+    //       let response = http.del(`${baseUrl}/${authUrl}`, params);
+    //       check(response, {
+    //         'verify status equals 200': (response) => response.status.toString() === '200',
+    //         'verify logout successfully': (r2) => r2.body.includes('OK'),
+    //       });
+    //       //console.log('show log Saved-Cookie is removed', response.cookies);
+    //     },
 }

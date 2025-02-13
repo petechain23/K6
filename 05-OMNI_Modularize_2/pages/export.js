@@ -91,23 +91,23 @@ export function exportOrders(cookies) {
         },
         filterable_fields: {
           created_at: {
-            gt: '2025-02-10T00:00:00.000Z',
-            lt: '2025-02-10T23:59:59.999Z'
-          },
-          depot_id: [
-            'depot_01HES9APM60R2D27MW39GHT6YC'
-          ]
+            gt: '2024-09-13T00:00:00.000Z',
+            lt: '2025-02-13T23:59:59.999Z'
+          }
+          // depot_id: [
+          //   'depot_01HES9APM60R2D27MW39GHT6YC'
+          // ]
         }
       }
 });
 
     // const res = http.post(`${BASE_URL}/${createUrl}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
     const res = http.post(`${BASE_URL}/${ORDER_EXPORT_URL}`, payloadExportOrders, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    console.log('Export Orders Response status: ', res.status);
+    console.log('Export Orders - Response status:', res.status);
     const body = JSON.parse(res.body)
-    console.log('Export Order - Response id: ', body.batch_job.id);
-    check(res, { 
-        'verify export response status': (r) => r.status === 201,
+    console.log('Export Order - Response batch_job id: ', body.batch_job.id);
+    check(res, {
+        'Export Order - verify export response status': (r) => r.status === 201,
         // 'verify export orders successfully': (r2) => r2.body.batch_job.status === 'created'
     });
     sleep(2);
