@@ -7,7 +7,7 @@ export function exportOrders(cookies) {
     // const randomDepot = masterData[Math.floor(Math.random() * masterData.length)];
     // const depot_id = randomDepot.depotId;
     // console.log('Random Depot: ', depot_id);
-
+    // MM-PROD export 1 month ~ 144000 line items
     const payloadExportOrders = JSON.stringify({
       dry_run: false,
       type: 'line-items-orders-export',

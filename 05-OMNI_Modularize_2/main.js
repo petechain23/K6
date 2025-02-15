@@ -33,7 +33,7 @@ export default function () {
         orderEdit(testData.cookies);
         // inventory(testData.cookies);
         // fetchPromotions(testData.cookies);
-        sleep(180);
+        sleep(1800);
         exportOrders(testData.cookies);
     }
     finally {

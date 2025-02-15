@@ -38,6 +38,7 @@ k6 cloud test.js
 
 
 --------------------GIT--------------------
+git config --global user.email "trantandat2707@gmail.com"
 git config --global user.name "petechain23"
 git status
 git commit -m "message"
