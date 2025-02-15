@@ -1,3 +1,4 @@
+// run: node server.js
 const express = require('express');
 const solace = require('solclientjs');
 

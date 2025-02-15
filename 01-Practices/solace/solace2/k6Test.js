@@ -2,8 +2,8 @@ import http from 'k6/http';
 import { check } from 'k6';
 
 export const options = {
-  vus: 10, // 10 virtual users
-  duration: '30s', // Run for 30 seconds
+  vus: 1, // 10 virtual users
+  // duration: '1s', // Run for 30 seconds
 };
 
 export default function () {
@@ -15,11 +15,8 @@ export default function () {
     total_stocked_quantity: null,
     incoming_quantity: 1000,
     incoming_date: '2025-02-20',
-    order_number: '14022025001'
-    // event: "Stock Update",
-    // materialID: "12345",
-    // warehouse: "APAC-MM",
-    // quantity: Math.floor(Math.random() * 1000), // Random quantity
+    order_number: '2025' + '-' + new Date().getDate() + new Date().getHours() + new Date().getMinutes()
+    // Random quantity: Math.floor(Math.random() * 1000),
     // timestamp: new Date().toISOString()
   });
 
