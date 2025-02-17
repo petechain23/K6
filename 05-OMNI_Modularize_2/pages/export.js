@@ -1,7 +1,10 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { BASE_URL, ORDER_EXPORT_URL } from '../config.js';
+import { Trend } from 'k6/metrics';
 
+// Create custom trends
+const exportOrderTrend = new Trend('export_order_duration');
 export function exportOrders(cookies) {
     // //Pick a random Depot
     // const randomDepot = masterData[Math.floor(Math.random() * masterData.length)];
@@ -91,8 +94,8 @@ export function exportOrders(cookies) {
         },
         filterable_fields: {
           created_at: {
-            gt: '2024-09-13T00:00:00.000Z',
-            lt: '2025-02-13T23:59:59.999Z'
+            gt: '2024-09-18T00:00:00.000Z',
+            lt: '2025-02-18T23:59:59.999Z'
           }
           // depot_id: [
           //   'depot_01HES9APM60R2D27MW39GHT6YC'
@@ -103,6 +106,7 @@ export function exportOrders(cookies) {
 
     // const res = http.post(`${BASE_URL}/${createUrl}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
     const res = http.post(`${BASE_URL}/${ORDER_EXPORT_URL}`, payloadExportOrders, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    exportOrderTrend.add(res.timings.duration);
     console.log('Export Orders - Response status:', res.status);
     const body = JSON.parse(res.body)
     console.log('Export Order - Response batch_job id: ', body.batch_job.id);

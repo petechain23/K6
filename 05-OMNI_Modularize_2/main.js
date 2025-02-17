@@ -9,7 +9,7 @@ import { orderCreate } from './pages/orders.js';
 import { orderEdit } from './pages/orders_edit.js';
 import { exportOrders } from './pages/export.js';
 // import { inventory } from './inventory.js';
-// import { fetchPromotions } from './promotion.js';
+// import { promotions } from './promotion.js';
 
 export const options = {
     scenarios: {
@@ -32,7 +32,7 @@ export default function () {
         orderCreate(testData.cookies);
         orderEdit(testData.cookies);
         // inventory(testData.cookies);
-        // fetchPromotions(testData.cookies);
+        // promotions(testData.cookies);
         sleep(1800);
         exportOrders(testData.cookies);
     }
@@ -56,7 +56,7 @@ export default function () {
 
 export function handleSummary(data) {
     return {
-        'TestSummaryReport3.html': htmlReport(data, { debug: false }), //true
+        'loadtest_1702_01.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     }
 }

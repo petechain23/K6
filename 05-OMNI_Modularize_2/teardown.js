@@ -8,7 +8,7 @@ export function teardown(cookies) {
     }
     // console.log(`Teardown - Clearing session cookies: ${JSON.stringify(cookies)}`);
     // http.del(`${BASE_URL}/${AUTH_URL}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    console.log('Teardown - Cleanup completed.');
+    // console.log('Teardown - Cleanup completed.');
 
     // function () {
     //       let response = http.del(`${baseUrl}/${authUrl}`, params);

@@ -41,26 +41,26 @@ export const ramupWorkload = {
     stages: [
         { target: 1, duration: '5s' },
         { target: 5, duration: '30s' },
+        { target: 5, duration: '10m' },
+        { target: 5, duration: '30m' },
+        { target: 10, duration: '30m' },
+        { target: 10, duration: '60m' },
+        { target: 10, duration: '60m' },
+        { target: 20, duration: '30m' },
+        { target: 20, duration: '60m' },
+        { target: 20, duration: '60m' },
         { target: 10, duration: '10m' },
-        { target: 10, duration: '30m' },
-        { target: 10, duration: '30m' },
-        { target: 10, duration: '30m' },
-        { target: 20, duration: '30m' },
-        { target: 20, duration: '30m' },
-        { target: 20, duration: '30m' },
-        { target: 10, duration: '30m' },
-        { target: 10, duration: '30m' },
-        { target: 10, duration: '30m' },
         { target: 10, duration: '10m' },
-        { target: 5, duration: '10s' },
+        { target: 5, duration: '10m' },
+        { target: 1, duration: '5s' },
     ],
     gracefulRampDown: '5s'
 }
 
 export const thresholdsSettings = {
     thresholds: {
-        http_req_duration: [{ threshold: 'p(99)<=10000', abortOnFail: false }],
-        http_req_failed: [{ threshold: 'rate<=0.01', abortOnFail: false }]
+        http_req_duration: [{ threshold: 'p(99)<=10000', abortOnFail: true }],
+        http_req_failed: [{ threshold: 'rate<=0.01', abortOnFail: true }]
     }
 }
 // export const options = {

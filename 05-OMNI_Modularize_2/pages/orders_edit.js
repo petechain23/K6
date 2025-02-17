@@ -1,7 +1,10 @@
 import { sleep, check, group } from 'k6'
 import http from 'k6/http'
 import { BASE_URL, ORDER_EDIT_URL, orderId } from '../config.js';
+import { Trend } from 'k6/metrics';
 
+// Create custom trends
+const editOrderTrend = new Trend('edit_order_duration');
 export function orderEdit(cookies) {
 
   //Pick a random order_Id
@@ -44,6 +47,7 @@ export function orderEdit(cookies) {
 
   // const res = http.post(`${BASE_URL}/${createUrl}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
   const res = http.post(`${BASE_URL}/${ORDER_EDIT_URL}/${order_Id}`, payloadEditOrder,  { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+  editOrderTrend.add(res.timings.duration);
   const body = JSON.parse(res.body)
   console.log('Edit Order - order_Id: ', body.order.id);
   console.log('Edit Order - display_id: ', body.order.display_id);

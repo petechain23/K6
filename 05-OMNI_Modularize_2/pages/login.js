@@ -13,8 +13,9 @@ export function login(cookies) {
     headers: { 'Content-Type': 'application/json', cookies: cookies }  //Reuse cookies from setup.js},
   });
   // console.log(`login - print response status: ${res.status}`);
+  
   check(res, {
-    'login - Session validation successful': (r) => r.status === 200
+    'Login - Session validation successful': (r) => r.status === 200
   });
   return cookies;  // Keep returning cookies for other modules
 }

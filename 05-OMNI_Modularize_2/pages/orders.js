@@ -1,7 +1,10 @@
 import { sleep, check, group } from 'k6'
 import http from 'k6/http'
 import { BASE_URL, ORDER_CREATE_URL, masterData } from '../config.js';
+import { Trend } from 'k6/metrics';
 
+// Create custom trends
+const createOrderTrend = new Trend('create_order_duration');
 export function orderCreate(cookies) {
     // //Pick a random outletId
     const randomOutlet = masterData[Math.floor(Math.random() * masterData.length)];
@@ -56,6 +59,7 @@ export function orderCreate(cookies) {
 
     // const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
     const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, payloadCreateOrder, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    createOrderTrend.add(res.timings.duration);
     console.log('Create Order Response status: ', res.status);
     const body = JSON.parse(res.body)
     console.log('Create Order - Response id: ', body.order.id);
