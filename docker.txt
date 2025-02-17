@@ -1,0 +1,37 @@
+---------create influxdb---------
+peter@peters-MacBook-Pro ~ % docker run -d \
+  --name=influxdb-grafana-k6 \
+  -p 8086:8086 \
+  -v influxdb-data:/var/lib/influxdb2 \
+  -e INFLUXDB_DB=mydb \
+  -e INFLUXDB_ADMIN_USER=admin \
+  -e INFLUXDB_ADMIN_PASSWORD=admin123 \
+  influxdb
+
+
+---------------run/delete docker file---------------
+-list all container/images file
+docker ps -a
+docker images
+
+-start container file
+docker start <container name> or <container id>
+
+-build file (go to file directory)
+docker-compose up -d
+docker-compose down
+
+---------------Configuration on portal/ or file docker-compose.yml---------------
+  New organization and new bucket
+  -user name: admin
+  -password: admin123
+  -organization: omni-v2
+  -bucket: omni-v2
+  -token omni-v2: CzEyJUly1eWhZzR2ynFAAX_B4EawPe2DUS_uV-YUf-QWt-_xrqdB8d-ICJ-ltk627620_jOh9kTcm1XWU24SnA==
+
+
+peter@peters-MacBook-Pro ~ % curl -G http://localhost:8086/api/v2/omni-v2 --header "Authorization: CzEyJUly1eWhZzR2ynFAAX_B4EawPe2DUS_uV-YUf-QWt-_xrqdB8d-ICJ-ltk627620_jOh9kTcm1XWU24SnA== admin:admin123
+
+check log:
+docker logs influxdb-omni (check log on http://localhost:8086)
+docker logs grafana-omni (check log on http://localhost:3000)

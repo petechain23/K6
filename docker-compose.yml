@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb-omni
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    environment:
+      - INFLUXDB_DB=k6db
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin123
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_ORG=omni-v2
+      - INFLUXDB_BUCKET=omni-v2
+      - INFLUXDB_TOKEN=CzEyJUly1eWhZzR2ynFAAX_B4EawPe2DUS_uV-YUf-QWt-_xrqdB8d-ICJ-ltk627620_jOh9kTcm1XWU24SnA==
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-omni
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - influxdb
+
+volumes:
+  influxdb-data:
+  grafana-data:
