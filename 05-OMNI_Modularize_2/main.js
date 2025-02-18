@@ -7,6 +7,7 @@ import { teardown } from './teardown.js';
 import { login } from './pages/login.js';
 import { orderCreate } from './pages/orders.js';
 import { orderEdit } from './pages/orders_edit.js';
+import { orderUpdateStatus } from './pages/orders_update_status.js';
 import { exportOrders } from './pages/export.js';
 // import { inventory } from './inventory.js';
 // import { promotions } from './promotion.js';
@@ -26,7 +27,8 @@ export default function () {
         console.error('Main - Setup failed. Aborting test.');
         return;
     }
-    orderCreate(testData.cookies);
+    // orderCreate(testData.cookies);
+    orderUpdateStatus(testData.cookies);
     // Way 1:
     // try {
     //     // login(testData.cookies);
@@ -55,9 +57,15 @@ export default function () {
     // }
 }
 
+// export function reportName () {
+//     return new Date().getDate() + new Date().getHours() + new Date().getMinutes()
+// }
+
+let name = new Date().getDate() + new Date().getHours() + new Date().getMinutes()
 export function handleSummary(data) {
     return {
-        'sc1_loadtest_1702_01.html': htmlReport(data, { debug: false }), //true
-        stdout: textSummary(data, { indent: " ", enableColors: true }),
+        // 'sc1_loadtest_1702_01.html': htmlReport(data, { debug: false }), //true
+        'aaa.html': htmlReport(data, { debug: false }), //true
+        stdout: textSummary(data, { indent: " ", enableColors: true })
     }
 }
