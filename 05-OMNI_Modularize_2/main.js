@@ -23,22 +23,23 @@ export const options = {
 export default function () {
     const testData = setup();  // Get session cookies
     if (!testData || !testData.cookies) {
-        console.error('main - Setup failed. Aborting test.');
+        console.error('Main - Setup failed. Aborting test.');
         return;
     }
+    orderCreate(testData.cookies);
     // Way 1:
-    try {
-        // login(testData.cookies);
-        orderCreate(testData.cookies);
-        orderEdit(testData.cookies);
-        // inventory(testData.cookies);
-        // promotions(testData.cookies);
-        sleep(1800);
-        exportOrders(testData.cookies);
-    }
-    finally {
-        teardown(testData);  // Ensure cleanup runs at the end
-    }
+    // try {
+    //     // login(testData.cookies);
+    //     orderCreate(testData.cookies);
+    //     // orderEdit(testData.cookies);
+    //     // inventory(testData.cookies);
+    //     // promotions(testData.cookies);
+    //     // sleep(1800);
+    //     // exportOrders(testData.cookies);
+    // }
+    // finally {
+    //     teardown(testData);  // Ensure cleanup runs at the end
+    // }
 
     // Way 2:
     // const sessionCookies = login(testData.cookies);
@@ -56,7 +57,7 @@ export default function () {
 
 export function handleSummary(data) {
     return {
-        'loadtest_1702_01.html': htmlReport(data, { debug: false }), //true
+        'sc1_loadtest_1702_01.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     }
 }

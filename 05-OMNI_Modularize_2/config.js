@@ -6,6 +6,12 @@ export const AUTH_URL = 'admin/auth'
 export const ORDER_CREATE_URL = 'admin/orders/create'
 export const ORDER_EDIT_URL = 'admin/orders/edit'
 export const ORDER_EXPORT_URL = 'admin/batch-jobs'
+export const ORDER_EXTEND_STATUS_UPDATE_URL = 'admin/order-extend-status/update'
+export const ORDER_PENDINGTOPROCESSING_URL = 'admin/orders'
+export const ORDER_INVENTORY_CHECK_URL = 'admin/orders/inventory-checked'
+export const ORDER_CREDIT_CHECK_URL = 'admin/orders/credit-checked'
+export const ORDER_PROMOTION_CHECK_URL = 'admin/orders/promotion-checked'
+export const ORDER_INVOICE_GENERATE_URL = 'admin/invoices/generate'
 
 // Load credentials from CSV
 export const users = new SharedArray('users', function () {
@@ -40,18 +46,15 @@ export const ramupWorkload = {
     gracefulStop: '5s',
     stages: [
         { target: 1, duration: '5s' },
-        { target: 5, duration: '30s' },
-        { target: 5, duration: '10m' },
-        { target: 5, duration: '30m' },
-        { target: 10, duration: '30m' },
-        { target: 10, duration: '60m' },
-        { target: 10, duration: '60m' },
-        { target: 20, duration: '30m' },
-        { target: 20, duration: '60m' },
-        { target: 20, duration: '60m' },
+        { target: 5, duration: '5m' },
         { target: 10, duration: '10m' },
         { target: 10, duration: '10m' },
-        { target: 5, duration: '10m' },
+        { target: 20, duration: '10m' },
+        { target: 20, duration: '10m' },
+        { target: 30, duration: '10m' },
+        { target: 30, duration: '10m' },
+        { target: 10, duration: '10m' },
+        { target: 5, duration: '5m' },
         { target: 1, duration: '5s' },
     ],
     gracefulRampDown: '5s'
@@ -59,8 +62,8 @@ export const ramupWorkload = {
 
 export const thresholdsSettings = {
     thresholds: {
-        http_req_duration: [{ threshold: 'p(99)<=10000', abortOnFail: true }],
-        http_req_failed: [{ threshold: 'rate<=0.01', abortOnFail: true }]
+        http_req_duration: [{ threshold: 'p(99)<=10000', abortOnFail: false }],
+        http_req_failed: [{ threshold: 'rate<=0.01', abortOnFail: false }]
     }
 }
 // export const options = {

@@ -57,7 +57,6 @@ export function orderCreate(cookies) {
         location_id: 'sloc_01HV3J179CG8PSS92N3446W6RQ'
     });
 
-    // const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
     const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, payloadCreateOrder, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
     createOrderTrend.add(res.timings.duration);
     console.log('Create Order Response status: ', res.status);
@@ -69,5 +68,5 @@ export function orderCreate(cookies) {
         'Create Order - verify orders successfully': (r2) => r2.body.includes('display_id'),
         'Create Order - verify promotion code included': (r2) => r2.body.includes('PROMO00258_216')
     });
-    sleep(2);
+    // sleep(2);
 }

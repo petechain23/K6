@@ -44,8 +44,7 @@ export function orderEdit(cookies) {
       }
     ]
   });
-
-  // const res = http.post(`${BASE_URL}/${createUrl}`, payloadCreateOrder, { headers: { 'Cookie': `session=${sessionCookie}`, 'Content-Type': 'application/json' } });
+  
   const res = http.post(`${BASE_URL}/${ORDER_EDIT_URL}/${order_Id}`, payloadEditOrder,  { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
   editOrderTrend.add(res.timings.duration);
   const body = JSON.parse(res.body)
@@ -57,5 +56,5 @@ export function orderEdit(cookies) {
     'Edit Order - verify update successfully': (r2) => r2.body.includes('editing order')
     // 'verify promotion code included': (r2) => r2.body.includes('PROMO00258_216'), //$.order.items[*].promotion_codes[0]
   });
-  sleep(2);
+  // sleep(2);
 }
