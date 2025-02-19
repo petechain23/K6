@@ -28,6 +28,12 @@ export const orderId = new SharedArray('orderId', function () {
     return papaparse.parse(open('../../02-K6 Files/mm-qa-edit_order.csv'), { header: true }).data.filter(row => row.order_Id)
 });
 
+// Load order_id for update order status
+export const orderId2 = new SharedArray('orderId2', function () {
+    return papaparse.parse(open('../../02-K6 Files/mm-qa-update_order_status.csv'), { header: true }).data.filter(row => row.order_Id)
+});
+
+
 export const sharedWorkload = {
     executor: 'shared-iterations',
     vus: 2,

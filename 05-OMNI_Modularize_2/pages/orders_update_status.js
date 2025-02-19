@@ -7,13 +7,14 @@ import {
   ORDER_INVENTORY_CHECK_URL,
   ORDER_CREDIT_CHECK_URL,
   ORDER_PROMOTION_CHECK_URL,
-  // ORDER_INVOICE_GENERATE_URL, 
-  //orderId
+  ORDER_INVOICE_GENERATE_URL,
+  orderId2
 } from '../config.js';
 import { Trend } from 'k6/metrics';
 
 // Create custom trends
 const updateOrderStatus = new Trend('update_order_duration');
+const generateInvoice = new Trend('generateInvoice_duration');
 const pendingToProcessing = new Trend('update_PendingToProcessing_duration');
 const updateInventoryCheck = new Trend('update_InventoryCheck_duration');
 const updateCreditCheck = new Trend('update_CreditCheck_duration');
@@ -21,26 +22,17 @@ const updatePromotionCheck = new Trend('update_PromotionCheck_duration');
 export function orderUpdateStatus(cookies) {
 
   //Pick a random order_Id
-  // const randomOrderId = orderId[Math.floor(Math.random() * orderId.length)];
-  // const order_Id = randomOrderId.order_Id;
-  const order_Id = 'order_01JMBCXZX7DFNDDH6H19D8K1XE'
-  // console.log('Random Outlet: ', outletId);
+  const randomOrderId = orderId2[Math.floor(Math.random() * orderId2.length)];
+  const order_Id = randomOrderId.order_Id;
+  // const order_Id = 'order_01JMBCX58NX6K94ER4WGVVN9CV'
+  // console.log('Random order_Id: ', outletId);
 
   //Pending to Processing
   const payloadPendingToProcessing = JSON.stringify({
     is_processing: true
   });
 
-  // //Update Order Status
-  // const payloadUpdateOrderStatus = JSON.stringify({
-  //   "order_ids": [
-  //     //   "order_01HV6526JPFB5B3F8QNW616Q5H"
-  //     `${order_Id}`
-  //   ],
-  //   "status": `${order_status}`
-  // });
-
-  group("Group: Update_order_status", function () {
+  group("Update_order_status", function () {
     // Pending to Processing
     const res1 = http.post(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}`, payloadPendingToProcessing, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
     pendingToProcessing.add(res1.timings.duration);
@@ -56,13 +48,16 @@ export function orderUpdateStatus(cookies) {
     //Promotion check
     const res4 = http.post(`${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${order_Id}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
     updatePromotionCheck.add(res4.timings.duration);
+    
+    //Generate invoice
+    const payloadGenerateInvoice = JSON.stringify({
+      order_ids: [
+        `${order_Id}`
+      ]
+    });
 
-    //Update status - confirmed
-    //Update status - ready_for_delivery
-    //Update status - shipped
-    //Update status - delivery
-    //Update status - paid
-    const arrStatus = ['confirmed', 'ready_for_delivery', 'shipped', 'delivery', 'paid'];
+    //Order extended status
+    const arrStatus = ['confirmed', 'ready_for_delivery', 'shipped', 'delivered'];
     // let arrStatus = arrayStatus.length;
     for (let i = 0; i < arrStatus.length; i++) {
       console.log(`status is: ${arrStatus[i]}`)
@@ -77,16 +72,28 @@ export function orderUpdateStatus(cookies) {
       });
 
       const res = http.post(`${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, payloadUpdateOrderStatus, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-      updateOrderStatus.add(res.timings.duration);
       const body = JSON.parse(res.body)
-      // console.log('Update Order Status - order_Id: ', body.order.id);
-      // console.log('Update Order Status - display_id: ', body.order.display_id); //orderResponse.saved[0].extended_status;
+      const extendedStatus = body.saved[0].extended_status;
+      console.log('Update Order Status - display_id: ', body.saved[0].display_id);
       check(res, {
         'Update Order Status - verify response status': (r) => r.status === 201,
-        'Update Order Status - verify update successfully': (r2) => r2.body.includes(`${arrStatus[i]}`)
+        'Update Order Status - verify update successfully': (r2) => extendedStatus === `${arrStatus[i]}`
       });
+      updateOrderStatus.add(res.timings.duration);
       // sleep(2);
     };
+
+    //Generate invoice
+    const res5 = http.post(`${BASE_URL}/${ORDER_INVOICE_GENERATE_URL}`, payloadGenerateInvoice, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    const body1 = JSON.parse(res5.body)
+    const invoiceStatus = body1.downloaded[0].invoice.status;
+    console.log('Generate invoice - display_id: ', body1.downloaded[0].invoice.order.display_id);
+    check(res5, {
+      'Generate invoice - verify response status': (r) => r.status === 201,
+      'Generate invoice - verify update successfully': (r2) => invoiceStatus === 'delivered'
+    });
+    generateInvoice.add(res5.timings.duration);
+    // sleep(2);
   });
 }
 

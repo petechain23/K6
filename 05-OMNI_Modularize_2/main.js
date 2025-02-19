@@ -27,12 +27,14 @@ export default function () {
         console.error('Main - Setup failed. Aborting test.');
         return;
     }
-    // orderCreate(testData.cookies);
+    orderCreate(testData.cookies);
     orderUpdateStatus(testData.cookies);
+    sleep(1200);
+    exportOrders(testData.cookies);
     // Way 1:
     // try {
     //     // login(testData.cookies);
-    //     orderCreate(testData.cookies);
+    //     orderCreate(testData.cookies);s
     //     // orderEdit(testData.cookies);
     //     // inventory(testData.cookies);
     //     // promotions(testData.cookies);
@@ -61,11 +63,10 @@ export default function () {
 //     return new Date().getDate() + new Date().getHours() + new Date().getMinutes()
 // }
 
-let name = new Date().getDate() + new Date().getHours() + new Date().getMinutes()
 export function handleSummary(data) {
     return {
-        // 'sc1_loadtest_1702_01.html': htmlReport(data, { debug: false }), //true
-        'aaa.html': htmlReport(data, { debug: false }), //true
+        'sc3_loadtest_1902_01.html': htmlReport(data, { debug: false }), //true
+        // 'aaa.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true })
     }
 }
