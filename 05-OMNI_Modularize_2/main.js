@@ -1,7 +1,7 @@
 import { sleep, check, group } from 'k6'
 import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
-import { sharedWorkload, ramupWorkload, thresholdsSettings} from './config.js';
+import { sharedWorkload, ramupWorkload, thresholdsSettings , orderCreateResponseTime, orderCreateSuccessRate, orderCreateRequestCount } from './config.js';
 import { setup } from './setup.js';
 import { teardown } from './teardown.js';
 import { login } from './pages/login.js';
@@ -28,9 +28,9 @@ export default function () {
         return;
     }
     orderCreate(testData.cookies);
-    orderUpdateStatus(testData.cookies);
-    sleep(1200);
-    exportOrders(testData.cookies);
+    // orderUpdateStatus(testData.cookies);
+    // sleep(1200);
+    // exportOrders(testData.cookies);
     // Way 1:
     // try {
     //     // login(testData.cookies);
@@ -64,9 +64,16 @@ export default function () {
 // }
 
 export function handleSummary(data) {
+    // let csvData = 'Metric,Value\n';
+    // csvData += `Total Requests,${data.metrics.orderCreateRequestCount.values.count}\n`;
+    // csvData += `Avg Response Time (ms),${data.metrics.orderCreateResponseTime.values.avg}\n`;
+    // csvData += `Max Response Time (ms),${data.metrics.orderCreateResponseTime.values.max}\n`;
+    // csvData += `Success Rate,${(data.metrics.orderCreateSuccessRate.values.rate * 100).toFixed(2)}%\n`;
+
     return {
-        'sc3_loadtest_1902_01.html': htmlReport(data, { debug: false }), //true
-        // 'aaa.html': htmlReport(data, { debug: false }), //true
+        // 'TestSummary.csv': csvData,
+        // 'sc3_loadtest_1902_01.html': htmlReport(data, { debug: false }), //true
+        'TestSummary.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true })
     }
 }

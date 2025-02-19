@@ -1,10 +1,11 @@
-import { sleep, check, group } from 'k6'
+import { sleep, check } from 'k6'
 import http from 'k6/http'
-import { BASE_URL, ORDER_CREATE_URL, masterData } from '../config.js';
-import { Trend } from 'k6/metrics';
+import { BASE_URL, ORDER_CREATE_URL, 
+    masterData, orderCreateResponseTime, orderCreateSuccessRate, orderCreateRequestCount
+} from '../config.js';
 
 // Create custom trends
-const createOrderTrend = new Trend('create_order_duration');
+// const createOrderTrend = new Trend('create_order_duration');
 export function orderCreate(cookies) {
     // //Pick a random outletId
     const randomOutlet = masterData[Math.floor(Math.random() * masterData.length)];
@@ -58,15 +59,17 @@ export function orderCreate(cookies) {
     });
 
     const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, payloadCreateOrder, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    createOrderTrend.add(res.timings.duration);
-    console.log('Create Order Response status: ', res.status);
+    // console.log('Create Order - Response status: ', res.status);
     const body = JSON.parse(res.body)
-    console.log('Create Order - Response id: ', body.order.id);
+    // console.log('Create Order - Response id: ', body.order.id);
     console.log('Create Order - Response display_id: ', body.order.display_id);
     check(res, { 
         'Create Order - verify response status': (r) => r.status === 200,
         'Create Order - verify orders successfully': (r2) => r2.body.includes('display_id'),
         'Create Order - verify promotion code included': (r2) => r2.body.includes('PROMO00258_216')
     });
+    orderCreateResponseTime.add(res.timings.duration);
+    orderCreateSuccessRate.add(res.status === 200);
+    orderCreateRequestCount.add(1);
     // sleep(2);
 }
