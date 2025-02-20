@@ -5,11 +5,19 @@ const solace = require('solclientjs');
 const app = express();
 app.use(express.json()); // Enable JSON parsing
 
+// Stock Update
 const host = "tcps://heineken-test.messaging.solace.cloud:55443";
 const vpn = "heineken-test";
 const username = "OMS_GLB_USER";
 const password = "qzNy7l387Yn1";
 const queueName = "HNK/MDM/PRODUCT/MATERIAL/STOCKUPDATE/UPD/OMS/APAC/MM/GR";
+
+// Orders Incomming
+// const host = "tcps://heineken-test.messaging.solace.cloud:55443";
+// const vpn = "heineken-test";
+// const username = "OMS_ID_USER";
+// const password = "nrmQP3mK5tm9";
+// const queueName = "HNK/MTC/SELLOUTSALES/SALESORDER/ORDER/3.0.0/OMS/NEW/APAC/ID";
 
 solace.SolclientFactory.init({
     profile: solace.SolclientFactoryProfiles.version10
@@ -53,5 +61,5 @@ app.post('/send-message', (req, res) => {
 });
 
 // Start Express Server
-const PORT = 3000;
+const PORT = 3000; //default 3000
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

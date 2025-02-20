@@ -14,10 +14,11 @@ export default function () {
     added_stocked_quantity: null,
     total_stocked_quantity: null,
     incoming_quantity: 1000,
-    incoming_date: '2025-02-20',
+    incoming_date: '2025-02-25',
     order_number: '2025' + '-' + new Date().getDate() + new Date().getHours() + new Date().getMinutes()
     // Random quantity: Math.floor(Math.random() * 1000),
     // timestamp: new Date().toISOString()
+    
   });
 
   const params = {
