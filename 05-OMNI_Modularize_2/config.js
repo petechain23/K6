@@ -1,8 +1,8 @@
 import { SharedArray } from 'k6/data';
 import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
-import { Trend, Rate, Counter } from 'k6/metrics';
+import { Trend, Rate, Counter, Metric } from 'k6/metrics';
 
-export const BASE_URL = 'https://hei-oms-apac-qa-mm-backend.azurewebsites.net';
+export const BASE_URL = 'https://hei-oms-apac-qa-mm-backend.azurewebsites.net'
 export const AUTH_URL = 'admin/auth'
 export const ORDER_CREATE_URL = 'admin/orders/create'
 export const ORDER_EDIT_URL = 'admin/orders/edit'
@@ -14,12 +14,28 @@ export const ORDER_CREDIT_CHECK_URL = 'admin/orders/credit-checked'
 export const ORDER_PROMOTION_CHECK_URL = 'admin/orders/promotion-checked'
 export const ORDER_INVOICE_GENERATE_URL = 'admin/invoices/generate'
 
+//Create Orders
 // Track Response Time
 export const orderCreateResponseTime = new Trend('orderCreate_ResponseTime');
 // Track Success Rate
 export const orderCreateSuccessRate = new Rate('orderCreate_SuccessRate');
 // Count Total Requests
 export const orderCreateRequestCount = new Counter('orderCreate_RequestCount');
+
+//Export Orders
+export const exportOrderResponseTime = new Trend('exportOrder_ResponseTime');
+export const exportOrderSuccessRate = new Rate('exportOrder_SuccessRate');
+export const exportOrderRequestCount = new Counter('exportOrder_RequestCount');
+
+//Edit Orders
+export const editOrderResponseTime = new Trend('editOrder_ResponseTime');
+export const editOrderSuccessRate = new Rate('editOrder_SuccessRate');
+export const editOrderRequestCount = new Counter('editOrder_RequestCount');
+
+//Update Status
+export const updateOrderResponseTime = new Trend('updateOrder_ResponseTime');
+export const updateOrderSuccessRate = new Rate('updateOrder_SuccessRate');
+export const updateOrderRequestCount = new Counter('updateOrder_RequestCount');
 
 // Load credentials from CSV
 export const users = new SharedArray('users', function () {
@@ -44,30 +60,34 @@ export const orderId2 = new SharedArray('orderId2', function () {
 
 export const sharedWorkload = {
     executor: 'shared-iterations',
-    vus: 2,
-    iterations: 2,
-    maxDuration: '30s'
+    vus: 10,
+    iterations: 20,
+    maxDuration: '2m'
 }
 
-// export const constant = {
-//     executor: 'constant-vus',
-//     vus: 40,
-//     duration: '30s',
-// }
+export const pervuiterations = {
+    executor: 'per-vu-iterations',
+    vus: 5,
+    iterations: 1,
+    // maxDuration: '30s'
+}
+
+export const constantWorkload = {
+    executor: 'constant-vus',
+    vus: 10,
+    duration: '10m'
+}
 
 export const ramupWorkload = {
     executor: 'ramping-vus',
-    gracefulStop: '5s',//default 30s
+    gracefulStop: '5s',
     stages: [
         { target: 1, duration: '5s' },
         { target: 5, duration: '5m' },
         { target: 10, duration: '10m' },
         { target: 10, duration: '10m' },
-        { target: 20, duration: '10m' },
-        { target: 20, duration: '10m' },
-        { target: 30, duration: '10m' },
-        { target: 30, duration: '10m' },
-        { target: 10, duration: '10m' },
+        { target: 15, duration: '10m' },
+        { target: 15, duration: '10m' },
         { target: 5, duration: '5m' },
         { target: 1, duration: '5s' },
     ],
@@ -76,7 +96,7 @@ export const ramupWorkload = {
 
 export const thresholdsSettings = {
     thresholds: {
-        http_req_duration: [{ threshold: 'p(99)<=10000', abortOnFail: false }],
+        http_req_duration: [{ threshold: 'p(99)<3500', abortOnFail: false }], //1000ms = 1s
         http_req_failed: [{ threshold: 'rate<=0.1', abortOnFail: false }]
     }
 }

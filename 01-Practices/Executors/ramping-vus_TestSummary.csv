@@ -1,5 +1,5 @@
 Metric,Value
-Total Requests,177
-Avg Response Time (ms),293.92119209039544
-Max Response Time (ms),613.245
+Total Requests,139
+Avg Response Time (ms),461.54055035971203
+Max Response Time (ms),1514.036
 Success Rate,100.00%

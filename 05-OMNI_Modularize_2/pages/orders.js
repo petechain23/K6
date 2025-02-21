@@ -7,6 +7,8 @@ import { BASE_URL, ORDER_CREATE_URL,
 // Create custom trends
 // const createOrderTrend = new Trend('create_order_duration');
 export function orderCreate(cookies) {
+    const vuID = __VU;
+    // console.log(`VU#${__VU}`);
     // //Pick a random outletId
     const randomOutlet = masterData[Math.floor(Math.random() * masterData.length)];
     const outletId = randomOutlet.outletId;
@@ -62,14 +64,14 @@ export function orderCreate(cookies) {
     // console.log('Create Order - Response status: ', res.status);
     const body = JSON.parse(res.body)
     // console.log('Create Order - Response id: ', body.order.id);
-    console.log('Create Order - Response display_id: ', body.order.display_id);
+    // console.log('Create Order - Response display_id: ', body.order.display_id);
     check(res, { 
         'Create Order - verify response status': (r) => r.status === 200,
         'Create Order - verify orders successfully': (r2) => r2.body.includes('display_id'),
         'Create Order - verify promotion code included': (r2) => r2.body.includes('PROMO00258_216')
     });
-    orderCreateResponseTime.add(res.timings.duration);
-    orderCreateSuccessRate.add(res.status === 200);
-    orderCreateRequestCount.add(1);
-    // sleep(2);
+    orderCreateResponseTime.add(res.timings.duration, { vu: vuID });
+    orderCreateSuccessRate.add(res.status === 200, { vu: vuID });
+    orderCreateRequestCount.add(1, { vu: vuID });
+    sleep(2);
 }

@@ -9,12 +9,12 @@ const shared_iterations_Trend = new Trend ('shared_iterations_trend')
 const shared_iterations_Rate = new Rate ('shared_iterations_rate')
 const shared_iterations_Counter = new Counter ('shared_iterations_counter')
 
-export function handleSummary(data) {
-    return {
-        'shared-iterations_TestSummaryReport.html': htmlReport(data, { debug: false }), //true
-        stdout: textSummary(data, { indent: ' ', enableColors: true })
-    }
-}
+// export function handleSummary(data) {
+//     return {
+//         'shared-iterations_TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+//         stdout: textSummary(data, { indent: ' ', enableColors: true })
+//     }
+// }
 
 export const options = {
   discardResponseBodies: true,
@@ -44,7 +44,7 @@ export default function () {
   sleep(0.5);
 }
 
-/*
+
 export function handleSummary(data) {
     let csvData = 'Metric,Value\n';
 
@@ -66,5 +66,4 @@ export function handleSummary(data) {
         stdout: textSummary(data, { indent: ' ', enableColors: true }),
     };
 }
-*/
 

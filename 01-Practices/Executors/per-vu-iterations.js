@@ -1,29 +1,68 @@
 // https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/per-vu-iterations/
 import http from 'k6/http';
-import { sleep } from 'k6';
+import {  check, sleep } from 'k6';
 import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
+import { Trend, Rate, Counter, Metric } from 'k6/metrics';
 
-export function handleSummary(data) {
-    return {
-        'per-vu-iterations_TestSummaryReport.html': htmlReport(data, { debug: false }) //true
-    }
-}
+const per_vu_iterations_Trend = new Trend ('per_vu_iterations_trend')
+const per_vu_iterations_Rate = new Rate ('per_vu_iterations_rate')
+const per_vu_iterations_Counter = new Counter ('per_vu_iterations_counter')
+
+// export function handleSummary(data) {
+//     return {
+//         'per-vu-iterations_TestSummaryReport.html': htmlReport(data, { debug: false }), //true
+//         stdout: textSummary(data, { indent: ' ', enableColors: true })
+//       }
+// }
 
 export const options = {
   discardResponseBodies: true,
   scenarios: {
     contacts: {
       executor: 'per-vu-iterations',
-      vus: 10,
+      vus: 20,
       iterations: 20,
-      maxDuration: '30s',
+      maxDuration: '30s'
     },
   },
 };
 
 export default function () {
-  http.get('https://test.k6.io/contacts.php');
+  const vuID = __VU;
+  console.log(`VU#${__VU}`);
+  const res = http.get('https://test.k6.io/contacts.php');
   // Injecting sleep
   // Sleep time is 500ms. Total iteration time is sleep + time to finish request.
+  check(res, {
+    'Verify response status = 200': (r) => r.status === 200
+  });
+  per_vu_iterations_Trend.add(res.timings.duration, { vu: vuID })
+  per_vu_iterations_Rate.add(res.status === 200, { vu: vuID })
+  // per_vu_iterations_Rate.add(res.status !== 200, { vu: vuID })
+  per_vu_iterations_Counter.add(1, { vu: vuID })
   sleep(0.5);
+}
+
+
+export function handleSummary(data) {
+    let csvData = 'Metric,Value\n';
+
+    if (data.metrics['per_vu_iterations_counter']) {
+        csvData += `Total Requests,${data.metrics['per_vu_iterations_counter'].values.count}\n`;
+    }
+
+    if (data.metrics['per_vu_iterations_trend']) {
+        csvData += `Avg Response Time (ms),${data.metrics['per_vu_iterations_trend'].values.avg}\n`;
+        csvData += `Max Response Time (ms),${data.metrics['per_vu_iterations_trend'].values.max}\n`;
+    }
+
+    if (data.metrics['per_vu_iterations_rate']) {
+        csvData += `Success Rate,${(data.metrics['per_vu_iterations_rate'].values.rate * 100).toFixed(2)}%\n`;
+    }
+
+    return {
+        'per-vu-iterations_TestSummary.csv': csvData,
+        stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    };
 }

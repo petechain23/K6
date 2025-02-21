@@ -1,11 +1,13 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { BASE_URL, ORDER_EXPORT_URL } from '../config.js';
-import { Trend } from 'k6/metrics';
+import { exportOrderResponseTime, exportOrderSuccessRate, exportOrderRequestCount } from 'k6/metrics';
 
 // Create custom trends
-const exportOrderTrend = new Trend('export_order_duration');
+// const exportOrderTrend = new Trend('export_order_duration');
 export function exportOrders(cookies) {
+  const vuID = __VU;
+  // console.log(`VU#${__VU}`);
   // //Pick a random Depot
   // const randomDepot = masterData[Math.floor(Math.random() * masterData.length)];
   // const depot_id = randomDepot.depotId;
@@ -94,6 +96,10 @@ export function exportOrders(cookies) {
       },
       filterable_fields: {
         created_at: {
+          //mm-hotfix
+          // gt: '2024-01-01T00:00:00.000Z',
+          // lt: '2025-02-28T23:59:59.999Z'
+          // mm-qa
           gt: '2024-09-18T00:00:00.000Z',
           lt: '2025-02-18T23:59:59.999Z'
           // lt: '2025-02-18T23:59:59.999Z'
@@ -106,7 +112,7 @@ export function exportOrders(cookies) {
   });
 
   const res = http.post(`${BASE_URL}/${ORDER_EXPORT_URL}`, payloadExportOrders, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-  exportOrderTrend.add(res.timings.duration);
+  // exportOrderTrend.add(res.timings.duration);
   console.log('Export Orders - Response status:', res.status);
   const body = JSON.parse(res.body)
   console.log('Export Order - Response batch_job id: ', body.batch_job.id);
@@ -114,5 +120,8 @@ export function exportOrders(cookies) {
     'Export Order - verify export response status': (r) => r.status === 201,
     // 'verify export orders successfully': (r2) => r2.body.batch_job.status === 'created'
   });
-  // sleep(2);
+  exportOrderResponseTime.add(res.timings.duration, { vu: vuID });
+  exportOrderSuccessRate.add(res.status === 200, { vu: vuID });
+  exportOrderRequestCount.add(1, { vu: vuID });
+  sleep(2);
 }

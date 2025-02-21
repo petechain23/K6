@@ -8,9 +8,8 @@ import {
   ORDER_CREDIT_CHECK_URL,
   ORDER_PROMOTION_CHECK_URL,
   ORDER_INVOICE_GENERATE_URL,
-  orderId2
+  orderId2, editOrderResponseTime, editOrderSuccessRate, editOrderRequestCount
 } from '../config.js';
-import { Trend } from 'k6/metrics';
 
 // Create custom trends
 const updateOrderStatus = new Trend('update_order_duration');

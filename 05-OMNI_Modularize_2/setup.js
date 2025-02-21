@@ -11,7 +11,7 @@ export function setup() {
 
     const user = users[Math.floor(Math.random() * users.length)];
     // console.log(`Setup - Logging in with user ${user.username}...`);
-    console.log(`VU#${__VU} - Logging in with user:${user.username}`);
+    // console.log(`VU#${__VU} - Logging in with user:${user.username}`);
     // console.log(`Logging in with user ${user.username}...`);
 
     const payload = JSON.stringify({ email: user.username, password: user.password });
