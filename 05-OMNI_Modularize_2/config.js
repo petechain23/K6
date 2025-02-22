@@ -57,12 +57,11 @@ export const orderId2 = new SharedArray('orderId2', function () {
     return papaparse.parse(open('../../02-K6 Files/mm-qa-update_order_status.csv'), { header: true }).data.filter(row => row.order_Id)
 });
 
-
 export const sharedWorkload = {
     executor: 'shared-iterations',
-    vus: 10,
+    vus: 5,
     iterations: 20,
-    maxDuration: '2m'
+    maxDuration: '10m'
 }
 
 export const pervuiterations = {
@@ -74,7 +73,7 @@ export const pervuiterations = {
 
 export const constantWorkload = {
     executor: 'constant-vus',
-    vus: 10,
+    vus: 5,
     duration: '10m'
 }
 
@@ -82,14 +81,11 @@ export const ramupWorkload = {
     executor: 'ramping-vus',
     gracefulStop: '5s',
     stages: [
-        { target: 1, duration: '5s' },
-        { target: 5, duration: '5m' },
-        { target: 10, duration: '10m' },
-        { target: 10, duration: '10m' },
-        { target: 15, duration: '10m' },
-        { target: 15, duration: '10m' },
-        { target: 5, duration: '5m' },
-        { target: 1, duration: '5s' },
+        { target: 5, duration: '1m' },
+        { target: 10, duration: '5m' },
+        { target: 10, duration: '5m' },
+        { target: 10, duration: '5m' },
+        { target: 5, duration: '1m' },
     ],
     gracefulRampDown: '5s'
 }

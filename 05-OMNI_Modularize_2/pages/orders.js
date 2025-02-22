@@ -73,5 +73,5 @@ export function orderCreate(cookies) {
     orderCreateResponseTime.add(res.timings.duration, { vu: vuID });
     orderCreateSuccessRate.add(res.status === 200, { vu: vuID });
     orderCreateRequestCount.add(1, { vu: vuID });
-    sleep(2);
+    // sleep(2);
 }

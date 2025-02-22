@@ -1,7 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { BASE_URL, ORDER_EXPORT_URL } from '../config.js';
-import { exportOrderResponseTime, exportOrderSuccessRate, exportOrderRequestCount } from 'k6/metrics';
+import { BASE_URL, ORDER_EXPORT_URL , exportOrderResponseTime, exportOrderSuccessRate, exportOrderRequestCount } from '../config.js';
 
 // Create custom trends
 // const exportOrderTrend = new Trend('export_order_duration');
@@ -121,7 +120,7 @@ export function exportOrders(cookies) {
     // 'verify export orders successfully': (r2) => r2.body.batch_job.status === 'created'
   });
   exportOrderResponseTime.add(res.timings.duration, { vu: vuID });
-  exportOrderSuccessRate.add(res.status === 200, { vu: vuID });
+  exportOrderSuccessRate.add(res.status === 201, { vu: vuID });
   exportOrderRequestCount.add(1, { vu: vuID });
-  sleep(2);
+  // sleep(2);
 }

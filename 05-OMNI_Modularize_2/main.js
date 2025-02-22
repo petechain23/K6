@@ -12,32 +12,32 @@ import { exportOrders } from './pages/export.js';
 // import { inventory } from './inventory.js';
 // import { promotions } from './promotion.js';
 
-// export const options = {
-//     scenarios: {
-//         my_scenario: __ENV.WORKLOAD === 'breaking' ? pervuiterations : ramupWorkload
-//     },
-//     thresholds: thresholdsSettings.thresholds
-// };
+/*
+export const options = {
+    scenarios: {
+        my_scenario: __ENV.WORKLOAD === 'breaking' ? pervuiterations : ramupWorkload
+    },
+    thresholds: thresholdsSettings.thresholds
+};
+*/
 
 export const options = { 
     scenarios: (() => {
         switch (__ENV.WORKLOAD) {
             case 'pervu':
-                return { pervu: pervuiterations }; 
-            case 'rampup':
-                return { rampup: ramupWorkload };
+                return { pervu: pervuiterations };
             case 'shared':
                 return { shared: sharedWorkload };
             case 'constant':
                 return { constant: constantWorkload };
+            case 'rampup':
+                return { rampup: ramupWorkload };
             default:
                 throw new Error(`Invalid WORKLOAD: ${__ENV.WORKLOAD}`);
         }
     })(), 
     thresholds: thresholdsSettings.thresholds
 };
-
-// export {setup, teardown};
 
 export default function () {
     const testData = setup();  // Get session cookies
@@ -46,80 +46,86 @@ export default function () {
         return;
     }
 
-    // 1:
-    orderCreate(testData.cookies);
-    orderEdit(testData.cookies);
+    // 1-Reues sessionCookies from Setup:
+    // orderCreate(testData.cookies);
+    // orderEdit(testData.cookies);
     // orderUpdateStatus(testData.cookies);
     // sleep(600);
     exportOrders(testData.cookies);
 
-    // 2:
-    // try {
-    //     // login(testData.cookies);
-    //     orderCreate(testData.cookies);
-    //     // orderEdit(testData.cookies);
-    //     // inventory(testData.cookies);
-    //     // promotions(testData.cookies);
-    //     sleep(300);
-    //     exportOrders(testData.cookies);
-    // }
-    // finally {
-    //     teardown(testData);  // Ensure cleanup runs at the end
-    // }
+    // 2-Reues sessionCookies from Setup with try-finnally:
+    /*
+    try {
+        // login(testData.cookies);
+        orderCreate(testData.cookies);
+        // orderEdit(testData.cookies);
+        // inventory(testData.cookies);
+        // promotions(testData.cookies);
+        sleep(300);
+        exportOrders(testData.cookies);
+    }
+    finally {
+        teardown(testData);  // Ensure cleanup runs at the end
+    }
+    */
 
-    // 3:
-    // const sessionCookies = login(testData.cookies);
-    // try {
-    //     orderCreate(sessionCookies);
-    //     orderEdit(sessionCookies);
-    //     // inventory(testData.cookies);
-    //     // fetchPromotions(testData.cookies);
-    //     sleep(600);
-    //     exportOrders(sessionCookies);
-    // } finally {
-    //     teardown(testData);  // Ensure cleanup runs at the end
-    // }
+    // 3-Reues sessionCookies from login:
+    /*
+    const sessionCookies = login(testData.cookies);
+    try {
+        orderCreate(sessionCookies);
+        orderEdit(sessionCookies);
+        // inventory(testData.cookies);
+        // fetchPromotions(testData.cookies);
+        sleep(600);
+        exportOrders(sessionCookies);
+    } finally {
+        teardown(testData);  // Ensure cleanup runs at the end
+    }
+    */
 }
 
-//html
+//Export html
 export function handleSummary(data) {
     return {
-        'sc3_loadtest_2102_00.html': htmlReport(data, { debug: false }), //true
+        './01-Reports/001_pervu_export_order.html': htmlReport(data, { debug: false }), //true
         // 'TestSummary.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true })
     }
 }
 
-//csv
-// export function handleSummary(data) {
-//     let csvData = 'Metric,Value\n';
+//Export csv
+/*
+export function handleSummary(data) {
+    let csvData = 'Metric,Value\n';
 
-//     if (data.metrics['orderCreate_RequestCount']) {
-//         csvData += `Total Requests,${data.metrics['orderCreate_RequestCount'].values.count}\n`;
-//     }
+    if (data.metrics['orderCreate_RequestCount']) {
+        csvData += `Total Requests,${data.metrics['orderCreate_RequestCount'].values.count}\n`;
+    }
 
-//     if (data.metrics['orderCreate_ResponseTime']) {
-//         csvData += `Avg Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.avg}\n`;
-//         csvData += `Min Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.min}\n`;
-//         csvData += `Max Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.max}\n`;
-//     }
+    if (data.metrics['orderCreate_ResponseTime']) {
+        csvData += `Avg Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.avg}\n`;
+        csvData += `Min Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.min}\n`;
+        csvData += `Max Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.max}\n`;
+    }
 
-//     // if (data.metrics['orderCreate_SuccessRate']) {
-//     //     csvData += `Success Rate,${(data.metrics['orderCreate_SuccessRate'].values.rate * 100).toFixed(2)}%\n`;
-//     // }
-//     if (data.metrics['orderCreate_SuccessRate'] && data.metrics['orderCreate_SuccessRate'].values) {
-//         let successMetric = data.metrics['orderCreate_SuccessRate'].values;
+    // if (data.metrics['orderCreate_SuccessRate']) {
+    //     csvData += `Success Rate,${(data.metrics['orderCreate_SuccessRate'].values.rate * 100).toFixed(2)}%\n`;
+    // }
+    if (data.metrics['orderCreate_SuccessRate'] && data.metrics['orderCreate_SuccessRate'].values) {
+        let successMetric = data.metrics['orderCreate_SuccessRate'].values;
         
-//         // Correctly calculate success rate: (successful events / total events) * 100
-//         let successRate = (successMetric.passes / successMetric.total) * 100 || 0; 
+        // Correctly calculate success rate: (successful events / total events) * 100
+        let successRate = (successMetric.passes / successMetric.total) * 100 || 0; 
         
-//         csvData += `Success Rate,${successRate.toFixed(2)}%\n`;
-//     } else {
-//         csvData += `Success Rate, N/A\n`; // Handle missing data case
-//     }
+        csvData += `Success Rate,${successRate.toFixed(2)}%\n`;
+    } else {
+        csvData += `Success Rate, N/A\n`; // Handle missing data case
+    }
 
-//     return {
-//         'sc3_loadtest_2102_00_TestSummary.csv': csvData,
-//         stdout: textSummary(data, { indent: ' ', enableColors: true }),
-//     };
-// }
+    return {
+        'sc3_loadtest_2102_00_TestSummary.csv': csvData,
+        stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    };
+}
+*/
