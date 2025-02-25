@@ -43,3 +43,15 @@ git config --global user.name "petechain23"
 git status
 git commit -m "message"
 git push/git pull
+
+1/ Undo the last commit and force push:
+git reset --hard HEAD~1
+git push --force
+
+2/ Undo multiple commits (e.g., last 3 commits) and force push:
+git reset --hard HEAD~3
+git push --force
+
+3/ Create a new commit to "undo" the previous commit (safe method):
+git revert HEAD
+git push
