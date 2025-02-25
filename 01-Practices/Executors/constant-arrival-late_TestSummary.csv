@@ -1,0 +1,6 @@
+Metric,Value
+Total Requests,888
+Avg Response Time (ms),254.0559943693694
+Max Response Time (ms),274.0109
+Min Response Time (ms),248.7175
+Success Rate,100.00%
