@@ -67,10 +67,23 @@ export const sharedWorkload = {
 
 export const pervuiterations = {
     executor: 'per-vu-iterations',
-    vus: 5,
+    vus: 10,
     iterations: 1,
+    startTime: '2m'
     // maxDuration: '30s'
 }
+
+// export const pervuiterations = {
+//     discardResponseBodies: true,
+//     scenarios: {
+//       exportOrder: {
+//         executor: 'per-vu-iterations',
+//         vus: 20,
+//         iterations: 20,
+//         startTime: '2m'
+//       },
+//     },
+//   };
 
 export const constantWorkload = {
     executor: 'constant-vus',
@@ -88,39 +101,11 @@ export const ramupWorkload = {
         { target: 15, duration: '30m' },
         { target: 15, duration: '30m' },
         { target: 15, duration: '30m' },
+        { target: 15, duration: '30m' },
         { target: 10, duration: '20m' },
         { target: 10, duration: '20m' },
         { target: 5, duration: '10m' },
         { target: 1, duration: '1m' }
-
-        // { target: 5, duration: '1m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 15, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 15, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 15, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 15, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 10, duration: '5m' },
-        // { target: 5, duration: '1m' },
     ],
     gracefulRampDown: '5s'
 }

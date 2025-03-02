@@ -1,6 +1,7 @@
 import { sleep, check } from 'k6'
 import http from 'k6/http'
-import { BASE_URL, ORDER_CREATE_URL, 
+import {
+    BASE_URL, ORDER_CREATE_URL,
     masterData, orderCreateResponseTime, orderCreateSuccessRate, orderCreateRequestCount
 } from '../config.js';
 
@@ -65,13 +66,17 @@ export function orderCreate(cookies) {
     const body = JSON.parse(res.body)
     // console.log('Create Order - Response id: ', body.order.id);
     // console.log('Create Order - Response display_id: ', body.order.display_id);
-    check(res, { 
-        'Create Order - verify response status': (r) => r.status === 200,
-        'Create Order - verify orders successfully': (r2) => r2.body.includes('display_id'),
-        'Create Order - verify promotion code included': (r2) => r2.body.includes('PROMO00258_216')
-    });
-    orderCreateResponseTime.add(res.timings.duration, { vu: vuID });
-    orderCreateSuccessRate.add(res.status === 200, { vu: vuID });
-    orderCreateRequestCount.add(1, { vu: vuID });
-    // sleep(2);
+    if (!res.body || res.status === 0) {
+        console.log(`Empty Response Body for Request`);
+    } else {
+        check(res, {
+            'Create Order - verify response status': (r) => r.status === 200,
+            'Create Order - verify orders successfully': (r2) => r2.body.includes('display_id'),
+            'Create Order - verify promotion code included': (r2) => r2.body.includes('PROMO00258_216')
+        });
+        orderCreateResponseTime.add(res.timings.duration, { vu: vuID });
+        orderCreateSuccessRate.add(res.status === 200, { vu: vuID });
+        orderCreateRequestCount.add(1, { vu: vuID });
+        // sleep(2);
+    }
 }

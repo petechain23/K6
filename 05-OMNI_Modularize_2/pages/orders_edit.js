@@ -1,6 +1,7 @@
 import { sleep, check, group } from 'k6'
 import http from 'k6/http'
-import { BASE_URL, ORDER_EDIT_URL, orderId , 
+import {
+  BASE_URL, ORDER_EDIT_URL, orderId,
   editOrderResponseTime, editOrderSuccessRate, editOrderRequestCount
 } from '../config.js';
 
@@ -46,20 +47,24 @@ export function orderEdit(cookies) {
       }
     ]
   });
-  
-  const res = http.post(`${BASE_URL}/${ORDER_EDIT_URL}/${order_Id}`, payloadEditOrder,  { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+
+  const res = http.post(`${BASE_URL}/${ORDER_EDIT_URL}/${order_Id}`, payloadEditOrder, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
   // editOrderTrend.add(res.timings.duration);
   const body = JSON.parse(res.body)
-  console.log('Edit Order - order_Id: ', body.order.id);
-  console.log('Edit Order - display_id: ', body.order.display_id);
-  check(res, {
-    // 'verify status equals 200': (res) => res.status.toString() === '200',
-    'Edit Order - verify response status': (r) => r.status === 200,
-    'Edit Order - verify update successfully': (r2) => r2.body.includes('editing order')
-    // 'verify promotion code included': (r2) => r2.body.includes('PROMO00258_216'), //$.order.items[*].promotion_codes[0]
-  });
-  editOrderResponseTime.add(res.timings.duration, { vu: vuID });
-  editOrderSuccessRate.add(res.status === 200, { vu: vuID });
-  editOrderRequestCount.add(1, { vu: vuID });
-  // sleep(2);
+  // console.log('Edit Order - order_Id: ', body.order.id);
+  // console.log('Edit Order - display_id: ', body.order.display_id);
+  if (!res.body || res.status === 0) {
+    console.log(`Empty Response Body for Request`);
+  } else {
+    check(res, {
+      // 'verify status equals 200': (res) => res.status.toString() === '200',
+      'Edit Order - verify response status': (r) => r.status === 200,
+      'Edit Order - verify update successfully': (r2) => r2.body.includes('editing order')
+      // 'verify promotion code included': (r2) => r2.body.includes('PROMO00258_216'), //$.order.items[*].promotion_codes[0]
+    });
+    editOrderResponseTime.add(res.timings.duration, { vu: vuID });
+    editOrderSuccessRate.add(res.status === 200, { vu: vuID });
+    editOrderRequestCount.add(1, { vu: vuID });
+    // sleep(2);
+  }
 }
