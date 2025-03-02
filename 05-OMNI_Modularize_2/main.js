@@ -7,10 +7,10 @@ import { teardown } from './teardown.js';
 import { login } from './pages/login.js';
 import { orderCreate } from './pages/orders.js';
 import { orderEdit } from './pages/orders_edit.js';
-// import { orderUpdateStatus } from './pages/orders_update_status.js';
+import { orderUpdateStatus } from './pages/orders_update_status.js';
 import { exportOrders } from './pages/export.js';
 // import { inventory } from './inventory.js';
-// import { promotions } from './promotion.js';
+import { promotions } from './pages/promotion.js';
 
 /*
 export const options = {
@@ -47,11 +47,15 @@ export default function () {
     }
 
     // 1-Reues sessionCookies from Setup:
-    // orderCreate(testData.cookies);
-    // orderEdit(testData.cookies);
-    // orderUpdateStatus(testData.cookies);
+    orderCreate(testData.cookies);
+    sleep(2);
+    orderEdit(testData.cookies);
+    sleep(2);
+    orderUpdateStatus(testData.cookies);
+    sleep(2);
     // sleep(600);
-    exportOrders(testData.cookies);
+    // exportOrders(testData.cookies);
+    promotions(testData.cookies);
 
     // 2-Reues sessionCookies from Setup with try-finnally:
     /*
@@ -88,7 +92,7 @@ export default function () {
 //Export html
 export function handleSummary(data) {
     return {
-        './01-Reports/001_pervu_export_order.html': htmlReport(data, { debug: false }), //true
+        'stressTest.html': htmlReport(data, { debug: false }), //true
         // 'TestSummary.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true })
     }

@@ -13,6 +13,7 @@ export const ORDER_INVENTORY_CHECK_URL = 'admin/orders/inventory-checked'
 export const ORDER_CREDIT_CHECK_URL = 'admin/orders/credit-checked'
 export const ORDER_PROMOTION_CHECK_URL = 'admin/orders/promotion-checked'
 export const ORDER_INVOICE_GENERATE_URL = 'admin/invoices/generate'
+// export const PROMOTIONS_URL = 'admin/promotions/get-list'
 
 //Create Orders
 // Track Response Time
@@ -81,11 +82,45 @@ export const ramupWorkload = {
     executor: 'ramping-vus',
     gracefulStop: '5s',
     stages: [
-        { target: 5, duration: '1m' },
-        { target: 10, duration: '5m' },
-        { target: 10, duration: '5m' },
-        { target: 10, duration: '5m' },
-        { target: 5, duration: '1m' },
+        { target: 5, duration: '10m' },
+        { target: 10, duration: '20m' },
+        { target: 10, duration: '20m' },
+        { target: 15, duration: '30m' },
+        { target: 15, duration: '30m' },
+        { target: 15, duration: '30m' },
+        { target: 10, duration: '20m' },
+        { target: 10, duration: '20m' },
+        { target: 5, duration: '10m' },
+        { target: 1, duration: '1m' }
+
+        // { target: 5, duration: '1m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 15, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 15, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 15, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 15, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 10, duration: '5m' },
+        // { target: 5, duration: '1m' },
     ],
     gracefulRampDown: '5s'
 }
