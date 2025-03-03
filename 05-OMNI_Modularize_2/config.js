@@ -58,18 +58,23 @@ export const orderId2 = new SharedArray('orderId2', function () {
     return papaparse.parse(open('../../02-K6 Files/mm-qa-update_order_status.csv'), { header: true }).data.filter(row => row.order_Id)
 });
 
+// Load outlet_external_id for query promotions
+export const outlet_depot = new SharedArray('outlet_depot', function () {
+    return papaparse.parse(open('../../02-K6 Files/mm-qa-promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
+});
+
 export const sharedWorkload = {
     executor: 'shared-iterations',
-    vus: 5,
-    iterations: 20,
-    maxDuration: '10m'
+    vus: 200,
+    iterations: 3000, //server die by 20k reuqest
+    // maxDuration: '5m'
 }
 
 export const pervuiterations = {
     executor: 'per-vu-iterations',
     vus: 10,
     iterations: 1,
-    startTime: '2m'
+    // startTime: '2m'
     // maxDuration: '30s'
 }
 
@@ -98,10 +103,12 @@ export const ramupWorkload = {
         { target: 5, duration: '10m' },
         { target: 10, duration: '20m' },
         { target: 10, duration: '20m' },
+        { target: 10, duration: '20m' },
         { target: 15, duration: '30m' },
         { target: 15, duration: '30m' },
         { target: 15, duration: '30m' },
         { target: 15, duration: '30m' },
+        { target: 10, duration: '20m' },
         { target: 10, duration: '20m' },
         { target: 10, duration: '20m' },
         { target: 5, duration: '10m' },

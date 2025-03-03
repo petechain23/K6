@@ -47,12 +47,12 @@ export default function () {
     }
 
     // 1-Reues sessionCookies from Setup:
-    orderCreate(testData.cookies);
-    sleep(2);
-    orderEdit(testData.cookies);
-    sleep(2);
-    orderUpdateStatus(testData.cookies);
-    sleep(2);
+    // orderCreate(testData.cookies);
+    // sleep(2);
+    // orderEdit(testData.cookies);
+    // sleep(2);
+    // orderUpdateStatus(testData.cookies);
+    // sleep(2);
     // sleep(600);
     // exportOrders(testData.cookies);
     promotions(testData.cookies);
@@ -93,7 +93,7 @@ export default function () {
 //Export html
 export function handleSummary(data) {
     return {
-        './01-Reports/stressTest.html': htmlReport(data, { debug: false }), //true
+        './01-Reports/shared3_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
         // 'TestSummary.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true })
     }
