@@ -10,7 +10,7 @@ import { orderEdit } from './pages/orders_edit.js';
 import { orderUpdateStatus } from './pages/orders_update_status.js';
 import { exportOrders } from './pages/export.js';
 // import { inventory } from './inventory.js';
-import { promotions } from './pages/promotion.js';
+// import { promotions } from './pages/promotion.js';
 
 /*
 export const options = {
@@ -55,24 +55,24 @@ export default function () {
     // sleep(2);
     // sleep(600);
     // exportOrders(testData.cookies);
-    promotions(testData.cookies);
-    sleep(2);
+    // promotions(testData.cookies);
+    // sleep(2);
 
     // 2-Reues sessionCookies from Setup with try-finnally:
-    /*
+    
     try {
-        // login(testData.cookies);
-        orderCreate(testData.cookies);
+        login(testData.cookies);
+        // orderCreate(testData.cookies);
         // orderEdit(testData.cookies);
         // inventory(testData.cookies);
         // promotions(testData.cookies);
-        sleep(300);
-        exportOrders(testData.cookies);
+        // sleep(300);
+        // exportOrders(testData.cookies);
     }
     finally {
         teardown(testData);  // Ensure cleanup runs at the end
     }
-    */
+    
 
     // 3-Reues sessionCookies from login:
     /*
@@ -93,7 +93,7 @@ export default function () {
 //Export html
 export function handleSummary(data) {
     return {
-        './01-Reports/shared3_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
+        // './01-Reports/shared3_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
         // 'TestSummary.html': htmlReport(data, { debug: false }), //true
         stdout: textSummary(data, { indent: " ", enableColors: true })
     }
