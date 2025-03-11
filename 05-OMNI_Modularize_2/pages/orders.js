@@ -21,16 +21,16 @@ export function orderCreate(cookies) {
         items: [
             {
                 variant_id: 'variant_01HES9RPQATXAMZQVSGGT1X7KS',
-                quantity: 2, //4
+                quantity: 4, //4, 2
                 metadata: {}
             },
             {
                 variant_id: 'variant_01HES9RPQATXAMZQVSGGT1X7KS',
-                quantity: 2, //1
+                quantity: 1, //1, 2
                 metadata: {
-                    // promotionCodes: 'PROMO00258_216',
-                    // item_category: 'YSRG',
-                    // promotionOverride: false
+                    promotionCodes: 'PROMO00258_216',
+                    item_category: 'YSRG',
+                    promotionOverride: false
                 }
             }
         ],
@@ -58,7 +58,7 @@ export function orderCreate(cookies) {
         metadata: {
             source_system: 'OMS'
         },
-        location_id: 'sloc_01HV3J179CG8PSS92N3446W6RQ'
+        location_id: 'sloc_01HEW6AGSSH0GCG8XZDC1A7YH0'
     });
 
     const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, payloadCreateOrder, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });

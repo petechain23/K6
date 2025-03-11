@@ -9,6 +9,7 @@ import { orderCreate } from './pages/orders.js';
 import { orderEdit } from './pages/orders_edit.js';
 import { orderUpdateStatus } from './pages/orders_update_status.js';
 import { exportOrders } from './pages/export.js';
+import { ordersGetList } from './pages/orders_get.js';
 // import { inventory } from './inventory.js';
 import { promotions } from './pages/promotion.js';
 
@@ -55,9 +56,10 @@ export default function () {
     // sleep(2);
     // sleep(600);
     // exportOrders(testData.cookies);
-    promotions(testData.cookies);
+    // promotions(testData.cookies);
+    // sleep(2);
+    ordersGetList(testData.cookies);
     sleep(2);
-
     // 2-Reues sessionCookies from Setup with try-finnally:
     /*
     try {
@@ -91,46 +93,46 @@ export default function () {
 }
 
 //Export html
-export function handleSummary(data) {
-    return {
-        './01-Reports/shared3_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
-        // 'TestSummary.html': htmlReport(data, { debug: false }), //true
-        stdout: textSummary(data, { indent: " ", enableColors: true })
-    }
-}
+// export function handleSummary(data) {
+//     return {
+//         './01-Reports/shared6_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
+//         // 'TestSummary.html': htmlReport(data, { debug: false }), //true
+//         stdout: textSummary(data, { indent: " ", enableColors: true })
+//     }
+// }
 
 //Export csv
-/*
-export function handleSummary(data) {
-    let csvData = 'Metric,Value\n';
+// export function handleSummary(data) {
+//     let csvData = 'Metric,Value\n';
 
-    if (data.metrics['orderCreate_RequestCount']) {
-        csvData += `Total Requests,${data.metrics['orderCreate_RequestCount'].values.count}\n`;
-    }
+//     if (data.metrics['orderCreate_RequestCount']) {
+//         csvData += `Total Requests,${data.metrics['orderCreate_RequestCount'].values.count}\n`;
+//     }
 
-    if (data.metrics['orderCreate_ResponseTime']) {
-        csvData += `Avg Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.avg}\n`;
-        csvData += `Min Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.min}\n`;
-        csvData += `Max Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.max}\n`;
-    }
+//     if (data.metrics['orderCreate_ResponseTime']) {
+//         csvData += `Avg Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.avg}\n`;
+//         csvData += `Min Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.min}\n`;
+//         csvData += `Max Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.max}\n`;
+//     }
 
-    // if (data.metrics['orderCreate_SuccessRate']) {
-    //     csvData += `Success Rate,${(data.metrics['orderCreate_SuccessRate'].values.rate * 100).toFixed(2)}%\n`;
-    // }
-    if (data.metrics['orderCreate_SuccessRate'] && data.metrics['orderCreate_SuccessRate'].values) {
-        let successMetric = data.metrics['orderCreate_SuccessRate'].values;
+//     // if (data.metrics['orderCreate_SuccessRate']) {
+//     //     csvData += `Success Rate,${(data.metrics['orderCreate_SuccessRate'].values.rate * 100).toFixed(2)}%\n`;
+//     // }
+//     if (data.metrics['orderCreate_SuccessRate'] && data.metrics['orderCreate_SuccessRate'].values) {
+//         let successMetric = data.metrics['orderCreate_SuccessRate'].values;
         
-        // Correctly calculate success rate: (successful events / total events) * 100
-        let successRate = (successMetric.passes / successMetric.total) * 100 || 0; 
+//         // Correctly calculate success rate: (successful events / total events) * 100
+//         let successRate = (successMetric.passes / successMetric.total) * 100 || 0; 
         
-        csvData += `Success Rate,${successRate.toFixed(2)}%\n`;
-    } else {
-        csvData += `Success Rate, N/A\n`; // Handle missing data case
-    }
+//         csvData += `Success Rate,${successRate.toFixed(2)}%\n`;
+//     } else {
+//         csvData += `Success Rate, N/A\n`; // Handle missing data case
+//     }
 
-    return {
-        'sc3_loadtest_2102_00_TestSummary.csv': csvData,
-        stdout: textSummary(data, { indent: ' ', enableColors: true }),
-    };
-}
-*/
+//     return {
+//         // 'sc1_loadtest_2102_00_TestSummary.csv': csvData,
+//         './01-Reports/004_2_promotions_shared_TestSummary.csv': csvData,
+//         // './01-Reports/002_create_order_rampup_TestSummary.csv': csvData,
+//         stdout: textSummary(data, { indent: ' ', enableColors: true }),
+//     };
+// }
