@@ -56,9 +56,10 @@ export default function () {
     // sleep(2);
     // sleep(600);
     // exportOrders(testData.cookies);
-    promotions(testData.cookies);
+    // promotions(testData.cookies);
+    // sleep(2);
+    ordersGetList(testData.cookies);
     sleep(2);
-
     // 2-Reues sessionCookies from Setup with try-finnally:
     
     try {
@@ -92,13 +93,13 @@ export default function () {
 }
 
 //Export html
-export function handleSummary(data) {
-    return {
-        './01-Reports/shared3_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
-        // 'TestSummary.html': htmlReport(data, { debug: false }), //true
-        stdout: textSummary(data, { indent: " ", enableColors: true })
-    }
-}
+// export function handleSummary(data) {
+//     return {
+//         './01-Reports/shared6_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
+//         // 'TestSummary.html': htmlReport(data, { debug: false }), //true
+//         stdout: textSummary(data, { indent: " ", enableColors: true })
+//     }
+// }
 
 //Export csv
 // export function handleSummary(data) {
