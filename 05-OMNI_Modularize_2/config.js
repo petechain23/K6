@@ -1,8 +1,7 @@
 import { SharedArray } from 'k6/data';
 import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { Trend, Rate, Counter, Metric } from 'k6/metrics';
-
-export const BASE_URL = 'https://hei-oms-apac-qa-mm-backend.azurewebsites.net'
+export const BASE_URL = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net'
 export const AUTH_URL = 'admin/auth'
 export const ORDER_CREATE_URL = 'admin/orders/create'
 export const ORDER_EDIT_URL = 'admin/orders/edit'
@@ -40,7 +39,7 @@ export const updateOrderRequestCount = new Counter('updateOrder_RequestCount');
 
 // Load credentials from CSV
 export const users = new SharedArray('users', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-credentals.csv'), { header: true }).data.filter(row => row.username);
+    return papaparse.parse(open('../../02-K6 Files/id-credentals.csv'), { header: true }).data.filter(row => row.username);
 });
 
 // Load master data (Outlet IDs)
@@ -60,61 +59,40 @@ export const orderId2 = new SharedArray('orderId2', function () {
 
 // Load outlet_external_id for query promotions
 export const outlet_depot = new SharedArray('outlet_depot', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
+    return papaparse.parse(open('../../02-K6 Files/id-qa-promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
 });
 
 export const sharedWorkload = {
     executor: 'shared-iterations',
     vus: 200,
     iterations: 3000, //server die by 20k reuqest
-    // maxDuration: '5m'
+    maxDuration: '10m'
 }
 
 export const pervuiterations = {
     executor: 'per-vu-iterations',
-    vus: 10,
+    vus: 50,
     iterations: 1,
-    // startTime: '2m'
     // maxDuration: '30s'
 }
 
-// export const pervuiterations = {
-//     discardResponseBodies: true,
-//     scenarios: {
-//       exportOrder: {
-//         executor: 'per-vu-iterations',
-//         vus: 20,
-//         iterations: 20,
-//         startTime: '2m'
-//       },
-//     },
-//   };
-
 export const constantWorkload = {
     executor: 'constant-vus',
-    vus: 5,
+    vus: 50,
     duration: '10m'
 }
 
 export const ramupWorkload = {
     executor: 'ramping-vus',
-    gracefulStop: '5s',
+    gracefulStop: '30s',
     stages: [
-        { target: 5, duration: '10m' },
-        { target: 10, duration: '20m' },
-        { target: 10, duration: '20m' },
-        { target: 10, duration: '20m' },
-        { target: 15, duration: '30m' },
-        { target: 15, duration: '30m' },
-        { target: 15, duration: '30m' },
-        { target: 15, duration: '30m' },
-        { target: 10, duration: '20m' },
-        { target: 10, duration: '20m' },
-        { target: 10, duration: '20m' },
-        { target: 5, duration: '10m' },
-        { target: 1, duration: '1m' }
+        { target: 1, duration: '1m' },
+        { target: 5, duration: '5m' },
+        { target: 10, duration: '10m' },
+        { target: 5, duration: '5m' },
+        { target: 1, duration: '1m' },
     ],
-    gracefulRampDown: '5s'
+    gracefulRampDown: '30s'
 }
 
 export const thresholdsSettings = {
