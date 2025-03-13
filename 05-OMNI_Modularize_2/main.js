@@ -22,23 +22,48 @@ export const options = {
 };
 */
 
-export const options = { 
-    scenarios: (() => {
-        switch (__ENV.WORKLOAD) {
-            case 'pervu':
-                return { pervu: pervuiterations };
-            case 'shared':
-                return { shared: sharedWorkload };
-            case 'constant':
-                return { constant: constantWorkload };
-            case 'rampup':
-                return { rampup: ramupWorkload };
-            default:
-                throw new Error(`Invalid WORKLOAD: ${__ENV.WORKLOAD}`);
-        }
-    })(), 
-    thresholds: thresholdsSettings.thresholds
+// Run parallel scenarios
+const workloads = {
+    pervu: pervuiterations,
+    shared: sharedWorkload,
+    constant: constantWorkload,
+    rampup: ramupWorkload,
 };
+
+// Get the current scenario or run all if not specified
+const selectedWorkload = __ENV.WORKLOAD || 'all';
+
+export const options = {
+    scenarios:
+        selectedWorkload === 'all'
+            ? Object.keys(workloads).reduce((acc, key) => {
+                  acc[key] = workloads[key];
+                  return acc;
+              }, {})
+            : { [selectedWorkload]: workloads[selectedWorkload] },
+    thresholds: thresholdsSettings.thresholds,
+};
+
+
+// Run all scenarios sequentially
+
+// export const options = { 
+//     scenarios: (() => {
+//         switch (__ENV.WORKLOAD) {
+//             case 'pervu':
+//                 return { pervu: pervuiterations };
+//             case 'shared':
+//                 return { shared: sharedWorkload };
+//             case 'constant':
+//                 return { constant: constantWorkload };
+//             case 'rampup':
+//                 return { rampup: ramupWorkload };
+//             default:
+//                 throw new Error(`Invalid WORKLOAD: ${__ENV.WORKLOAD}`);
+//         }
+//     })(), 
+//     thresholds: thresholdsSettings.thresholds
+// };
 
 export default function () {
     const testData = setup();  // Get session cookies
@@ -59,21 +84,21 @@ export default function () {
     // promotions(testData.cookies);
     // sleep(2);
     ordersGetList(testData.cookies);
-    sleep(2);
+    // sleep(2);
     // 2-Reues sessionCookies from Setup with try-finnally:
     
-    try {
-        login(testData.cookies);
-        // orderCreate(testData.cookies);
-        // orderEdit(testData.cookies);
-        // inventory(testData.cookies);
-        // promotions(testData.cookies);
-        // sleep(300);
-        // exportOrders(testData.cookies);
-    }
-    finally {
-        teardown(testData);  // Ensure cleanup runs at the end
-    }
+    // try {
+    //     login(testData.cookies);
+    //     // orderCreate(testData.cookies);
+    //     // orderEdit(testData.cookies);
+    //     // inventory(testData.cookies);
+    //     // promotions(testData.cookies);
+    //     // sleep(300);
+    //     // exportOrders(testData.cookies);
+    // }
+    // finally {
+    //     teardown(testData);  // Ensure cleanup runs at the end
+    // }
     
 
     // 3-Reues sessionCookies from login:
@@ -102,37 +127,48 @@ export default function () {
 // }
 
 //Export csv
-// export function handleSummary(data) {
-//     let csvData = 'Metric,Value\n';
+export function handleSummary(data) {
+    let csvData = 'Metric,Value\n';
 
-//     if (data.metrics['orderCreate_RequestCount']) {
-//         csvData += `Total Requests,${data.metrics['orderCreate_RequestCount'].values.count}\n`;
-//     }
+    if (data.metrics['getOrderRequestCount']) {
+        csvData += `Total Requests,${data.metrics['getOrderRequestCount'].values.count}\n`;
+    }
 
-//     if (data.metrics['orderCreate_ResponseTime']) {
-//         csvData += `Avg Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.avg}\n`;
-//         csvData += `Min Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.min}\n`;
-//         csvData += `Max Response Time (ms),${data.metrics['orderCreate_ResponseTime'].values.max}\n`;
-//     }
+    if (data.metrics['getOrderResponseTime']) {
+        csvData += `Avg Response Time (ms),${data.metrics['getOrderResponseTime'].values.avg}\n`;
+        csvData += `Min Response Time (ms),${data.metrics['getOrderResponseTime'].values.min}\n`;
+        csvData += `Max Response Time (ms),${data.metrics['getOrderResponseTime'].values.max}\n`;
+    }
 
-//     // if (data.metrics['orderCreate_SuccessRate']) {
-//     //     csvData += `Success Rate,${(data.metrics['orderCreate_SuccessRate'].values.rate * 100).toFixed(2)}%\n`;
-//     // }
-//     if (data.metrics['orderCreate_SuccessRate'] && data.metrics['orderCreate_SuccessRate'].values) {
-//         let successMetric = data.metrics['orderCreate_SuccessRate'].values;
+    // if (data.metrics['getOrderSuccessRate']) {
+    //     csvData += `Success Rate,${(data.metrics['getOrderSuccessRate'].values.rate * 100).toFixed(2)}%\n`;
+    // }
+    if (data.metrics['getOrderSuccessRate'] && data.metrics['getOrderSuccessRate'].values) {
+        let successMetric = data.metrics['getOrderSuccessRate'].values;
         
-//         // Correctly calculate success rate: (successful events / total events) * 100
-//         let successRate = (successMetric.passes / successMetric.total) * 100 || 0; 
+        // Correctly calculate success rate: (successful events / total events) * 100
+        let successRate = (successMetric.passes / successMetric.total) * 100 || 0; 
         
-//         csvData += `Success Rate,${successRate.toFixed(2)}%\n`;
-//     } else {
-//         csvData += `Success Rate, N/A\n`; // Handle missing data case
-//     }
+        csvData += `Success Rate,${successRate.toFixed(2)}%\n`;
+    } else {
+        csvData += `Success Rate, N/A\n`; // Handle missing data case
+    }
 
-//     return {
-//         // 'sc1_loadtest_2102_00_TestSummary.csv': csvData,
-//         './01-Reports/004_2_promotions_shared_TestSummary.csv': csvData,
-//         // './01-Reports/002_create_order_rampup_TestSummary.csv': csvData,
-//         stdout: textSummary(data, { indent: ' ', enableColors: true }),
-//     };
-// }
+    // return {
+    //     // 'sc1_loadtest_2102_00_TestSummary.csv': csvData,
+    //     './01-Reports/002_orders_list_get_constant_LOOP_TestSummary.csv': csvData,
+    //     // './01-Reports/002_create_order_rampup_TestSummary.csv': csvData,
+    //     stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    // };
+
+    // Generate a timestamp in YYYY-MM-DD_HH-MM-SS format
+    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
+
+    // Generate the report filename dynamically
+    const reportName = `C:\Users\dat.tran\OneDrive - Niteco Group\HNK\OMS\Ticket\GENERAL_SUPPORT\k6-report/002_orders_list_get_constant_REP_TestSummary${timestamp}.csv`;
+
+    return {
+        [reportName]: csvData, 
+        stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    };
+}

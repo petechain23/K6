@@ -37,36 +37,16 @@ export const updateOrderResponseTime = new Trend('updateOrder_ResponseTime');
 export const updateOrderSuccessRate = new Rate('updateOrder_SuccessRate');
 export const updateOrderRequestCount = new Counter('updateOrder_RequestCount');
 
-// Load credentials from CSV
-export const users = new SharedArray('users', function () {
-    return papaparse.parse(open('../../02-K6 Files/id-credentals.csv'), { header: true }).data.filter(row => row.username);
-});
-
-// Load master data (Outlet IDs)
-export const masterData = new SharedArray('masterData', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-create_order.csv'), { header: true }).data.filter(row => row.outletId) //.map(row => row.outletId);
-});
-
-// Load order_id for edit order
-export const orderId = new SharedArray('orderId', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-edit_order.csv'), { header: true }).data.filter(row => row.order_Id)
-});
-
-// Load order_id for update order status
-export const orderId2 = new SharedArray('orderId2', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-update_order_status.csv'), { header: true }).data.filter(row => row.order_Id)
-});
-
-// Load outlet_external_id for query promotions
-export const outlet_depot = new SharedArray('outlet_depot', function () {
-    return papaparse.parse(open('../../02-K6 Files/id-qa-promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
-});
+//Get order list
+export const getOrderResponseTime = new Trend('getOrder_ResponseTime');
+export const getOrderSuccessRate = new Rate('getOrder_SuccessRate');
+export const getOrderRequestCount = new Counter('getOrder_RequestCount');
 
 export const sharedWorkload = {
     executor: 'shared-iterations',
-    vus: 200,
-    iterations: 3000, //server die by 20k reuqest
-    maxDuration: '10m'
+    vus: 50,
+    iterations: 1000,
+    maxDuration: '1m'
 }
 
 export const pervuiterations = {
@@ -79,18 +59,18 @@ export const pervuiterations = {
 export const constantWorkload = {
     executor: 'constant-vus',
     vus: 50,
-    duration: '10m'
+    duration: '1m'
 }
 
 export const ramupWorkload = {
     executor: 'ramping-vus',
     gracefulStop: '30s',
     stages: [
-        { target: 1, duration: '1m' },
-        { target: 5, duration: '5m' },
-        { target: 10, duration: '10m' },
-        { target: 5, duration: '5m' },
-        { target: 1, duration: '1m' },
+        { target: 5, duration: '1m' },
+        { target: 10, duration: '3m' },
+        { target: 50, duration: '5m' },
+        { target: 10, duration: '3m' },
+        { target: 5, duration: '1m' }
     ],
     gracefulRampDown: '30s'
 }
@@ -117,3 +97,27 @@ export const thresholdsSettings = {
 //     },
 //   }
 
+// Load credentials from CSV
+export const users = new SharedArray('users', function () {
+    return papaparse.parse(open('../../02-K6 Files/id-credentals.csv'), { header: true }).data.filter(row => row.username);
+});
+
+// Load master data (Outlet IDs)
+export const masterData = new SharedArray('masterData', function () {
+    return papaparse.parse(open('../../02-K6 Files/mm-qa-create_order.csv'), { header: true }).data.filter(row => row.outletId) //.map(row => row.outletId);
+});
+
+// Load order_id for edit order
+export const orderId = new SharedArray('orderId', function () {
+    return papaparse.parse(open('../../02-K6 Files/mm-qa-edit_order.csv'), { header: true }).data.filter(row => row.order_Id)
+});
+
+// Load order_id for update order status
+export const orderId2 = new SharedArray('orderId2', function () {
+    return papaparse.parse(open('../../02-K6 Files/mm-qa-update_order_status.csv'), { header: true }).data.filter(row => row.order_Id)
+});
+
+// Load outlet_external_id for query promotions
+export const outlet_depot = new SharedArray('outlet_depot', function () {
+    return papaparse.parse(open('../../02-K6 Files/id-qa-promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
+});
