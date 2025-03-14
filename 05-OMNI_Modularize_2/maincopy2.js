@@ -52,7 +52,7 @@ export const options = {
 
 // Main function
 export default function () {
-    console.log(`Running VU: ${__VU}, Iteration: ${__ITER}`);
+    // console.log(`Running VU: ${__VU}, Iteration: ${__ITER}`);
 
     const testData = setup(); // Get session cookies
     if (!testData || !testData.cookies) {
@@ -69,7 +69,7 @@ export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
 
     // Generate the report filename dynamically
-    const reportName = `./001_orders_list_get_constant_REP_TestSummary${timestamp}.html`;
+    const reportName = `./verify_002_orders_list_get_ALL_DIS_TestSummary${timestamp}.html`;
 
     return {
         [reportName]: htmlReport(data, { debug: false }),
