@@ -42,13 +42,6 @@ export const getOrderResponseTime = new Trend('getOrder_ResponseTime');
 export const getOrderSuccessRate = new Rate('getOrder_SuccessRate');
 export const getOrderRequestCount = new Counter('getOrder_RequestCount');
 
-export const sharedWorkload = {
-    executor: 'shared-iterations',
-    vus: 50,
-    iterations: 1000,
-    maxDuration: '1m'
-}
-
 export const pervuiterations = {
     executor: 'per-vu-iterations',
     vus: 50,
@@ -59,7 +52,14 @@ export const pervuiterations = {
 export const constantWorkload = {
     executor: 'constant-vus',
     vus: 50,
-    duration: '1m'
+    duration: '5m'
+}
+
+export const sharedWorkload = {
+    executor: 'shared-iterations',
+    vus: 50,
+    iterations: 1000,
+    maxDuration: '5m'
 }
 
 export const ramupWorkload = {
@@ -119,5 +119,5 @@ export const orderId2 = new SharedArray('orderId2', function () {
 
 // Load outlet_external_id for query promotions
 export const outlet_depot = new SharedArray('outlet_depot', function () {
-    return papaparse.parse(open('../../02-K6 Files/id-qa-promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
+    return papaparse.parse(open('../../02-K6 Files/mm-qa-promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
 });

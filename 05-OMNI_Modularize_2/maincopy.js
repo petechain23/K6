@@ -22,22 +22,26 @@ export const options = {
 };
 */
 
-export const options = { 
-    scenarios: (() => {
-        switch (__ENV.WORKLOAD) {
-            case 'pervu':
-                return { pervu: pervuiterations };
-            case 'constant':
-                return { constant: constantWorkload };
-            case 'shared':
-                return { shared: sharedWorkload };
-            case 'rampup':
-                return { rampup: ramupWorkload };
-            default:
-                throw new Error(`Invalid WORKLOAD: ${__ENV.WORKLOAD}`);
-        }
-    })(), 
-    thresholds: thresholdsSettings.thresholds
+// Run parallel scenarios
+const workloads = {
+    pervu: pervuiterations,
+    constant: constantWorkload,
+    shared: sharedWorkload,
+    rampup: ramupWorkload,
+};
+
+// Get the current scenario or run all if not specified
+const selectedWorkload = __ENV.WORKLOAD || 'all';
+
+export const options = {
+    scenarios:
+        selectedWorkload === 'all'
+            ? Object.keys(workloads).reduce((acc, key) => {
+                  acc[key] = workloads[key];
+                  return acc;
+              }, {})
+            : { [selectedWorkload]: workloads[selectedWorkload] },
+    thresholds: thresholdsSettings.thresholds,
 };
 
 export default function () {

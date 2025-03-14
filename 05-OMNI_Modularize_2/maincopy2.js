@@ -13,94 +13,68 @@ import { ordersGetList } from './pages/orders_get.js';
 // import { inventory } from './inventory.js';
 // import { promotions } from './pages/promotion.js';
 
-/*
+
+// Run parallel scenarios
+// Define workloads
+const workloads = {
+    pervu: pervuiterations,
+    constant: constantWorkload,
+    shared: sharedWorkload,
+    rampup: ramupWorkload,
+};
+
+// Get selected workload or run all
+const selectedWorkload = __ENV.WORKLOAD || 'all';
+
+// Function to generate scenarios with sequential execution
+function generateScenarios() {
+    if (selectedWorkload !== 'all') {
+        return { [selectedWorkload]: workloads[selectedWorkload] };
+    }
+
+    let scenarios = {};
+    let delay = 0; // Delay in seconds for each scenario
+
+    for (const [name, workload] of Object.entries(workloads)) {
+        scenarios[name] = {
+            ...workload,
+            startTime: `${delay}s`, // Stagger start time for sequential execution
+        };
+        delay += 300; // Adjust delay time as needed
+    }
+    return scenarios;
+}
+
+// Export K6 options
 export const options = {
-    scenarios: {
-        my_scenario: __ENV.WORKLOAD === 'breaking' ? pervuiterations : ramupWorkload
-    },
-    thresholds: thresholdsSettings.thresholds
-};
-*/
-
-export const options = { 
-    scenarios: (() => {
-        switch (__ENV.WORKLOAD) {
-            case 'pervu':
-                return { pervu: pervuiterations };
-            case 'constant':
-                return { constant: constantWorkload };
-            case 'shared':
-                return { shared: sharedWorkload };
-            case 'rampup':
-                return { rampup: ramupWorkload };
-            default:
-                throw new Error(`Invalid WORKLOAD: ${__ENV.WORKLOAD}`);
-        }
-    })(), 
-    thresholds: thresholdsSettings.thresholds
+    scenarios: generateScenarios(),
 };
 
+// Main function
 export default function () {
-    const testData = setup();  // Get session cookies
+    console.log(`Running VU: ${__VU}, Iteration: ${__ITER}`);
+
+    const testData = setup(); // Get session cookies
     if (!testData || !testData.cookies) {
         console.error('Main - Setup failed. Aborting test.');
         return;
     }
 
-    // 1-Reues sessionCookies from Setup:
-    // orderCreate(testData.cookies);
-    // sleep(2);
-    // orderEdit(testData.cookies);
-    // sleep(2);
-    // orderUpdateStatus(testData.cookies);
-    // sleep(2);
-    // sleep(600);
-    // exportOrders(testData.cookies);
-    // promotions(testData.cookies);
-    // sleep(2);
-    ordersGetList(testData.cookies);
-    // sleep(2);
-
-    // 2-Reues sessionCookies from Setup with try-finnally:
-    /*
-    // try {
-    //     login(testData.cookies);
-    //     // orderCreate(testData.cookies);
-    //     // orderEdit(testData.cookies);
-    //     // inventory(testData.cookies);
-    //     // promotions(testData.cookies);
-    //     // sleep(300);
-    //     // exportOrders(testData.cookies);
-    // }
-    // finally {
-    //     teardown(testData);  // Ensure cleanup runs at the end
-    // }
-    */
-
-    // 3-Reues sessionCookies from login:
-    /*
-    const sessionCookies = login(testData.cookies);
-    try {
-        orderCreate(sessionCookies);
-        orderEdit(sessionCookies);
-        // inventory(testData.cookies);
-        // fetchPromotions(testData.cookies);
-        sleep(600);
-        exportOrders(sessionCookies);
-    } finally {
-        teardown(testData);  // Ensure cleanup runs at the end
-    }
-    */
+    ordersGetList(testData.cookies); // Execute the test function
+    sleep(5); // Delay between requests
 }
-
-
 //Export html
 export function handleSummary(data) {
+    // Generate a timestamp in YYYY-MM-DD_HH-MM-SS format
+    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
+
+    // Generate the report filename dynamically
+    const reportName = `./001_orders_list_get_constant_REP_TestSummary${timestamp}.html`;
+
     return {
-        './01-Reports/shared6_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
-        // 'TestSummary.html': htmlReport(data, { debug: false }), //true
-        stdout: textSummary(data, { indent: " ", enableColors: true })
-    }
+        [reportName]: htmlReport(data, { debug: false }),
+        stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    };
 }
 
 //Export csv
