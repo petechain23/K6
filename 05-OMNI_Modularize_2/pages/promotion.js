@@ -16,12 +16,14 @@ export function promotions(cookies) {
   for (let i = 0; i < outlet_depot.length; i++) {
     let external_id = outlet_depot[i].outlet_external_id;
     console.log(`Outlet External ID: ${external_id}`);
-    const res = http.get(`${BASE_URL}/admin/promotions/get-list?depot_external_id=302-BBI-D03-MAIN&outlet_external_id=${external_id}&start_before=2025-03-06T00:00:00.000Z`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    const res = http.get(`${BASE_URL}/admin/promotions/get-list?distributor_external_id=302-BBI&outlet_external_id=${external_id}&start_before=2025-03-06T00:00:00.000Z&end_after=2025-03-06T00:00:00.000Z`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    // REP - Before fix:
+    // const res = http.get(`${BASE_URL}/admin/promotions/get-list?depot_external_id=302-BBI-D03-MAIN&outlet_external_id=${external_id}&start_before=2025-03-06T00:00:00.000Z`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
     //&end_after=2025-03-06T00:00:00.000Z
     // console.log('Response status:', res.status);
     // const body = JSON.parse(res.body)
-    if (!res.body || res.status === 0) {
-      console.log(`Empty Response Body for Request`);
+    if (!res.body) {
+      console.log(`Empty Response Body for Request`,res.status);
     } else {
       check(res, {
         'Get promotions - verify get promotions status': (r) => r.status === 200,
