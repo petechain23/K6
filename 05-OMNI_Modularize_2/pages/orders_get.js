@@ -19,11 +19,11 @@ export function ordersGetList(cookies) {
   //Admin:
   // const res = http.get(`${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
   //REP:
-  // const res = http.get(`${BASE_URL}/admin/orders/external?limit=10&offset=0&outlet_external_id=3022200797&depot_external_id=302-BBI-D01-MAIN&order=-created_at&order_type=standard&fields=id,created_at,extended_status,display_id,outlet_id,metadata,currency_code&expand=items,items.variant,items.variant.product,customer`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+  //const res = http.get(`${BASE_URL}/admin/orders/external?limit=10&offset=0&outlet_external_id=3022200797&depot_external_id=302-BBI-D01-MAIN&order=-created_at&order_type=standard&fields=id,created_at,extended_status,display_id,outlet_id,metadata,currency_code&expand=items,items.variant,items.variant.product,customer`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
   //Returned: 
-  // const res = http.get(`${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=returned&offset=0&limit=20&order=-created_at&include_count=false`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+  const res = http.get(`${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=returned&offset=0&limit=20&order=-created_at&include_count=false`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
   //Distributor: 
-  const res = http.get(`${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+  //const res = http.get(`${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
   
   // console.log('Response status:', res.status);
   const body = JSON.parse(res.body)
