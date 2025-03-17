@@ -32,7 +32,7 @@ export function promotions(cookies) {
       // exportOrderResponseTime.add(res.timings.duration, { vu: vuID });
       // exportOrderSuccessRate.add(res.status === 201, { vu: vuID });
       // exportOrderRequestCount.add(1, { vu: vuID });
-      // sleep(2);
+      sleep(2);
     }
   }
 }

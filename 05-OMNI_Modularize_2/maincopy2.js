@@ -60,8 +60,9 @@ export default function () {
         return;
     }
 
-    ordersGetList(testData.cookies); // Execute the test function
-    sleep(5); // Delay between requests
+    // ordersGetList(testData.cookies); // Execute the test function
+    promotions(testData.cookies);
+    // sleep(5); // Delay between requests
 }
 //Export html
 export function handleSummary(data) {
@@ -69,7 +70,7 @@ export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
 
     // Generate the report filename dynamically
-    const reportName = `./verify_002_orders_list_get_ALL_DIS_TestSummary${timestamp}.html`;
+    const reportName = `./verify_214971_002_orders_list_get_ALL_DIS_TestSummary${timestamp}.html`;
 
     return {
         [reportName]: htmlReport(data, { debug: false }),
