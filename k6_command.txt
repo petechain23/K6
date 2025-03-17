@@ -18,6 +18,9 @@ k6 run test.js -e DOMAIN=test.k6.io
 run test Dynamically configure scripts with environment variables
 k6 run main.js -e WORKLOAD=breaking 
 
+# Build the k6 binary
+xk6 build --with github.com/grafana/xk6-output-influxdb
+
 dashboard real time
 K6_WEB_DASHBOARD=true k6 run script.js 
 
@@ -33,8 +36,9 @@ k6 run --out csv=test_results.csv script.js
 k6 run --out csv=today_test_result.csv 'd:\Testing\03-Perfomance Testing\01-K6 Load Test\04-OMNI_Modularize\orders_edit.js'
 k6 run --out csv=../../03-K6-Test-Reports/my_result.csv main.js -e WORKLOAD=breaking
 k6 run .\main.js -e WORKLOAD=ramup --out csv=001_orders_get_rampup_TestSummary.csv
+k6 run 05-OMNI_Modularize_2/maincopy2.js -o xk6-influxdb=http://localhost:8086/omni-bucket -e K6_INFLUXDB_ORGANIZATION=omni-org -e K6_INFLUXDB_TOKEN=a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba
 
-RunRun cloud test
+Run cloud test
 k6 cloud test.js
 
 

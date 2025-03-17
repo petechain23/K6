@@ -35,3 +35,6 @@ peter@peters-MacBook-Pro ~ % curl -G http://localhost:8086/api/v2/omni-v2 --head
 check log:
 docker logs influxdb-omni (check log on http://localhost:8086)
 docker logs grafana-omni (check log on http://localhost:3000)
+
+
+command: run -o xk6-influxdb=http://influxdb:8086/omni-bucket -e K6_INFLUXDB_ORGANIZATION=omni-org -e K6_INFLUXDB_TOKEN=a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba /scripts:/script.js

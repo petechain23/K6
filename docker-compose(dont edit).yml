@@ -1,33 +1,53 @@
-version: '3.8'
+#version: "3.8"
 
 services:
   influxdb:
-    image: influxdb:latest
-    container_name: influxdb-omni
+    image: influxdb:2.7
     ports:
       - "8086:8086"
     volumes:
       - influxdb-data:/var/lib/influxdb2
     environment:
-      - INFLUXDB_DB=k6db
-      - INFLUXDB_ADMIN_USER=admin
-      - INFLUXDB_ADMIN_PASSWORD=admin123
-      - INFLUXDB_HTTP_AUTH_ENABLED=false
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin123
+      DOCKER_INFLUXDB_INIT_ORG: omni-org
+      DOCKER_INFLUXDB_INIT_BUCKET: omni-bucket
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba # CHANGE THIS!
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana-omni
     ports:
       - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards # Mount dashboards
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_DASHBOARDS_PROVIDERS_ENABLE_UPDATE: "true" # Allow dashboard updates
+      GF_DASHBOARDS_PROVIDERS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/14801_rev2.json # set default dashboard
     depends_on:
-      - influxdb
+      influxdb:
+        condition: service_healthy
+
+  k6:
+      image: grafana/k6:latest
+      volumes:
+        - .scripts:/script.js
+      environment:
+        K6_INFLUXDB_ORGANIZATION: omni-org
+        K6_INFLUXDB_TOKEN: a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba
+      depends_on:
+        influxdb:
+          condition: service_healthy
+      command: run -o xk6-influxdb=http://influxdb:8086/omni-bucket /scripts:/script.js
 
 volumes:
   influxdb-data:
   grafana-data:
-
