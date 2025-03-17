@@ -11,7 +11,7 @@ import { orderUpdateStatus } from './pages/orders_update_status.js';
 import { exportOrders } from './pages/export.js';
 import { ordersGetList } from './pages/orders_get.js';
 // import { inventory } from './inventory.js';
-// import { promotions } from './pages/promotion.js';
+import { promotions } from './pages/promotion.js';
 
 
 // Run parallel scenarios
@@ -60,8 +60,8 @@ export default function () {
         return;
     }
 
-    // ordersGetList(testData.cookies); // Execute the test function
-    promotions(testData.cookies);
+    ordersGetList(testData.cookies); // Execute the test function
+    // promotions(testData.cookies);
     // sleep(5); // Delay between requests
 }
 //Export html
@@ -70,7 +70,7 @@ export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
 
     // Generate the report filename dynamically
-    const reportName = `./verify_214971_002_orders_list_get_ALL_DIS_TestSummary${timestamp}.html`;
+    const reportName = `./reports/215544/verify_215544_003_orders_get_list_rampup_RETURN_TestSummary${timestamp}.html`;
 
     return {
         [reportName]: htmlReport(data, { debug: false }),

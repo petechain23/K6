@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { BASE_URL , getOrderRequestCount, getOrderSuccessRate, getOrderResponseTime} from '../config.js';
+import { BASE_URL , orderGetListRequestCount, orderGetListSuccessRate, orderGetListResponseTime} from '../config.js';
 
 // Create custom trends
 // const exportOrderTrend = new Trend('export_order_duration');
@@ -27,7 +27,7 @@ export function ordersGetList(cookies) {
   
   // console.log('Response status:', res.status);
   const body = JSON.parse(res.body)
-  if (!res.body) {
+  if (!res.body){
     console.log(`Empty Response Body for Request`, res.status);
   } else {
     check(res, {
@@ -35,9 +35,9 @@ export function ordersGetList(cookies) {
       // 'Create Order - verify orders successfully': (r2) => r2.body.includes('display_id')
       // 'verify export orders successfully': (r2) => r2.body.batch_job.status === 'created'
     });
-    getOrderResponseTime.add(res.timings.duration, { vu: vuID });
-    getOrderSuccessRate.add(res.status === 200, { vu: vuID });
-    getOrderRequestCount.add(1, { vu: vuID });
+    orderGetListResponseTime.add(res.timings.duration, { vu: vuID });
+    orderGetListSuccessRate.add(res.status === 200, { vu: vuID });
+    orderGetListRequestCount.add(1, { vu: vuID });
     sleep(2);
   }
 }

@@ -14,6 +14,48 @@ export const ORDER_PROMOTION_CHECK_URL = 'admin/orders/promotion-checked'
 export const ORDER_INVOICE_GENERATE_URL = 'admin/invoices/generate'
 // export const PROMOTIONS_URL = 'admin/promotions/get-list'
 
+
+//Settings for different workloads
+export const pervuiterations = {
+    executor: 'per-vu-iterations',
+    vus: 50,
+    iterations: 1,
+    // maxDuration: '30s'
+}
+
+export const constantWorkload = {
+    executor: 'constant-vus',
+    vus: 100,
+    duration: '5m'
+}
+
+export const sharedWorkload = {
+    executor: 'shared-iterations',
+    vus: 50,
+    iterations: 1000,
+    maxDuration: '5m'
+}
+
+export const ramupWorkload = {
+    executor: 'ramping-vus',
+    gracefulStop: '30s',
+    stages: [
+        { target: 5, duration: '1m' },
+        { target: 20, duration: '3m' },
+        { target: 100, duration: '5m' },
+        { target: 50, duration: '3m' },
+        { target: 5, duration: '1m' }
+    ],
+    gracefulRampDown: '30s'
+}
+
+export const thresholdsSettings = {
+    thresholds: {
+        http_req_duration: [{ threshold: 'p(99)<3500', abortOnFail: false }], //1000ms = 1s
+        http_req_failed: [{ threshold: 'rate<=0.1', abortOnFail: false }]
+    }
+}
+
 //Create Orders
 // Track Response Time
 export const orderCreateResponseTime = new Trend('orderCreate_ResponseTime');
@@ -38,64 +80,14 @@ export const updateOrderSuccessRate = new Rate('updateOrder_SuccessRate');
 export const updateOrderRequestCount = new Counter('updateOrder_RequestCount');
 
 //Get order list
-export const getOrderResponseTime = new Trend('getOrder_ResponseTime');
-export const getOrderSuccessRate = new Rate('getOrder_SuccessRate');
-export const getOrderRequestCount = new Counter('getOrder_RequestCount');
+export const orderGetListResponseTime = new Trend('orderGetList_ResponseTime');
+export const orderGetListSuccessRate = new Rate('orderGetList_SuccessRate');
+export const orderGetListRequestCount = new Counter('orderGetList_RequestCount');
 
-export const pervuiterations = {
-    executor: 'per-vu-iterations',
-    vus: 50,
-    iterations: 1,
-    // maxDuration: '30s'
-}
-
-export const constantWorkload = {
-    executor: 'constant-vus',
-    vus: 50,
-    duration: '5m'
-}
-
-export const sharedWorkload = {
-    executor: 'shared-iterations',
-    vus: 50,
-    iterations: 1000,
-    maxDuration: '5m'
-}
-
-export const ramupWorkload = {
-    executor: 'ramping-vus',
-    gracefulStop: '30s',
-    stages: [
-        { target: 5, duration: '1m' },
-        { target: 10, duration: '3m' },
-        { target: 50, duration: '5m' },
-        { target: 10, duration: '3m' },
-        { target: 5, duration: '1m' }
-    ],
-    gracefulRampDown: '30s'
-}
-
-export const thresholdsSettings = {
-    thresholds: {
-        http_req_duration: [{ threshold: 'p(99)<3500', abortOnFail: false }], //1000ms = 1s
-        http_req_failed: [{ threshold: 'rate<=0.1', abortOnFail: false }]
-    }
-}
-// export const options = {
-//     scenarios: {
-//       Authen_login: {
-//         executor: 'ramping-vus',
-//         gracefulStop: '1s',
-//         stages: [
-//           { target: 5, duration: '5s' },
-//           { target: 5, duration: '10' },
-//           { target: 0, duration: '5s' },
-//         ],
-//         gracefulRampDown: '1s',
-//         exec: 'login',
-//       },
-//     },
-//   }
+//Get order list
+export const promoGetListResponseTime = new Trend('promoGetList_ResponseTime');
+export const promoGetListSuccessRate = new Rate('promoGetList_SuccessRate');
+export const promoGetListRequestCount = new Counter('promoGetList_RequestCount');
 
 // Load credentials from CSV
 export const users = new SharedArray('users', function () {
