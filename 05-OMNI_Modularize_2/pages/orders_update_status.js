@@ -9,130 +9,177 @@ import {
   ORDER_PROMOTION_CHECK_URL,
   ORDER_INVOICE_GENERATE_URL,
   orderId2,
+  updateOrderResponseTime, updateOrderSuccessRate, updateOrderRequestCount,
+  generateInvoiceTime, generateInvoiceSuccessRate, generateInvoiceRequestCount,
+  pendingToProcessingResponseTime, pendingToProcessingRequestCount, pendingToProcessingSuccessRate,
+  updateInventoryCheckResponseTime, updateInventoryCheckRequestCount, updateInventoryCheckSuccessRate,
+  updateCreditCheckResponseTime, updateCreditCheckRequestCount, updateCreditCheckSuccessRate,
+  updatePromotionCheckResponseTime, updatePromotionCheckRequestCount, updatePromotionCheckSuccessRate
 } from '../config.js';
-import { Trend, Rate, Counter, Metric } from 'k6/metrics';
 
-// Create custom trends
-const updateOrderStatus = new Trend('update_order_duration');
-const generateInvoice = new Trend('generateInvoice_duration');
-const pendingToProcessing = new Trend('update_PendingToProcessing_duration');
-const updateInventoryCheck = new Trend('update_InventoryCheck_duration');
-const updateCreditCheck = new Trend('update_CreditCheck_duration');
-const updatePromotionCheck = new Trend('update_PromotionCheck_duration');
 export function orderUpdateStatus(cookies) {
+  const vuID = __VU;
 
-  //Pick a random order_Id
+  // Pick a random order_Id
   const randomOrderId = orderId2[Math.floor(Math.random() * orderId2.length)];
   const order_Id = randomOrderId.order_Id;
-  // const order_Id = 'order_01JMBCX58NX6K94ER4WGVVN9CV'
-  // console.log('Random order_Id: ', outletId);
 
-  //Pending to Processing
-  const payloadPendingToProcessing = JSON.stringify({
-    is_processing: true
-  });
+  // Pending to Processing payload
+  const payloadPendingToProcessing = JSON.stringify({ is_processing: true });
+
+  // Define extended statuses to loop through
+  const arrStatus = ['confirmed', 'ready_for_delivery', 'shipped', 'delivered'];
+  let finalStatus = '';
 
   group("Update_order_status", function () {
-    // Pending to Processing
-    const res1 = http.post(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}`, payloadPendingToProcessing, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    pendingToProcessing.add(res1.timings.duration);
-
-    //Inventory check
-    const res2 = http.post(`${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${order_Id}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    updateInventoryCheck.add(res2.timings.duration);
-
-    //Credit check
-    const res3 = http.post(`${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${order_Id}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    updateCreditCheck.add(res3.timings.duration);
-
-    //Promotion check
-    const res4 = http.post(`${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${order_Id}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    updatePromotionCheck.add(res4.timings.duration);
-
-    //Generate invoice
-    const payloadGenerateInvoice = JSON.stringify({
-      order_ids: [
-        `${order_Id}`
-      ]
+    // Step 1: Pending to Processing
+    const res1 = http.post(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}`, payloadPendingToProcessing, {
+      headers: { cookies: cookies, 'Content-Type': 'application/json' }
     });
 
-    //Order extended status
-    const arrStatus = ['confirmed', 'ready_for_delivery', 'shipped', 'delivered'];
-    //Check if Order is valid to Update Status
-    const checkOrderStatus = http.get(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,refundable_amount,refunded_total,refunds,location_id`,
+    pendingToProcessingResponseTime.add(res1.timings.duration, { vu: vuID });
+    pendingToProcessingSuccessRate.add(res1.status === 200, { vu: vuID });
+    pendingToProcessingRequestCount.add(1, { vu: vuID });
+
+    check(res1, {
+      'Pending to Processing - status is 200': (r) => r.status === 200
+    });
+
+    // Step 2: Inventory check
+    const res2 = http.post(`${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${order_Id}`, null, {
+      headers: { cookies: cookies, 'Content-Type': 'application/json' }
+    });
+
+    updateInventoryCheckResponseTime.add(res2.timings.duration, { vu: vuID });
+    updateInventoryCheckSuccessRate.add(res2.status === 200, { vu: vuID });
+    updateInventoryCheckRequestCount.add(1, { vu: vuID });
+
+    check(res2, {
+      'Inventory check - status is 200': (r) => r.status === 200
+    });
+
+    // Step 3: Credit check
+    const res3 = http.post(`${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${order_Id}`, null, {
+      headers: { cookies: cookies, 'Content-Type': 'application/json' }
+    });
+
+    updateCreditCheckResponseTime.add(res3.timings.duration, { vu: vuID });
+    updateCreditCheckSuccessRate.add(res3.status === 200, { vu: vuID });
+    updateCreditCheckRequestCount.add(1, { vu: vuID });
+
+    check(res3, {
+      'Credit check - status is 200': (r) => r.status === 200
+    });
+
+    // Step 4: Promotion check
+    const res4 = http.post(`${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${order_Id}`, null, {
+      headers: { cookies: cookies, 'Content-Type': 'application/json' }
+    });
+
+    updatePromotionCheckResponseTime.add(res4.timings.duration, { vu: vuID });
+    updatePromotionCheckSuccessRate.add(res4.status === 200, { vu: vuID });
+    updatePromotionCheckRequestCount.add(1, { vu: vuID });
+
+    check(res4, {
+      'Promotion check - status is 200': (r) => r.status === 200
+    });
+
+    // Step 5: Check current order status before updating
+    const statusCheckRes = http.get(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,refundable_amount,refunded_total,refunds,location_id`,
       { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    const body = JSON.parse(checkOrderStatus.body)
-    const extendedStatus = body.order.extended_status;
-    const display_id = body.order.display_id
-    // console.log('Update Order Status - checkOrderStatusIsValid: ', extendedStatus);
-    if (arrStatus.includes(extendedStatus)) {
-      console.log('Order Status is Invalid, No Update Performed:', display_id, extendedStatus);
+
+    let statusCheckBody;
+    try {
+      statusCheckBody = statusCheckRes.json();
+    } catch (e) {
+      console.error(`Status check JSON parse failed: ${e.message}. Raw body: ${statusCheckRes.body}`);
+      return;
     }
-    else {
-      for (let i = 0; i < arrStatus.length; i++) {
-        // console.log(`status is: ${arrStatus[i]}`)
-        //Update Order Status
-        const payloadUpdateOrderStatus = JSON.stringify({
-          order_ids: [
-            //   "order_01HV6526JPFB5B3F8QNW616Q5H"
-            `${order_Id}`
-          ],
-          status: `${arrStatus[i]}`
-        });
 
-        const res = http.post(`${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, payloadUpdateOrderStatus, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-        const body = JSON.parse(res.body)
-        const extendedStatus = body.saved[0].extended_status;
-        // console.log('Update Order Status - display_id: ', body.saved[0].display_id);
-        if (!res.body || res.status === 0) {
-          console.log(`Empty Response Body for Request`);
-        } else {
-          check(res, {
-            'Update Order Status - verify response status': (r) => r.status === 201,
-            'Update Order Status - verify update successfully': (r2) => extendedStatus === `${arrStatus[i]}`
-          });
-          updateOrderStatus.add(res.timings.duration);
-          // sleep(2);
-        }
-      };
+    const extendedStatus1 = statusCheckBody?.order?.extended_status;
+    const display_id1 = statusCheckBody?.order?.display_id;
 
-      //Generate invoice
-      const res5 = http.post(`${BASE_URL}/${ORDER_INVOICE_GENERATE_URL}`, payloadGenerateInvoice, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-      const body1 = JSON.parse(res5.body)
-      const invoiceStatus = body1.downloaded[0].invoice.status;
-      // console.log('Generate invoice - display_id: ', body1.downloaded[0].invoice.order.display_id);
-      check(res5, {
-        'Generate invoice - verify response status': (r) => r.status === 201,
-        'Generate invoice - verify update successfully': (r2) => invoiceStatus === 'delivered'
+    if (arrStatus.includes(extendedStatus1)) {
+      console.log('Order Status is Invalid, No Update Performed:', display_id1);
+      return;
+    }
+
+    // Step 6: Sequentially update extended status
+    for (const status of arrStatus) {
+      finalStatus = status;
+
+      const payloadUpdateOrderStatus = JSON.stringify({
+        order_ids: [order_Id],
+        status: status
       });
-      generateInvoice.add(res5.timings.duration);
-      // sleep(2);
+
+      const res = http.post(`${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, payloadUpdateOrderStatus, {
+        headers: { cookies: cookies, 'Content-Type': 'application/json' }
+      });
+
+      let body;
+      try {
+        body = res.json();
+      } catch (e) {
+        console.error(`Update status JSON parse failed: ${e.message}. Raw body: ${res.body}`);
+        return;
+      }
+
+      const extendedStatus = body?.saved?.[0]?.extended_status;
+
+      if (!res.body || !extendedStatus) {
+        console.error('Invalid or empty response for order update:', JSON.stringify(body));
+        return;
+      }
+
+      check(res, {
+        'Order Update - status is 201': (r) => r.status === 201,
+        'Order Update - extended_status matches': () => extendedStatus === status
+      });
+
+      updateOrderResponseTime.add(res.timings.duration, { vu: vuID });
+      updateOrderSuccessRate.add(res.status === 201, { vu: vuID });
+      updateOrderRequestCount.add(1, { vu: vuID });
+
+      sleep(2);
     }
+
+    // Step 7: Generate Invoice
+    const payloadGenerateInvoice = JSON.stringify({
+      order_ids: [order_Id]
+    });
+
+    const res5 = http.post(`${BASE_URL}/${ORDER_INVOICE_GENERATE_URL}`, payloadGenerateInvoice, {
+      headers: { cookies: cookies, 'Content-Type': 'application/json' }
+    });
+
+    let body5;
+    try {
+      body5 = res5.json();
+    } catch (e) {
+      console.error(`Invoice JSON parse failed: ${e.message}. Raw body: ${res5.body}`);
+      return;
+    }
+
+    const iExtendedStatus = body5?.downloaded?.[0]?.invoice?.status;
+    const invoiceStatus = body5?.downloaded?.[0]?.invoice?.order?.invoices?.[0]?.status;
+    // const display_id5 = body5?.downloaded?.[0]?.invoice?.order?.display_id;
+
+    if (!res5.body || !iExtendedStatus || !invoiceStatus) {
+      console.error('Invalid response structure for invoice:', JSON.stringify(body5));
+      return;
+    }
+
+    check(res5, {
+      'Invoice - status is 201': (r) => r.status === 201,
+      'Invoice - extended_status matches final': () => iExtendedStatus === finalStatus,
+      'Invoice - status is delivered': () => invoiceStatus === 'delivered'
+    });
+
+    generateInvoiceTime.add(res5.timings.duration, { vu: vuID });
+    generateInvoiceSuccessRate.add(res5.status === 201, { vu: vuID });
+    generateInvoiceRequestCount.add(1, { vu: vuID });
+
+    sleep(2);
   });
 }
-
-// // Create custom trends
-// const coinflipLatency = new Trend('coinflip_duration');
-
-// export function coinflip(baseUrl) {
-//     group("Coinflip game", function () {
-//         // save response as variable
-//         let res = http.get(`${baseUrl}/flip_coin.php?bet=heads`);
-//         check(res, {
-//             "is status 200": (r) => r.status === 200,
-//         });
-//         console.log(`Response time was heads: ${res.timings.duration} ms`);
-//         // add duration property to metric
-//         coinflipLatency.add(res.timings.duration);
-//         sleep(1);
-//         // mutate for new request
-//         res = http.get(`${baseUrl}/flip_coin.php?bet=tails`);
-//         check(res, {
-//             "is status 200": (r) => r.status === 200,
-//         });
-//         console.log(`Response time was tails: ${res.timings.duration} ms`);
-//         // add duration property to metric
-//         coinflipLatency.add(res.timings.duration);
-//         sleep(1);
-//     });
-// }

@@ -15,38 +15,65 @@ export const ORDER_INVOICE_GENERATE_URL = 'admin/invoices/generate'
 // export const PROMOTIONS_URL = 'admin/promotions/get-list'
 
 
+// Load credentials from CSV
+export const users = new SharedArray('users', function () {
+    return papaparse.parse(open('../../02-K6 Files/id_credentals.csv'), { header: true }).data.filter(row => row.username);
+});
+
+// Load master data (Outlet IDs)
+export const masterData = new SharedArray('masterData', function () {
+    return papaparse.parse(open('../../02-K6 Files/id_qa_order_create.csv'), { header: true }).data.filter(row => row.outletId) //.map(row => row.outletId);
+});
+
+// Load order_id for edit order
+export const orderId = new SharedArray('orderId', function () {
+    return papaparse.parse(open('../../02-K6 Files/id_qa_order_edit.csv'), { header: true }).data.filter(row => row.order_Id)
+});
+
+// Load order_id for update order status
+export const orderId2 = new SharedArray('orderId2', function () {
+    return papaparse.parse(open('../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_Id)
+});
+
+// Load outlet_external_id for query promotions
+export const outlet_depot = new SharedArray('outlet_depot', function () {
+    return papaparse.parse(open('../../02-K6 Files/id_qa_promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
+});
+
 //Settings for different workloads
 export const pervuiterations = {
     executor: 'per-vu-iterations',
-    vus: 50,
+    vus: 1,
     iterations: 1,
     // maxDuration: '30s'
 }
 
 export const constantWorkload = {
     executor: 'constant-vus',
-    vus: 100,
-    duration: '5m'
+    vus: 5,
+    duration: '10m'
 }
 
 export const sharedWorkload = {
     executor: 'shared-iterations',
-    vus: 50,
-    iterations: 1000,
-    maxDuration: '5m'
+    vus: 5,
+    iterations: 10000,
+    maxDuration: '24h'
 }
 
 export const ramupWorkload = {
     executor: 'ramping-vus',
-    gracefulStop: '30s',
+    gracefulStop: '5s',
     stages: [
         { target: 5, duration: '1m' },
-        { target: 20, duration: '3m' },
-        { target: 100, duration: '5m' },
-        { target: 50, duration: '3m' },
-        { target: 5, duration: '1m' }
+        // { target: 10, duration: '10m' },
+        // { target: 15, duration: '10m' },
+        // { target: 20, duration: '20m' },
+        // { target: 30, duration: '20m' },
+        { target: 10, duration: '3m' },
+        { target: 5, duration: '1m' },
     ],
-    gracefulRampDown: '30s'
+    gracefulRampDown: '5s'
 }
 
 export const thresholdsSettings = {
@@ -56,12 +83,17 @@ export const thresholdsSettings = {
     }
 }
 
-//Create Orders
+//Generic custom trend
 // Track Response Time
-export const orderCreateResponseTime = new Trend('orderCreate_ResponseTime');
+export const customTrendResponseTime = new Trend('customTrendResponseTime');
 // Track Success Rate
-export const orderCreateSuccessRate = new Rate('orderCreate_SuccessRate');
+export const customTrendSuccessRate = new Rate('customTrendSuccessRate');
 // Count Total Requests
+export const customTrendRequestCount = new Counter('customTrendRequestCount');
+
+//Create Orders
+export const orderCreateResponseTime = new Trend('orderCreate_ResponseTime');
+export const orderCreateSuccessRate = new Rate('orderCreate_SuccessRate');
 export const orderCreateRequestCount = new Counter('orderCreate_RequestCount');
 
 //Export Orders
@@ -75,9 +107,29 @@ export const editOrderSuccessRate = new Rate('editOrder_SuccessRate');
 export const editOrderRequestCount = new Counter('editOrder_RequestCount');
 
 //Update Status
+export const pendingToProcessingResponseTime = new Trend('update_PendingToProcessing_ResponseTime');
+export const pendingToProcessingSuccessRate = new Trend('update_PendingToProcessing_SuccessRate');
+export const pendingToProcessingRequestCount = new Trend('update_PendingToProcessing_RequestCount');
+
+export const updateInventoryCheckResponseTime = new Trend('update_InventoryCheck_ResponseTime');
+export const updateInventoryCheckSuccessRate = new Trend('update_InventoryCheck_SuccessRate');
+export const updateInventoryCheckRequestCount = new Trend('update_InventoryCheck_RequestCount');
+
+export const updateCreditCheckResponseTime = new Trend('update_CreditCheck_ResponseTime');
+export const updateCreditCheckSuccessRate = new Trend('update_CreditCheck_SuccessRate');
+export const updateCreditCheckRequestCount = new Trend('update_CreditCheck_RequestCount');
+
+export const updatePromotionCheckResponseTime = new Trend('update_PromotionCheck_ResponseTime');
+export const updatePromotionCheckSuccessRate = new Trend('update_PromotionCheck_SuccessRate');
+export const updatePromotionCheckRequestCount = new Trend('update_PromotionCheck_RequestCount');
+
 export const updateOrderResponseTime = new Trend('updateOrder_ResponseTime');
 export const updateOrderSuccessRate = new Rate('updateOrder_SuccessRate');
 export const updateOrderRequestCount = new Counter('updateOrder_RequestCount');
+
+export const generateInvoiceTime = new Trend('generateInvoice_ResponseTime');
+export const generateInvoiceSuccessRate = new Rate('generateInvoice_SuccessRate');
+export const generateInvoiceRequestCount = new Counter('generateInvoice_RequestCount');
 
 //Get order list
 export const orderGetListResponseTime = new Trend('orderGetList_ResponseTime');
@@ -88,28 +140,3 @@ export const orderGetListRequestCount = new Counter('orderGetList_RequestCount')
 export const promoGetListResponseTime = new Trend('promoGetList_ResponseTime');
 export const promoGetListSuccessRate = new Rate('promoGetList_SuccessRate');
 export const promoGetListRequestCount = new Counter('promoGetList_RequestCount');
-
-// Load credentials from CSV
-export const users = new SharedArray('users', function () {
-    return papaparse.parse(open('../../02-K6 Files/id-credentals.csv'), { header: true }).data.filter(row => row.username);
-});
-
-// Load master data (Outlet IDs)
-export const masterData = new SharedArray('masterData', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-create_order.csv'), { header: true }).data.filter(row => row.outletId) //.map(row => row.outletId);
-});
-
-// Load order_id for edit order
-export const orderId = new SharedArray('orderId', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-edit_order.csv'), { header: true }).data.filter(row => row.order_Id)
-});
-
-// Load order_id for update order status
-export const orderId2 = new SharedArray('orderId2', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-update_order_status.csv'), { header: true }).data.filter(row => row.order_Id)
-});
-
-// Load outlet_external_id for query promotions
-export const outlet_depot = new SharedArray('outlet_depot', function () {
-    return papaparse.parse(open('../../02-K6 Files/mm-qa-promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id)
-});

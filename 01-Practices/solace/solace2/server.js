@@ -37,24 +37,38 @@ app.post('/send-message', (req, res) => {
     session.on(solace.SessionEventCode.UP_NOTICE, function () {
         console.log("Connected to Solace!");
 
-        const message = solace.SolclientFactory.createMessage();
-        message.setDestination(solace.SolclientFactory.createTopicDestination(queueName));
-        message.setBinaryAttachment(JSON.stringify(payload));
+        try {
+            const message = solace.SolclientFactory.createMessage();
+            message.setDestination(solace.SolclientFactory.createTopicDestination(queueName));
+            message.setBinaryAttachment(JSON.stringify(payload));
 
-        session.send(message);
-        console.log("Message sent:", payload);
-
-        res.status(200).send({ status: "Message sent successfully!" });
-
-        setTimeout(() => {
-            session.disconnect();
-            console.log("Disconnected from Solace.");
-        }, 1000);
+            session.send(message, function (error) {
+                if (error) {
+                    console.error("Failed to send message:", error);
+                    res.status(500).send({ error: "Failed to send message" });
+                } else {
+                    console.log("Message sent successfully:", payload);
+                    res.status(200).send({ status: "Message sent successfully!" });
+                }
+            });
+        } catch (err) {
+            console.error("Error while sending message:", err);
+            res.status(500).send({ error: "Error while sending message" });
+        } finally {
+            setTimeout(() => {
+                session.disconnect();
+                console.log("Disconnected from Solace.");
+            }, 1000);
+        }
     });
 
     session.on(solace.SessionEventCode.CONNECT_FAILED_ERROR, function (error) {
         console.error("Connection failed:", error);
         res.status(500).send({ error: "Solace connection failed" });
+    });
+
+    session.on(solace.SessionEventCode.DISCONNECTED, function () {
+        console.log("Session disconnected.");
     });
 
     session.connect();

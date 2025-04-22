@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { BASE_URL, ORDER_EXPORT_URL , exportOrderResponseTime, exportOrderSuccessRate, exportOrderRequestCount } from '../config.js';
+import { BASE_URL, ORDER_EXPORT_URL , customTrendResponseTime, customTrendSuccessRate, customTrendRequestCount } from '../config.js';
 
 // Create custom trends
 // const exportOrderTrend = new Trend('export_order_duration');
@@ -100,9 +100,21 @@ export function exportOrders(cookies) {
           // lt: '2025-02-28T23:59:59.999Z'
           
           // mm-qa --12633 line-items
-          gt: '2024-09-19T00:00:00.000Z',
-          lt: '2025-02-19T23:59:59.999Z'
+          // gt: '2024-09-19T00:00:00.000Z',
+          // lt: '2025-02-19T23:59:59.999Z'
           // lt: '2025-02-18T23:59:59.999Z'
+
+          // mm-qa --10208 line-items
+          // gt: '2024-09-19T00:00:00.000Z',
+          // lt: '2025-02-19T23:59:59.999Z'
+
+          // id-qa --30214 line-items,1 min
+          gt: '2025-03-01T00:00:00.000Z',
+          lt: '2025-03-31T23:59:59.999Z'
+
+          // id-hotfix --1665 line-items,1 min
+          // gt: '2024-01-01T00:00:00.000Z',
+          // lt: '2025-03-31T23:59:59.999Z'
         }
         // depot_id: [
         //   'depot_01HES9APM60R2D27MW39GHT6YC'
@@ -120,8 +132,8 @@ export function exportOrders(cookies) {
     'Export Order - verify export response status': (r) => r.status === 201,
     // 'verify export orders successfully': (r2) => r2.body.batch_job.status === 'created'
   });
-  exportOrderResponseTime.add(res.timings.duration, { vu: vuID });
-  exportOrderSuccessRate.add(res.status === 201, { vu: vuID });
-  exportOrderRequestCount.add(1, { vu: vuID });
-  // sleep(2);
+  customTrendResponseTime.add(res.timings.duration, { vu: vuID });
+  customTrendSuccessRate.add(res.status === 201, { vu: vuID });
+  customTrendRequestCount.add(1, { vu: vuID });
+  sleep(2);
 }

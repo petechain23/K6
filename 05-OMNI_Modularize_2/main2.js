@@ -13,7 +13,6 @@ import { ordersGetList } from './pages/orders_get.js';
 // import { inventory } from './inventory.js';
 import { promotions } from './pages/promotion.js';
 
-
 // Run parallel scenarios
 // Define workloads
 const workloads = {
@@ -59,10 +58,18 @@ export default function () {
         console.error('Main - Setup failed. Aborting test.');
         return;
     }
-
-    ordersGetList(testData.cookies); // Execute the test function
+    //   ordersGetList(testData.cookies); // Execute the test function
     // promotions(testData.cookies);
+    // sleep(5);
+    // orderCreate(testData.cookies);
+    // sleep(2); // Delay between requests
+    // orderEdit(testData.cookies);
+    // sleep(2); // Delay between requests
+    orderUpdateStatus(testData.cookies);
+    // sleep(2); // Delay between requests
+    // exportOrders(testData.cookies);
     // sleep(5); // Delay between requests
+    // login(testData.cookies);
 }
 //Export html
 export function handleSummary(data) {
@@ -70,13 +77,22 @@ export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
 
     // Generate the report filename dynamically
-    const reportName = `./reports/215544/verify_215544_003_orders_get_list_rampup_RETURN_TestSummary${timestamp}.html`;
-
+    //const reportName = `./reports/215544/verify_215544_003_orders_get_list_constant_RETURN${timestamp}.html`;
+    // const reportName = `./reports/improve_edit_order/011_create_orders_constant${timestamp}.html`;
+    //const reportName = `./reports/improve_edit_order/verify_002_order_edit_constant(id)${timestamp}.html`;
+    // const reportName = `./update_orders_rampup${timestamp}.html`;
+    // const reportName = `./order_export_constant${timestamp}.html`;
+    //const reportName = `./login_constant${timestamp}.html`;
+    // const reportName = `./reports/217013/verify_001_217013_combine_rampup(Id-Hotfix)${timestamp}.html`;
+    // const reportName = `./reports/219284/219284_order_update_status(Id)${timestamp}.html`;
+    // const reportName = `./reports/219284/001_219284_order_create_rampup${timestamp}.html`;
+    // const reportName = `./reports/218615/218615_order_combine_rampup_ID${timestamp}.html`;
     return {
         [reportName]: htmlReport(data, { debug: false }),
         stdout: textSummary(data, { indent: ' ', enableColors: true }),
     };
 }
+
 
 //Export csv
 // export function handleSummary(data) {
