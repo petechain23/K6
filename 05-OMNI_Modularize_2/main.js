@@ -10,97 +10,144 @@ import { orderEdit } from './pages/orders_edit.js';
 import { orderUpdateStatus } from './pages/orders_update_status.js';
 import { exportOrders } from './pages/export.js';
 import { ordersGetList } from './pages/orders_get.js';
-// import { inventory } from './inventory.js';
-// import { promotions } from './pages/promotion.js';
+import { promotions } from './pages/promotion.js';
 
-/*
+// Global array to track all response times
+const responseTimeData = [];
+
+// Utility to record a response time
+export function addResponseTimeMetric(endpoint, duration, vuID, status) {
+    responseTimeData.push({
+        endpoint: endpoint,
+        duration: duration,
+        vu: vuID,
+        status,
+        timestamp: new Date().toISOString()
+    });
+}
+
+// Convert array to CSV with headers
+function convertToCSV(data) {
+    const headers = ['endpoint', 'duration(ms)', 'vu', 'status', 'timestamp'];
+    const rows = data.map(r =>
+        `${r.endpoint},${r.duration},${r.vu},${r.status},${r.timestamp}`
+    );
+    return [headers.join(','), ...rows].join('\n');
+}
+
+// Grouped summary per VU (extra CSV)
+function generatePerVuSummary(data) {
+    const summary = {};
+
+    for (const entry of data) {
+        if (!summary[entry.vu]) summary[entry.vu] = [];
+        summary[entry.vu].push(entry);
+    }
+
+    let csv = 'vu,total_requests,avg_duration(ms)\n';
+    for (const vu in summary) {
+        const requests = summary[vu];
+        const total = requests.length;
+        const avg = requests.reduce((sum, r) => sum + r.duration, 0) / total;
+        csv += `${vu},${total},${avg.toFixed(2)}\n`;
+    }
+
+    return csv;
+}
+
+// Run parallel scenarios
+// Define workloads
+const workloads = {
+    pervu: pervuiterations,
+    constant: constantWorkload,
+    shared: sharedWorkload,
+    rampup: ramupWorkload,
+};
+
+// Get selected workload or run all
+const selectedWorkload = __ENV.WORKLOAD || 'all';
+
+// Function to generate scenarios with sequential execution
+function generateScenarios() {
+    if (selectedWorkload !== 'all') {
+        return { [selectedWorkload]: workloads[selectedWorkload] };
+    }
+
+    let scenarios = {};
+    let delay = 0; // Delay in seconds for each scenario
+
+    for (const [name, workload] of Object.entries(workloads)) {
+        scenarios[name] = {
+            ...workload,
+            startTime: `${delay}s`, // Stagger start time for sequential execution
+        };
+        delay += 300; // Adjust delay time as needed
+    }
+    return scenarios;
+}
+
+// Export K6 options
 export const options = {
-    scenarios: {
-        my_scenario: __ENV.WORKLOAD === 'breaking' ? pervuiterations : ramupWorkload
-    },
-    thresholds: thresholdsSettings.thresholds
-};
-*/
-
-export const options = { 
-    scenarios: (() => {
-        switch (__ENV.WORKLOAD) {
-            case 'pervu':
-                return { pervu: pervuiterations };
-            case 'constant':
-                return { constant: constantWorkload };
-            case 'shared':
-                return { shared: sharedWorkload };
-            case 'rampup':
-                return { rampup: ramupWorkload };
-            default:
-                throw new Error(`Invalid WORKLOAD: ${__ENV.WORKLOAD}`);
-        }
-    })(), 
-    thresholds: thresholdsSettings.thresholds
+    scenarios: generateScenarios(),
 };
 
+// Main function
 export default function () {
-    const testData = setup();  // Get session cookies
+    // console.log(`Running VU: ${__VU}, Iteration: ${__ITER}`);
+
+    const testData = setup(); // Get session cookies
     if (!testData || !testData.cookies) {
         console.error('Main - Setup failed. Aborting test.');
         return;
     }
-
-    // 1-Reues sessionCookies from Setup:
-    // orderCreate(testData.cookies);
-    // sleep(2);
-    // orderEdit(testData.cookies);
-    // sleep(2);
-    // orderUpdateStatus(testData.cookies);
-    // sleep(2);
-    // sleep(600);
-    // exportOrders(testData.cookies);
+    //   ordersGetList(testData.cookies); // Execute the test function
     // promotions(testData.cookies);
-    // sleep(2);
-    ordersGetList(testData.cookies);
-    // sleep(2);
-
-    // 2-Reues sessionCookies from Setup with try-finnally:
-    /*
-    // try {
-    //     login(testData.cookies);
-    //     // orderCreate(testData.cookies);
-    //     // orderEdit(testData.cookies);
-    //     // inventory(testData.cookies);
-    //     // promotions(testData.cookies);
-    //     // sleep(300);
-    //     // exportOrders(testData.cookies);
-    // }
-    // finally {
-    //     teardown(testData);  // Ensure cleanup runs at the end
-    // }
-    */
-
-    // 3-Reues sessionCookies from login:
-    /*
-    const sessionCookies = login(testData.cookies);
-    try {
-        orderCreate(sessionCookies);
-        orderEdit(sessionCookies);
-        // inventory(testData.cookies);
-        // fetchPromotions(testData.cookies);
-        sleep(600);
-        exportOrders(sessionCookies);
-    } finally {
-        teardown(testData);  // Ensure cleanup runs at the end
-    }
-    */
+    // sleep(5);
+    orderCreate(testData.cookies);
+    // sleep(2); // Delay between requests
+    // orderEdit(testData.cookies);
+    // sleep(2); // Delay between requests
+    // orderUpdateStatus(testData.cookies);
+    // sleep(2); // Delay between requests
+    // exportOrders(testData.cookies);
+    // sleep(5); // Delay between requests
+    // login(testData.cookies);
 }
-
-
 //Export html
+/*
 export function handleSummary(data) {
+    // Generate a timestamp in YYYY-MM-DD_HH-MM-SS format
+    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
+
+    // Generate the report filename dynamically
+    //const reportName = `./reports/215544/verify_215544_003_orders_get_list_constant_RETURN${timestamp}.html`;
+    // const reportName = `./reports/improve_edit_order/011_create_orders_constant${timestamp}.html`;
+    //const reportName = `./reports/improve_edit_order/verify_002_order_edit_constant(id)${timestamp}.html`;
+    // const reportName = `./update_orders_rampup${timestamp}.html`;
+    // const reportName = `./order_export_constant${timestamp}.html`;
+    //const reportName = `./login_constant${timestamp}.html`;
+    // const reportName = `./reports/217013/verify_001_217013_combine_rampup(Id-Hotfix)${timestamp}.html`;
+    // const reportName = `./reports/219284/219284_order_update_status(Id)${timestamp}.html`;
+    // const reportName = `./reports/219284/001_219284_order_create_rampup${timestamp}.html`;
+    // const reportName = `./reports/218615/218615_order_combine_rampup_ID${timestamp}.html`;
     return {
-        './01-Reports/shared6_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
-        // 'TestSummary.html': htmlReport(data, { debug: false }), //true
-        stdout: textSummary(data, { indent: " ", enableColors: true })
-    }
+        [reportName]: htmlReport(data, { debug: false }),
+        stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    };
+}
+*/
+
+// Reports: HTML + Console + CSV
+export function handleSummary(data) {
+    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
+    const reportName = `./219284_order_update_status(Id)${timestamp}.html`;
+
+    return {
+        [reportName]: htmlReport(data, { debug: false }),
+        stdout: textSummary(data, { indent: ' ', enableColors: true }),
+        'response_times.csv': convertToCSV(responseTimeData),
+        'per_vu_summary.csv': generatePerVuSummary(responseTimeData)
+    };
 }
 
 //Export csv

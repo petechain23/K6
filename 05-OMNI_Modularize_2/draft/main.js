@@ -1,14 +1,14 @@
 import { sleep } from 'k6'
 import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
-import { constantWorkload, sharedWorkload, pervuiterations, ramupWorkload, thresholdsSettings } from './config.js';
-import { setup } from './setup.js';
-import { teardown } from './teardown.js';
-import { login } from './pages/login.js';
-import { orderCreate } from './pages/orders.js';
+import { constantWorkload, sharedWorkload, pervuiterations, ramupWorkload, thresholdsSettings } from '../config.js';
+import { setup } from '../setup.js';
+import { teardown } from '../teardown.js';
+import { login } from '../pages/login.js';
+import { orderCreate } from '../pages/orders.js';
 import { orderEdit } from './pages/orders_edit.js';
-import { orderUpdateStatus } from './pages/orders_update_status.js';
-import { exportOrders } from './pages/export.js';
+import { orderUpdateStatus } from '../pages/orders_update_status.js';
+import { exportOrders } from '../pages/export.js';
 import { ordersGetList } from './pages/orders_get.js';
 // import { inventory } from './inventory.js';
 // import { promotions } from './pages/promotion.js';
@@ -22,26 +22,22 @@ export const options = {
 };
 */
 
-// Run parallel scenarios
-const workloads = {
-    pervu: pervuiterations,
-    constant: constantWorkload,
-    shared: sharedWorkload,
-    rampup: ramupWorkload,
-};
-
-// Get the current scenario or run all if not specified
-const selectedWorkload = __ENV.WORKLOAD || 'all';
-
-export const options = {
-    scenarios:
-        selectedWorkload === 'all'
-            ? Object.keys(workloads).reduce((acc, key) => {
-                  acc[key] = workloads[key];
-                  return acc;
-              }, {})
-            : { [selectedWorkload]: workloads[selectedWorkload] },
-    thresholds: thresholdsSettings.thresholds,
+export const options = { 
+    scenarios: (() => {
+        switch (__ENV.WORKLOAD) {
+            case 'pervu':
+                return { pervu: pervuiterations };
+            case 'constant':
+                return { constant: constantWorkload };
+            case 'shared':
+                return { shared: sharedWorkload };
+            case 'rampup':
+                return { rampup: ramupWorkload };
+            default:
+                throw new Error(`Invalid WORKLOAD: ${__ENV.WORKLOAD}`);
+        }
+    })(), 
+    thresholds: thresholdsSettings.thresholds
 };
 
 export default function () {

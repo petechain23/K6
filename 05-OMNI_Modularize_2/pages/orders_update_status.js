@@ -16,6 +16,7 @@ import {
   updateCreditCheckResponseTime, updateCreditCheckRequestCount, updateCreditCheckSuccessRate,
   updatePromotionCheckResponseTime, updatePromotionCheckRequestCount, updatePromotionCheckSuccessRate
 } from '../config.js';
+import { addResponseTimeMetric } from '../main.js';
 
 export function orderUpdateStatus(cookies) {
   const vuID = __VU;
@@ -36,10 +37,11 @@ export function orderUpdateStatus(cookies) {
     const res1 = http.post(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}`, payloadPendingToProcessing, {
       headers: { cookies: cookies, 'Content-Type': 'application/json' }
     });
-
+    
     pendingToProcessingResponseTime.add(res1.timings.duration, { vu: vuID });
     pendingToProcessingSuccessRate.add(res1.status === 200, { vu: vuID });
     pendingToProcessingRequestCount.add(1, { vu: vuID });
+    addResponseTimeMetric('Order Update - Pending to Processing', res1.timings.duration, vuID, res1.status);
 
     check(res1, {
       'Pending to Processing - status is 200': (r) => r.status === 200
@@ -49,11 +51,12 @@ export function orderUpdateStatus(cookies) {
     const res2 = http.post(`${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${order_Id}`, null, {
       headers: { cookies: cookies, 'Content-Type': 'application/json' }
     });
-
+    
     updateInventoryCheckResponseTime.add(res2.timings.duration, { vu: vuID });
     updateInventoryCheckSuccessRate.add(res2.status === 200, { vu: vuID });
     updateInventoryCheckRequestCount.add(1, { vu: vuID });
-
+    addResponseTimeMetric('Order Update - Inventory Check', res2.timings.duration, vuID, res2.status);
+    
     check(res2, {
       'Inventory check - status is 200': (r) => r.status === 200
     });
@@ -62,7 +65,7 @@ export function orderUpdateStatus(cookies) {
     const res3 = http.post(`${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${order_Id}`, null, {
       headers: { cookies: cookies, 'Content-Type': 'application/json' }
     });
-
+    addResponseTimeMetric('Order Update - Credit Check', res3.timings.duration, vuID, res3.status);
     updateCreditCheckResponseTime.add(res3.timings.duration, { vu: vuID });
     updateCreditCheckSuccessRate.add(res3.status === 200, { vu: vuID });
     updateCreditCheckRequestCount.add(1, { vu: vuID });
@@ -75,10 +78,11 @@ export function orderUpdateStatus(cookies) {
     const res4 = http.post(`${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${order_Id}`, null, {
       headers: { cookies: cookies, 'Content-Type': 'application/json' }
     });
-
+    
     updatePromotionCheckResponseTime.add(res4.timings.duration, { vu: vuID });
     updatePromotionCheckSuccessRate.add(res4.status === 200, { vu: vuID });
     updatePromotionCheckRequestCount.add(1, { vu: vuID });
+    addResponseTimeMetric('Order Update - Promotion Check', res4.timings.duration, vuID, res4.status);
 
     check(res4, {
       'Promotion check - status is 200': (r) => r.status === 200
@@ -136,10 +140,11 @@ export function orderUpdateStatus(cookies) {
         'Order Update - status is 201': (r) => r.status === 201,
         'Order Update - extended_status matches': () => extendedStatus === status
       });
-
+      
       updateOrderResponseTime.add(res.timings.duration, { vu: vuID });
       updateOrderSuccessRate.add(res.status === 201, { vu: vuID });
       updateOrderRequestCount.add(1, { vu: vuID });
+      addResponseTimeMetric('Order Update - Promotion Check', res.timings.duration, vuID, res.status);
 
       sleep(2);
     }
@@ -175,10 +180,11 @@ export function orderUpdateStatus(cookies) {
       'Invoice - extended_status matches final': () => iExtendedStatus === finalStatus,
       'Invoice - status is delivered': () => invoiceStatus === 'delivered'
     });
-
+    
     generateInvoiceTime.add(res5.timings.duration, { vu: vuID });
     generateInvoiceSuccessRate.add(res5.status === 201, { vu: vuID });
     generateInvoiceRequestCount.add(1, { vu: vuID });
+    addResponseTimeMetric('Order Update - Promotion Check', res5.timings.duration, vuID, res5.status);
 
     sleep(2);
   });

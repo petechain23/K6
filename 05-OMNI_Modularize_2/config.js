@@ -50,8 +50,8 @@ export const pervuiterations = {
 
 export const constantWorkload = {
     executor: 'constant-vus',
-    vus: 5,
-    duration: '10m'
+    vus: 3,
+    duration: '10s'
 }
 
 export const sharedWorkload = {
@@ -70,7 +70,7 @@ export const ramupWorkload = {
         // { target: 15, duration: '10m' },
         // { target: 20, duration: '20m' },
         // { target: 30, duration: '20m' },
-        { target: 10, duration: '3m' },
+        { target: 10, duration: '1m' },
         { target: 5, duration: '1m' },
     ],
     gracefulRampDown: '5s'

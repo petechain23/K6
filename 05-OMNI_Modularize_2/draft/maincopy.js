@@ -1,20 +1,28 @@
 import { sleep } from 'k6'
 import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
-import { constantWorkload, sharedWorkload, pervuiterations, ramupWorkload, thresholdsSettings } from './config.js';
-import { setup } from './setup.js';
-import { teardown } from './teardown.js';
-import { login } from './pages/login.js';
-import { orderCreate } from './pages/orders.js';
+import { constantWorkload, sharedWorkload, pervuiterations, ramupWorkload, thresholdsSettings } from '../config.js';
+import { setup } from '../setup.js';
+import { teardown } from '../teardown.js';
+import { login } from '../pages/login.js';
+import { orderCreate } from '../pages/orders.js';
 import { orderEdit } from './pages/orders_edit.js';
-import { orderUpdateStatus } from './pages/orders_update_status.js';
-import { exportOrders } from './pages/export.js';
+import { orderUpdateStatus } from '../pages/orders_update_status.js';
+import { exportOrders } from '../pages/export.js';
 import { ordersGetList } from './pages/orders_get.js';
 // import { inventory } from './inventory.js';
-import { promotions } from './pages/promotion.js';
+// import { promotions } from './pages/promotion.js';
+
+/*
+export const options = {
+    scenarios: {
+        my_scenario: __ENV.WORKLOAD === 'breaking' ? pervuiterations : ramupWorkload
+    },
+    thresholds: thresholdsSettings.thresholds
+};
+*/
 
 // Run parallel scenarios
-// Define workloads
 const workloads = {
     pervu: pervuiterations,
     constant: constantWorkload,
@@ -22,77 +30,82 @@ const workloads = {
     rampup: ramupWorkload,
 };
 
-// Get selected workload or run all
+// Get the current scenario or run all if not specified
 const selectedWorkload = __ENV.WORKLOAD || 'all';
 
-// Function to generate scenarios with sequential execution
-function generateScenarios() {
-    if (selectedWorkload !== 'all') {
-        return { [selectedWorkload]: workloads[selectedWorkload] };
-    }
-
-    let scenarios = {};
-    let delay = 0; // Delay in seconds for each scenario
-
-    for (const [name, workload] of Object.entries(workloads)) {
-        scenarios[name] = {
-            ...workload,
-            startTime: `${delay}s`, // Stagger start time for sequential execution
-        };
-        delay += 300; // Adjust delay time as needed
-    }
-    return scenarios;
-}
-
-// Export K6 options
 export const options = {
-    scenarios: generateScenarios(),
+    scenarios:
+        selectedWorkload === 'all'
+            ? Object.keys(workloads).reduce((acc, key) => {
+                  acc[key] = workloads[key];
+                  return acc;
+              }, {})
+            : { [selectedWorkload]: workloads[selectedWorkload] },
+    thresholds: thresholdsSettings.thresholds,
 };
 
-// Main function
 export default function () {
-    // console.log(`Running VU: ${__VU}, Iteration: ${__ITER}`);
-
-    const testData = setup(); // Get session cookies
+    const testData = setup();  // Get session cookies
     if (!testData || !testData.cookies) {
         console.error('Main - Setup failed. Aborting test.');
         return;
     }
-    //   ordersGetList(testData.cookies); // Execute the test function
-    // promotions(testData.cookies);
-    // sleep(5);
+
+    // 1-Reues sessionCookies from Setup:
     // orderCreate(testData.cookies);
-    // sleep(2); // Delay between requests
+    // sleep(2);
     // orderEdit(testData.cookies);
-    // sleep(2); // Delay between requests
-    orderUpdateStatus(testData.cookies);
-    // sleep(2); // Delay between requests
+    // sleep(2);
+    // orderUpdateStatus(testData.cookies);
+    // sleep(2);
+    // sleep(600);
     // exportOrders(testData.cookies);
-    // sleep(5); // Delay between requests
-    // login(testData.cookies);
+    // promotions(testData.cookies);
+    // sleep(2);
+    ordersGetList(testData.cookies);
+    // sleep(2);
+
+    // 2-Reues sessionCookies from Setup with try-finnally:
+    /*
+    // try {
+    //     login(testData.cookies);
+    //     // orderCreate(testData.cookies);
+    //     // orderEdit(testData.cookies);
+    //     // inventory(testData.cookies);
+    //     // promotions(testData.cookies);
+    //     // sleep(300);
+    //     // exportOrders(testData.cookies);
+    // }
+    // finally {
+    //     teardown(testData);  // Ensure cleanup runs at the end
+    // }
+    */
+
+    // 3-Reues sessionCookies from login:
+    /*
+    const sessionCookies = login(testData.cookies);
+    try {
+        orderCreate(sessionCookies);
+        orderEdit(sessionCookies);
+        // inventory(testData.cookies);
+        // fetchPromotions(testData.cookies);
+        sleep(600);
+        exportOrders(sessionCookies);
+    } finally {
+        teardown(testData);  // Ensure cleanup runs at the end
+    }
+    */
 }
+
+
 //Export html
 export function handleSummary(data) {
-    // Generate a timestamp in YYYY-MM-DD_HH-MM-SS format
-    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
-
-    // Generate the report filename dynamically
-    //const reportName = `./reports/215544/verify_215544_003_orders_get_list_constant_RETURN${timestamp}.html`;
-    // const reportName = `./reports/improve_edit_order/011_create_orders_constant${timestamp}.html`;
-    //const reportName = `./reports/improve_edit_order/verify_002_order_edit_constant(id)${timestamp}.html`;
-    // const reportName = `./update_orders_rampup${timestamp}.html`;
-    // const reportName = `./order_export_constant${timestamp}.html`;
-    //const reportName = `./login_constant${timestamp}.html`;
-    // const reportName = `./reports/217013/verify_001_217013_combine_rampup(Id-Hotfix)${timestamp}.html`;
-    // const reportName = `./reports/219284/219284_order_update_status(Id)${timestamp}.html`;
-    // const reportName = `./reports/219284/001_219284_order_create_rampup${timestamp}.html`;
-    // const reportName = `./reports/218615/218615_order_combine_rampup_ID${timestamp}.html`;
     return {
-        [reportName]: htmlReport(data, { debug: false }),
-        stdout: textSummary(data, { indent: ' ', enableColors: true }),
-    };
+        './01-Reports/shared6_locadTestPromotions.html': htmlReport(data, { debug: false }), //true
+        // 'TestSummary.html': htmlReport(data, { debug: false }), //true
+        stdout: textSummary(data, { indent: " ", enableColors: true })
+    }
 }
-
 
 //Export csv
 // export function handleSummary(data) {
