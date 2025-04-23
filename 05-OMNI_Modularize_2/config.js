@@ -50,8 +50,8 @@ export const pervuiterations = {
 
 export const constantWorkload = {
     executor: 'constant-vus',
-    vus: 3,
-    duration: '10s'
+    vus: 5,
+    duration: '20m'
 }
 
 export const sharedWorkload = {

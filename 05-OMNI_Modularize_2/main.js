@@ -8,6 +8,7 @@ import { login } from './pages/login.js';
 import { orderCreate } from './pages/orders.js';
 import { orderEdit } from './pages/orders_edit.js';
 import { orderUpdateStatus } from './pages/orders_update_status.js';
+import { orderUpdateStatusDelivered } from './pages/orders_update_status_delivered_only.js';
 import { exportOrders } from './pages/export.js';
 import { ordersGetList } from './pages/orders_get.js';
 import { promotions } from './pages/promotion.js';
@@ -103,12 +104,13 @@ export default function () {
     //   ordersGetList(testData.cookies); // Execute the test function
     // promotions(testData.cookies);
     // sleep(5);
-    orderCreate(testData.cookies);
+    // orderCreate(testData.cookies);
     // sleep(2); // Delay between requests
     // orderEdit(testData.cookies);
     // sleep(2); // Delay between requests
     // orderUpdateStatus(testData.cookies);
     // sleep(2); // Delay between requests
+    orderUpdateStatusDelivered(testData.cookies);
     // exportOrders(testData.cookies);
     // sleep(5); // Delay between requests
     // login(testData.cookies);
@@ -140,7 +142,7 @@ export function handleSummary(data) {
 // Reports: HTML + Console + CSV
 export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
-    const reportName = `./219284_order_update_status(Id)${timestamp}.html`;
+    const reportName = `./reports/219284/219284_order_update_status(Id)_constant${timestamp}.html`;
 
     return {
         [reportName]: htmlReport(data, { debug: false }),

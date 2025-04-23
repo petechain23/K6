@@ -10,79 +10,104 @@ import {
   ORDER_INVOICE_GENERATE_URL,
   orderId2,
   updateOrderResponseTime, updateOrderSuccessRate, updateOrderRequestCount,
-  generateInvoiceTime, generateInvoiceSuccessRate, generateInvoiceRequestCount, 
-  pendingToProcessingResponseTime,pendingToProcessingRequestCount,pendingToProcessingSuccessRate,
-  updateInventoryCheckResponseTime,updateInventoryCheckRequestCount,updateInventoryCheckSuccessRate,
-  updateCreditCheckResponseTime,updateCreditCheckRequestCount,updateCreditCheckSuccessRate,
-  updatePromotionCheckResponseTime,updatePromotionCheckRequestCount,updatePromotionCheckSuccessRate
+  generateInvoiceTime, generateInvoiceSuccessRate, generateInvoiceRequestCount,
+  pendingToProcessingResponseTime, pendingToProcessingRequestCount, pendingToProcessingSuccessRate,
+  updateInventoryCheckResponseTime, updateInventoryCheckRequestCount, updateInventoryCheckSuccessRate,
+  updateCreditCheckResponseTime, updateCreditCheckRequestCount, updateCreditCheckSuccessRate,
+  updatePromotionCheckResponseTime, updatePromotionCheckRequestCount, updatePromotionCheckSuccessRate
 } from '../config.js';
+import { addResponseTimeMetric } from '../main.js';
 
-export function orderUpdateStatus(cookies) {
+export function orderUpdateStatusDelivered(cookies) {
   const vuID = __VU;
-  // console.log(`VU#${__VU}`);
-  //Pick a random order_Id
-  const randomOrderId = orderId2[Math.floor(Math.random() * orderId2.length)];
-  const order_Id = randomOrderId.order_Id;
-  // const order_Id = 'order_01JMBCX58NX6K94ER4WGVVN9CV'
-  // console.log('Random order_Id: ', outletId);
 
-  //Pending to Processing
-  const payloadPendingToProcessing = JSON.stringify({
-    is_processing: true
-  });
+  // Randomly select an order ID
+  const { order_Id } = orderId2[Math.floor(Math.random() * orderId2.length)];
+  const headers = { cookies, 'Content-Type': 'application/json' };
+
+  const payloadPendingToProcessing = JSON.stringify({ is_processing: true });
+  const desiredStatus = 'delivered';
 
   group("Update_order_status", function () {
-    // Pending to Processing
-    const res1 = http.post(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}`, payloadPendingToProcessing, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
+    // Step 1: Pending → Processing
+    const res1 = http.post(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}`, payloadPendingToProcessing, { headers });
+    addResponseTimeMetric('Order Update - Pending to Processing', res1.timings.duration, vuID, res1.status);
     pendingToProcessingResponseTime.add(res1.timings.duration, { vu: vuID });
     pendingToProcessingSuccessRate.add(res1.status === 200, { vu: vuID });
     pendingToProcessingRequestCount.add(1, { vu: vuID });
 
-    //Inventory check
-    const res2 = http.post(`${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${order_Id}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    updateInventoryCheckResponseTime.add(res2.timings.duration, { vu: vuID });
-    updateInventoryCheckSuccessRate.add(res2.status === 200, { vu: vuID });
-    updateInventoryCheckRequestCount.add(1, { vu: vuID });
-
-    //Credit check
-    const res3 = http.post(`${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${order_Id}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    updateCreditCheckResponseTime.add(res3.timings.duration, { vu: vuID });
-    updateCreditCheckSuccessRate.add(res3.status === 200, { vu: vuID });
-    updateCreditCheckRequestCount.add(1, { vu: vuID });
-
-    //Promotion check
-    const res4 = http.post(`${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${order_Id}`, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    updatePromotionCheckResponseTime.add(res4.timings.duration, { vu: vuID });
-    updatePromotionCheckSuccessRate.add(res4.status === 200, { vu: vuID });
-    updatePromotionCheckRequestCount.add(1, { vu: vuID });
-
-    //Order extended status
-    const payloadUpdateOrderStatus = JSON.stringify({
-      order_ids: [
-        //   "order_01HV6526JPFB5B3F8QNW616Q5H"
-        `${order_Id}`
-      ],
-      status: 'delivered'
+    check(res1, {
+      'Pending to Processing - status is 200': (r) => r.status === 200
     });
 
-    const res = http.post(`${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, payloadUpdateOrderStatus, { headers: { cookies: cookies, 'Content-Type': 'application/json' } });
-    const body = JSON.parse(res.body)
-    const extendedStatus = body.saved[0].extended_status;
-    console.log('Order Update - Order number to be updated: ', body.saved[0].display_id);
-    if (!res.body) {
-      console.log(`Empty Response Body for Request`, res.status);
-      sleep(2);
-    } else {
-      console.log('Order Update - Order number updated successfully: ', body.saved[0].display_id);
-      console.log('Order Update - Extended Status: ', extendedStatus);
+    // Step 2: Inventory, Credit, Promotion checks
+    const checkEndpoints = [
+      { name: 'Inventory Check', url: ORDER_INVENTORY_CHECK_URL, time: updateInventoryCheckResponseTime, success: updateInventoryCheckSuccessRate, count: updateInventoryCheckRequestCount },
+      { name: 'Credit Check', url: ORDER_CREDIT_CHECK_URL, time: updateCreditCheckResponseTime, success: updateCreditCheckSuccessRate, count: updateCreditCheckRequestCount },
+      { name: 'Promotion Check', url: ORDER_PROMOTION_CHECK_URL, time: updatePromotionCheckResponseTime, success: updatePromotionCheckSuccessRate, count: updatePromotionCheckRequestCount },
+    ];
+
+    for (const step of checkEndpoints) {
+      const res = http.post(`${BASE_URL}/${step.url}/${order_Id}`, null, { headers });
+      step.time.add(res.timings.duration, { vu: vuID });
+      step.success.add(res.status === 200, { vu: vuID });
+      step.count.add(1, { vu: vuID });
+      addResponseTimeMetric(`Order Update - ${step.name}`, res.timings.duration, vuID, res.status);
+
       check(res, {
-        'Order Update - verify response status': (r) => r.status === 201,
-        'Order Update - verify update successfully': (r2) => extendedStatus === 'delivered'
+        [`${step.name} - status is 200`]: (r) => r.status === 200
       });
-      updateOrderResponseTime.add(res.timings.duration, { vu: vuID });
-      updateOrderSuccessRate.add(res.status === 201, { vu: vuID });
-      updateOrderRequestCount.add(1, { vu: vuID });
-      sleep(2);
     }
+
+    // Step 3: Check current extended_status
+    const statusCheckRes = http.get(`${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${order_Id}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments&fields=id,display_id,extended_status`, { headers });
+
+    let statusData;
+    try {
+      statusData = statusCheckRes.json();
+    } catch (e) {
+      console.error(`Failed to parse status check response: ${e.message}`);
+      return;
+    }
+
+    const currentStatus = statusData?.order?.extended_status;
+    const displayId = statusData?.order?.display_id;
+
+    if (currentStatus !== 'processing') {
+      console.warn(`Order ${displayId} is not in 'processing' state. Current: ${currentStatus}. Skipping update.`);
+      return;
+    }
+
+    // Step 4: Update status to delivered
+    const payloadUpdate = JSON.stringify({ order_ids: [order_Id], status: desiredStatus });
+
+    const resUpdate = http.post(`${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, payloadUpdate, { headers });
+
+    let updateBody;
+    try {
+      updateBody = resUpdate.json();
+    } catch (e) {
+      console.error(`Failed to parse update status response: ${e.message}`);
+      return;
+    }
+
+    const updatedStatus = updateBody?.saved?.[0]?.extended_status;
+
+    if (!updatedStatus) {
+      console.error(`Empty or invalid update response: ${JSON.stringify(updateBody)}`);
+      return;
+    }
+
+    check(resUpdate, {
+      'Order Update - status is 201': (r) => r.status === 201,
+      'Order Update - status changed to delivered': () => updatedStatus === desiredStatus
+    });
+
+    updateOrderResponseTime.add(resUpdate.timings.duration, { vu: vuID });
+    updateOrderSuccessRate.add(resUpdate.status === 201, { vu: vuID });
+    updateOrderRequestCount.add(1, { vu: vuID });
+    addResponseTimeMetric('Order Update - Delivered', resUpdate.timings.duration, vuID, resUpdate.status);
+
+    sleep(2);
   });
 }
