@@ -89,7 +89,7 @@ function generateScenarios() {
 
 // Export K6 options
 export const options = {
-    scenarios: generateScenarios(),
+    scenarios: generateScenarios()
 };
 
 // Main function
@@ -104,14 +104,15 @@ export default function () {
     //   ordersGetList(testData.cookies); // Execute the test function
     // promotions(testData.cookies);
     // sleep(5);
-    // orderCreate(testData.cookies);
-    // sleep(2); // Delay between requests
-    // orderEdit(testData.cookies);
-    // sleep(2); // Delay between requests
-    // orderUpdateStatus(testData.cookies);
-    // sleep(2); // Delay between requests
+    orderCreate(testData.cookies);
+    sleep(2); // Delay between requests
+    orderEdit(testData.cookies);
+    sleep(2); // Delay between requests
+    orderUpdateStatus(testData.cookies);
+    sleep(2); // Delay between requests
     orderUpdateStatusDelivered(testData.cookies);
-    // exportOrders(testData.cookies);
+    sleep(2);
+    exportOrders(testData.cookies);
     // sleep(5); // Delay between requests
     // login(testData.cookies);
 }
@@ -142,7 +143,7 @@ export function handleSummary(data) {
 // Reports: HTML + Console + CSV
 export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
-    const reportName = `./reports/219284/219284_order_update_status(Id)_constant${timestamp}.html`;
+    const reportName = `./reports/218615/001_218615_order_combine_rampup_ID${timestamp}.html`;
 
     return {
         [reportName]: htmlReport(data, { debug: false }),

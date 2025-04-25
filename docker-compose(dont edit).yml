@@ -13,7 +13,7 @@ services:
       DOCKER_INFLUXDB_INIT_PASSWORD: admin123
       DOCKER_INFLUXDB_INIT_ORG: omni-org
       DOCKER_INFLUXDB_INIT_BUCKET: omni-bucket
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba # CHANGE THIS!
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: zML_Dm31864FA3uMs_4V8ZrGoqFeSuGVoz0iXk_1iADOlwG6u8OYoDqS7LuGBKbloXuqdNVKiQuBCABBHuSrcQ== # CHANGE THIS!
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       interval: 5s
@@ -42,7 +42,7 @@ services:
         - .scripts:/script.js
       environment:
         K6_INFLUXDB_ORGANIZATION: omni-org
-        K6_INFLUXDB_TOKEN: a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba
+        K6_INFLUXDB_TOKEN: zML_Dm31864FA3uMs_4V8ZrGoqFeSuGVoz0iXk_1iADOlwG6u8OYoDqS7LuGBKbloXuqdNVKiQuBCABBHuSrcQ==
       depends_on:
         influxdb:
           condition: service_healthy

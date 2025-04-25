@@ -39,18 +39,14 @@ services:
   k6:
       image: grafana/k6:latest
       volumes:
-        - .05-OMNI_Modularize_2:/maincopy2.js
+        - .scripts:/script.js
       environment:
         K6_INFLUXDB_ORGANIZATION: omni-org
         K6_INFLUXDB_TOKEN: a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba
-        K6_INFLUXDB_BUCKET: omni-bucket
-        K6_INFLUXDB_ADDR: http://influxdb:8086
-        K6_INFLUXDB_PUSH_INTERVAL: 1s
-        K6_INFLUXDB_CONCURRENT_WRITES: 4
       depends_on:
         influxdb:
           condition: service_healthy
-      command: ./k6 run maincopy2.js -o xk6-influxdb
+      command: run -o xk6-influxdb=http://influxdb:8086/omni-bucket /scripts:/script.js
 
 volumes:
   influxdb-data:

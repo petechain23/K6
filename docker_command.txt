@@ -21,6 +21,12 @@ docker start <container name> or <container id>
 docker-compose up -d
 docker-compose down
 
+-check the Port is listing
+netstat -aon | findstr :8086
+
+-kill process
+taskkill /PID 14996 /F
+
 ---------------Configuration on portal/ or file docker-compose.yml---------------
   New organization and new bucket
   -user name: admin
