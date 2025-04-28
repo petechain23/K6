@@ -22,7 +22,7 @@ export function addResponseTimeMetric(endpoint, duration, vuID, status) {
         endpoint: endpoint,
         duration: duration,
         vu: vuID,
-        status: status,
+        status,
         timestamp: new Date().toISOString()
     });
 }
@@ -89,7 +89,7 @@ function generateScenarios() {
 
 // Export K6 options
 export const options = {
-    scenarios: generateScenarios()
+    scenarios: generateScenarios(),
 };
 
 // Main function
@@ -101,9 +101,11 @@ export default function () {
         console.error('Main - Setup failed. Aborting test.');
         return;
     }
+    login(testData.cookies);
+    sleep(5); // Delay between requests
     //   ordersGetList(testData.cookies); // Execute the test function
-    // promotions(testData.cookies);
-    // sleep(5);
+    promotions(testData.cookies);
+    sleep(5);
     orderCreate(testData.cookies);
     sleep(2); // Delay between requests
     orderEdit(testData.cookies);
@@ -111,10 +113,9 @@ export default function () {
     orderUpdateStatus(testData.cookies);
     sleep(2); // Delay between requests
     orderUpdateStatusDelivered(testData.cookies);
-    sleep(2);
     exportOrders(testData.cookies);
-    // sleep(5); // Delay between requests
-    // login(testData.cookies);
+    
+    
 }
 //Export html
 /*
@@ -143,7 +144,7 @@ export function handleSummary(data) {
 // Reports: HTML + Console + CSV
 export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
-    const reportName = `./reports/218615/001_218615_order_combine_rampup_ID${timestamp}.html`;
+    const reportName = `./reports/219284/219284_order_update_status(Id)_constant${timestamp}.html`;
 
     return {
         [reportName]: htmlReport(data, { debug: false }),

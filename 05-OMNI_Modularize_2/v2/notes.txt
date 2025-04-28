@@ -1,0 +1,43 @@
+issue GET 2 API khi search order number: 
+https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01H6X2SJQBKCBW1HKAEFSB42WD&q=12345
+https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01H6X2SJQBKCBW1HKAEFSB42WD&q=12345
+
+
+
+
+
+/admin/orders/{orderid}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,items.variant.product.brand,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system
+
+{
+    "errors": [
+        {
+            "order_id": "order_01HZGH3FTEZZXH2ADMF1C0DWMZ",
+            "error": {
+                "type": "System error",
+                "message": "There is an unknown error."
+            }
+        }
+    ],
+    "saved": []
+}
+
+287942
+286689
+errors[0].error.message
+saved[0].extended_status = "status of currentpayload update status"
+
+?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,
+fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description
+
+?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product
+,items.variant.product.brand,
+fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system
+
+
+All depots:
+https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/orders/order_01JSPFYD68JQ66BAGKQNXXHM0Z
+?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,items.variant.product.brand,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system
+
+Depot:
+https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/orders/order_01JSP7AXVBDS6NPSHS72G1CG7Z
+?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,items.variant.product.brand,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system
