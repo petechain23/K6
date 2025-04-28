@@ -22,7 +22,7 @@ export function addResponseTimeMetric(endpoint, duration, vuID, status) {
         endpoint: endpoint,
         duration: duration,
         vu: vuID,
-        status: status,
+        status,
         timestamp: new Date().toISOString()
     });
 }
@@ -101,19 +101,21 @@ export default function () {
         console.error('Main - Setup failed. Aborting test.');
         return;
     }
+    login(testData.cookies);
+    sleep(5); // Delay between requests
     //   ordersGetList(testData.cookies); // Execute the test function
-    // promotions(testData.cookies);
-    // sleep(5);
-    // orderCreate(testData.cookies);
-    // sleep(2); // Delay between requests
-    // orderEdit(testData.cookies);
-    // sleep(2); // Delay between requests
-    // orderUpdateStatus(testData.cookies);
-    // sleep(2); // Delay between requests
+    promotions(testData.cookies);
+    sleep(5);
+    orderCreate(testData.cookies);
+    sleep(2); // Delay between requests
+    orderEdit(testData.cookies);
+    sleep(2); // Delay between requests
+    orderUpdateStatus(testData.cookies);
+    sleep(2); // Delay between requests
     orderUpdateStatusDelivered(testData.cookies);
-    // exportOrders(testData.cookies);
-    // sleep(5); // Delay between requests
-    // login(testData.cookies);
+    exportOrders(testData.cookies);
+    
+    
 }
 //Export html
 /*

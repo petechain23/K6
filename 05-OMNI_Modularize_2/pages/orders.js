@@ -23,18 +23,8 @@ export function orderCreate(cookies) {
         ],
         region_id: 'reg_01H5P3E6X97YGENVSW4Z7A5446',
         shipping_methods: [{ option_id: 'so_01H5P53FY82T6HVEPB37Z8PFPZ' }],
-        shipping_address: {
-            address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104',
-            country_code: 'id',
-            first_name: 'NENGAH',
-            last_name: '-'
-        },
-        billing_address: {
-            address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104',
-            country_code: 'id',
-            first_name: 'NENGAH',
-            last_name: '-'
-        },
+        shipping_address: { address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104', country_code: 'id', first_name: 'NENGAH', last_name: '-' },
+        billing_address: { address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104', country_code: 'id', first_name: 'NENGAH', last_name: '-' },
         customer_id: 'cus_01JM74671R0812YXBZEP4W2KKC',
         depot_id: 'depot_01HGYXPR1M5HQ229XGC8RDQSJE',
         outlet_id: outletId,
@@ -42,9 +32,10 @@ export function orderCreate(cookies) {
         metadata: { source_system: 'OMS' },
         location_id: 'sloc_01HGYYZND43JR5B4F1D0HG80Z9'
     };
-    
-    const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, JSON.stringify(payload), { 
-        headers: { cookies: cookies, 'Content-Type': 'application/json' }});
+
+    const res = http.post(`${BASE_URL}/${ORDER_CREATE_URL}`, JSON.stringify(payload), {
+        headers: { cookies: cookies, 'Content-Type': 'application/json' }
+    });
 
     if (!res.body) {
         console.error(`Empty response body. Status: ${res.status}`);
