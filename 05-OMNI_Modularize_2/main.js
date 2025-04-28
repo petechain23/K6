@@ -110,9 +110,9 @@ export default function () {
     sleep(2); // Delay between requests
     orderUpdateStatus(testData.cookies);
     sleep(2); // Delay between requests
-    orderUpdateStatusDelivered(testData.cookies);
-    sleep(2);
-    exportOrders(testData.cookies);
+    // orderUpdateStatusDelivered(testData.cookies);
+    // sleep(2);
+    // exportOrders(testData.cookies);
     // sleep(5); // Delay between requests
     // login(testData.cookies);
 }
