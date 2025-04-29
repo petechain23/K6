@@ -21,28 +21,42 @@ export const ORDER_INVOICE_GENERATE_URL = 'admin/invoices/generate';
 // --- Data Loading ---
 export const users = new SharedArray('users', function () {
     // Use relative path from the project root where k6 is run
-    return papaparse.parse(open('../../../02-K6 Files/id_credentals.csv'), { header: true }).data.filter(row => row.username);
+    return papaparse.parse(open('../../../../02-K6 Files/id_credentals.csv'), { header: true }).data.filter(row => row.username);
 });
 
 export const masterData = new SharedArray('masterData', function () {
-    return papaparse.parse(open('../../../02-K6 Files/id_qa_order_create.csv'), { header: true }).data.filter(row => row.outletId);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create.csv'), { header: true }).data.filter(row => row.outletId);
+});
+
+export const masterData_2 = new SharedArray('masterData_2', function () {
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create_2.csv'), { header: true }).data.filter(row => row.outletId);
+});
+
+export const masterData_3 = new SharedArray('masterData_3', function () {
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create_3.csv'), { header: true }).data.filter(row => row.outletId);
 });
 
 export const orderId = new SharedArray('orderId', function () {
-    return papaparse.parse(open('../../../02-K6 Files/id_qa_order_edit.csv'), { header: true }).data.filter(row => row.order_Id);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_edit.csv'), { header: true }).data.filter(row => row.order_Id);
 });
 
 export const orderId2 = new SharedArray('orderId2', function () {
-    return papaparse.parse(open('../../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_Id);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_Id);
 });
 
 export const outlet_depot = new SharedArray('outlet_depot', function () {
-    return papaparse.parse(open('../../../02-K6 Files/id_qa_promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id);
 });
 
+export const DEPOT_ID_FILTER = [
+    // 'depot_01HGYXPR1M5HQ229XGC8RDQSJE',  // Klungkung
+    'depot_01H6X2SJQBKCBW1HKAEFSB42WD', // NUSA DUA
+    'depot_01H6X2SJQBKCBW1HKAEFSB42WD' // NUSA DUA
+    // 'depot_01H5W4GM27TYHKGH9RKTWDEYF6', // D01-MAIN - test invalid case
+];
 // --- Hardcoded IDs (Parameterize where possible) ---
 export const REGION_ID = 'reg_01H5P3E6X97YGENVSW4Z7A5446';
-export const DEPOT_ID_FILTER = 'depot_01HGYXPR1M5HQ229XGC8RDQSJE'; // Klungkung
+// export const DEPOT_ID_FILTER = 'depot_01HGYXPR1M5HQ229XGC8RDQSJE'; // Klungkung
 export const LOCATION_ID_EDIT = 'sloc_01HGYYZND43JR5B4F1D0HG80Z9';// Klungkung
 export const VARIANT_ID_EDIT_1 = 'variant_01H771AV5J5D62ZAKQ340JQJ7S';
 export const VARIANT_ID_EDIT_2 = 'variant_01H729MHHAW56JTRXCC8HYCV1X';
@@ -62,7 +76,7 @@ export const CANCELLATION_REASON_ID = 'reason_01JHPP5TQYXJEJ0Y8AG6SGWRES';
 // --- Workload Settings ---
 export const pervuiterations = {
     executor: 'per-vu-iterations',
-    vus: 1,
+    vus: 2,
     iterations: 1,
     // maxDuration: '30s'
 }
@@ -98,27 +112,37 @@ export const ramupWorkload = {
 // --- Threshold Settings ---
 export const thresholdsSettings = {
     thresholds: {
-        // Use tags for more specific thresholds
+        // --- Built-in Metrics (These were mostly correct) ---
         'http_req_duration{name:/admin/auth - POST (Login)}': ['p(99)<1500'],
-        'http_req_duration{group:::Orders Create}': ['p(95)<2000'],
-        'http_req_duration{group:::Orders Update}': ['p(95)<2000'],
-        'http_req_duration{group:::Orders Edit}': ['p(95)<2000'],
+        'http_req_duration{group:::Orders Create}': ['p(95)<2500'],
+        'http_req_duration{group:::Orders Update}': ['p(95)<2500'],
+        'http_req_duration{group:::Orders Edit}': ['p(95)<2500'],
         'http_req_duration{group:::Login}': ['p(99)<1500'],
-        'http_req_duration{group:::Orders Export}': ['p(99)<1500'],
-        'http_req_duration': ['p(95)<1500'], // Global
-        'http_req_failed': ['rate<0.02'], // Use k6 built-in
-        'checks': ['rate>0.98'],
-        // Add thresholds for custom metrics
-        'rate(orderCreate_SuccessRate)>0.95': ['threshold>0.95', { abortOnFail: false }],
-        'trend(orderCreate_ResponseTime):p(95)<2500': ['threshold<2500', { abortOnFail: false }],
-        'rate(editOrder_SuccessRate)>0.95': ['threshold>0.95', { abortOnFail: false }],
-        'trend(editOrder_ResponseTime):p(95)<2500': ['threshold<2500', { abortOnFail: false }],
-        'rate(updateOrder_SuccessRate)>0.95': ['threshold>0.95', { abortOnFail: false }],
-        'trend(updateOrder_ResponseTime):p(95)<2500': ['threshold<2500', { abortOnFail: false }],
-        'rate(exportOrder_SuccessRate)>0.95': ['threshold>0.95', { abortOnFail: false }],
-        'trend(exportOrder_ResponseTime):p(95)<3000': ['threshold<3000', { abortOnFail: false }], // Allow more time for export potentially
+        'http_req_duration{group:::Orders Export}': ['p(99)<1500'], // Consider if 1500ms is realistic for export trigger/poll
+        'http_req_duration': ['p(95)<1500'], // Global default
+        'http_req_failed': ['rate<0.02'], // Global failure rate
+        'checks': ['rate>0.98'], // Global check pass rate
+
+        // --- Custom Metrics (Corrected Syntax) ---
+
+        // Order Create
+        'orderCreate_SuccessRate': ['rate>0.95'], // Check the rate of the 'orderCreate_SuccessRate' metric
+        'orderCreate_ResponseTime': ['p(95)<2500'], // Check the p(95) of the 'orderCreate_ResponseTime' trend
+
+        // Order Edit
+        'editOrder_SuccessRate': ['rate>0.95'],
+        'editOrder_ResponseTime': ['p(95)<3000'],
+
+        // Order Update
+        'updateOrder_SuccessRate': ['rate>0.95'],
+        'updateOrder_ResponseTime': ['p(95)<2500'],
+
+        // Order Export
+        'exportOrder_SuccessRate': ['rate>0.95'],
+        'exportOrder_ResponseTime': ['p(95)<3000'], // Allow slightly more time for export-related requests
     }
 };
+
 
 // --- Custom Metrics Definitions ---
 

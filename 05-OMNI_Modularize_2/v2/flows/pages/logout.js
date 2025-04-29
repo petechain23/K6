@@ -1,6 +1,6 @@
 // v2/flows/logout.js
 import { group, check, sleep } from 'k6';
-import { BASE_URL, AUTH_URL } from '../../config.js'; // Adjust path
+import { BASE_URL, AUTH_URL } from '../config.js'; // Adjust path
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path
 
 export function logoutFlow(authToken) {

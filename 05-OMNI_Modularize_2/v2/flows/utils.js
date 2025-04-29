@@ -1,19 +1,14 @@
 // v2/utils.js
-import http from 'k6/http';
+import http from 'k6/http'; // Ensure http is imported
 import { check } from 'k6';
 import {
-    FRONTEND_URL, // Import FRONTEND_URL for default headers
-    customTrendResponseTime, // Generic Trend from config.js
-    customTrendSuccessRate,  // Generic Rate from config.js
-    customTrendRequestCount  // Generic Counter from config.js
+    FRONTEND_URL,
+    customTrendResponseTime,
+    customTrendSuccessRate,
+    customTrendRequestCount
 } from './config.js';
 
-/**
- * Creates headers for a request, merging default, authorization, and specific headers.
- * @param {string|null} authToken - The authentication token (Bearer).
- * @param {object} specificHeaders - Headers specific to this request.
- * @returns {object} The merged headers object.
- */
+// ... createHeaders function remains the same ...
 export function createHeaders(authToken, specificHeaders = {}) {
     // Define default headers INSIDE the function if they depend on config
     const defaultHeaders = {
@@ -38,13 +33,11 @@ export function createHeaders(authToken, specificHeaders = {}) {
         headers['content-type'] = specificHeaders['content-type'];
     } else if (!headers['content-type'] && (specificHeaders.body || defaultHeaders.body)) {
         // Default to json if body exists and content-type isn't set,
-        // but only if the method likely supports a body (POST, PUT, PATCH)
-        // This check might need refinement based on actual usage.
-        // For simplicity, we keep the original logic for now.
         headers['content-type'] = 'application/json';
     }
     return headers;
 }
+
 
 /**
  * Makes an HTTP request, adds basic checks, and records GENERIC metrics.
@@ -65,26 +58,23 @@ export function makeRequest(method, url, body, params = {}, name) {
         requestBody = JSON.stringify(body);
     }
 
-    const response = httpmethod;
+    const response = http[method](url, requestBody, requestParams);
 
     // Increment generic total request counter
     // Add tags for better filtering in results
+    // NOW response.status will be a valid number (e.g., 200, 404, 500)
     const tags = { name: name, method: method.toUpperCase(), status: response.status, group: params.tags?.group || 'N/A' };
-    customTrendRequestCount.add(1, tags);
+    customTrendRequestCount.add(1, tags); // This should now work
 
     // Basic check for success (2xx/3xx)
     const isSuccess = response.status >= 200 && response.status < 400;
     check(response, {
-        [`${name} - status is 2xx/3xx`]: (r) => isSuccess,
+        [`${name} - status is 2xx/3xx`]: (r) => r.status >= 200 && r.status < 400,
     });
 
     // Add data to generic metrics
     customTrendResponseTime.add(response.timings.duration, tags);
-    customTrendSuccessRate.add(isSuccess, tags);
+    customTrendSuccessRate.add(isSuccess, tags); // isSuccess is boolean (true/false), which is valid for Rate metric
 
-    // Add response time to the global array for CSV export (if using main.js logic)
-    // import { addResponseTimeMetric } from './main.js'; // Avoid circular dependency - handle this differently if needed
-    // addResponseTimeMetric(name, response.timings.duration, __VU, response.status);
-
-    return response;
+    return response; // Return the actual k6 response object
 }

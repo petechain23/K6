@@ -5,8 +5,9 @@ import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 
 // Import Configs, Data, Metrics, Workloads, Thresholds
 import {
-    users, masterData, orderId, orderId2, // Data loaders
-    thresholdsSettings, // Thresholds
+    users, orderId, orderId2, // Data loaders
+    thresholdsSettings, DEPOT_ID_FILTER ,
+    masterData, masterData_2, masterData_3, // Thresholds
     // Import workloads if needed directly for options
     pervuiterations, constantWorkload, sharedWorkload, ramupWorkload
 } from './config.js';
@@ -30,8 +31,8 @@ export const options = {
     },
     scenarios: {
         // Choose one or more scenarios
-        // debug_run: pervuiterations,
-        load_run: ramupWorkload,
+        debug_run: pervuiterations,
+        // load_run: ramupWorkload,
         // endurance_run: constantWorkload,
     },
     thresholds: thresholdsSettings.thresholds, // Use thresholds from config
@@ -39,15 +40,58 @@ export const options = {
 
 // --- Main VU Function ---
 export default function () {
-    // Select user data for this VU iteration
+    // --- Data Selection ---
+    // Select user data
     const currentUser = users[__VU % users.length];
-    // Select master data (e.g., outlet for creation)
-    const currentMasterData = masterData[__VU % masterData.length];
-    // Select specific order IDs for edit/update if needed
-    const editOrderData = orderId[__VU % orderId.length];
-    const updateOrderData = orderId2[__VU % orderId2.length];
 
-    console.log(`VU ${__VU} starting iteration with user ${currentUser.username}`);
+    // Determine the index for depot selection (0, 1, or 2)
+    const depotIndex = __VU % DEPOT_ID_FILTER.length;
+
+    // Select the Depot ID based on the index
+    const currentDepotId = DEPOT_ID_FILTER[depotIndex];
+
+    // Select the appropriate master data array based on the depot index
+    let selectedMasterDataArray;
+    if (depotIndex === 0) {
+        selectedMasterDataArray = masterData;
+        console.log(`VU ${__VU}: Using masterData (Index 0)`);
+    } else if (depotIndex === 1) {
+        selectedMasterDataArray = masterData_2;
+        console.log(`VU ${__VU}: Using masterData_2 (Index 1)`);
+    } else { // Assuming index 2 (or any other index if DEPOT_ID_FILTER grows)
+        selectedMasterDataArray = masterData_3;
+        console.log(`VU ${__VU}: Using masterData_3 (Index 2)`);
+    }
+
+    // Select RANDOM master data (e.g., outlet for creation) FROM THE CHOSEN ARRAY
+    let currentMasterData = null;
+    if (selectedMasterDataArray && selectedMasterDataArray.length > 0) {
+        const randomIndex = Math.floor(Math.random() * selectedMasterDataArray.length);
+        currentMasterData = selectedMasterDataArray[randomIndex];
+    } else {
+        console.error(`VU ${__VU}: Selected master data array (Index ${depotIndex}) is empty or undefined! Halting iteration.`);
+        return; // Stop iteration if data source is invalid
+    }
+
+    // Select specific order IDs for edit/update if needed
+    // --- MODIFIED: Select a RANDOM order for editing ---
+    let editOrderData = null;
+    if (orderId && orderId.length > 0) {
+        const randomEditIndex = Math.floor(Math.random() * orderId.length);
+        editOrderData = orderId[randomEditIndex];
+    } else {
+        console.error(`VU ${__VU}: orderId SharedArray is empty or undefined! Cannot select order for edit.`);
+        // Depending on requirements, you might return here or let it proceed without an edit ID
+        // If you proceed, ordersEditFlow will skip itself due to missing orderIdToEdit
+    }
+    // --- END MODIFICATION ---
+
+    // Keep update order selection as round-robin (or change if needed)
+    const updateOrderData = orderId2[__VU % orderId2.length];
+    // --- End Data Selection ---
+
+    // Log the randomly selected outlet ID and potentially the edit order ID
+    console.log(`VU ${__VU} starting iteration with user ${currentUser.username} using Depot ${currentDepotId}, Outlet ${currentMasterData?.outletId}, Edit Order ${editOrderData?.order_Id || 'N/A'}`);
 
     // 1. Login
     const authToken = loginFlow(currentUser.username, currentUser.password);
@@ -60,25 +104,35 @@ export default function () {
     // Prepare config data object to pass to flows
     const flowConfigData = {
         // Data needed by various flows
-        outletId: currentMasterData.outletId,
-        userEmail: currentUser.username, // Pass email if needed (e.g., for create payload)
-        orderIdToEdit: editOrderData?.order_Id, // Pass specific ID for editing
-        orderIdForStatusUpdate: updateOrderData?.order_Id, // Pass specific ID for status updates
+        outletId: currentMasterData?.outletId, // Use optional chaining
+        userEmail: currentUser.username,
+        orderIdToEdit: editOrderData?.order_Id, // Use optional chaining
+        orderIdForStatusUpdate: updateOrderData?.order_Id, // Use optional chaining
+        depotId: currentDepotId,
         // Add other dynamic data as needed by your flows
     };
 
+     // Check if essential data like outletId is present before proceeding
+     if (!flowConfigData.outletId) {
+        console.error(`VU ${__VU}: Missing outletId after data selection. Halting iteration.`);
+        // Optionally try logout before returning
+        // logoutFlow(authToken);
+        return;
+     }
+
     // 2. Execute Order Flows (Add sleeps for think time)
-    sleep(1);
-    ordersUpdateFlow(authToken, flowConfigData); // Pass token and data
+    // sleep(2);
+    // ordersCreateFlow(authToken, flowConfigData);
 
     sleep(2);
-    ordersCreateFlow(authToken, flowConfigData);
-
-    sleep(2);
+    // ordersEditFlow will now receive a potentially random orderIdToEdit (or null if the array was empty)
     ordersEditFlow(authToken, flowConfigData);
 
-    sleep(2);
-    ordersExportFlow(authToken, flowConfigData);
+    // sleep(1);
+    // ordersUpdateFlow(authToken, flowConfigData); // Pass token and data
+
+    // sleep(2);
+    // ordersExportFlow(authToken, flowConfigData);
 
     // Add calls to other flows if implemented
     // sleep(2);
@@ -91,6 +145,8 @@ export default function () {
 
     console.log(`VU ${__VU} finished iteration.`);
 }
+
+
 
 // --- handleSummary ---
 // Keep your preferred handleSummary logic (HTML, Console, CSV)
@@ -114,7 +170,6 @@ export function handleSummary(data) {
         console.log(`Order Export Success Rate: ${(data.metrics.exportOrder_SuccessRate.values.rate * 100).toFixed(2)}%`);
     }
     console.log("-----------------------------------------------------------------");
-
 
     // Example combining HTML and Console
     return {

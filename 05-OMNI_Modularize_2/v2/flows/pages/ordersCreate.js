@@ -1,10 +1,10 @@
 // v2/flows/ordersCreate.js
 import { group, check, sleep } from 'k6';
 import {
-    BASE_URL, FRONTEND_URL, REGION_ID, DEPOT_ID_FILTER, LOCATION_ID_EDIT,
+    BASE_URL, ORDER_CREATE_URL, REGION_ID, LOCATION_ID_EDIT,
     VARIANT_ID_EDIT_6, VARIANT_ID_EDIT_10, VARIANT_ID_EDIT_11, VARIANT_ID_EDIT_12, // Use IDs from config
     orderCreateResponseTime, orderCreateSuccessRate, orderCreateRequestCount, // Specific metrics
-} from '../../config.js'; // Adjust path
+} from '../config.js'; // Adjust path
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path
 
 // Helper to add specific metrics for this flow
@@ -18,7 +18,7 @@ function addMetrics(response, isSuccessCheck = null) {
 }
 
 export function ordersCreateFlow(authToken, configData) { // Pass configData like outletId
-    const { outletId } = configData; // Extract needed data from the object passed by main.js
+    const { outletId, depotId, userEmail, customerId } = configData; // Extract needed data from the object passed by main.js
 
     group('Orders Create', function () {
         if (!authToken) {
@@ -29,23 +29,27 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
              console.warn(`VU ${__VU} - Skipping Orders Create due to missing outletId in configData.`);
              return;
         }
+        if (!depotId) {
+            console.warn(`VU ${__VU} Orders Create: Skipping flow due to missing depotId in configData.`);
+            return;
+       }
 
         const groupTags = { group: 'Orders Create' }; // Define tags for makeRequest
 
         // Select Depot
-        const numReadyResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (Select Depot)');
+        const numReadyResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (Select Depot)');
         addMetrics(numReadyResponse);
 
-        const numActiveResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (Select Depot)');
+        const numActiveResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (Select Depot)');
         addMetrics(numActiveResponse);
 
-        const numNeedReviewResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (Select Depot)');
+        const numNeedReviewResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (Select Depot)');
         addMetrics(numNeedReviewResponse);
 
         // Fetch the actual list of the first 20 orders, filtered by the selected depot
         const depotFilteredOrderCreate = makeRequest(
             'get',
-            `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${DEPOT_ID_FILTER}`,
+            `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`,
             null,
             { headers: createHeaders(authToken), tags: groupTags },
             '/admin/orders (List orders page, Select Depot)'
@@ -70,7 +74,7 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
 
         if (foundThirdOrder && orderIdView3) {
             console.log(`VU ${__VU} Orders Create: Proceeding to view details for order ${orderIdView3}`);
-            const viewDetailsResponse = makeRequest('get', `${BASE_URL}/admin/orders/${orderIdView3}?expand=...`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/{id} (View Details 2)');
+            const viewDetailsResponse = makeRequest('get', `${BASE_URL}/admin/orders/${orderIdView3}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/{id} (View Details 2)');
             addMetrics(viewDetailsResponse);
             const viewEventResponse = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${orderIdView3}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (View Details 2)');
             addMetrics(viewEventResponse);
@@ -84,34 +88,34 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
         // Scrolling Outlet list
         for (let i = 0; i < 5; i++) {
             const offset = i * 20;
-            const outletPayload = { outletDepots: [DEPOT_ID_FILTER], include_address: true };
+            const outletPayload = { outletDepots: [depotId], include_address: true };
             const outletListResponse = makeRequest('post', `${BASE_URL}/admin/outlets/fetch?offset=${offset}&limit=20&q=`, outletPayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, `/admin/outlets/fetch (List Outlets ${i + 1})`);
             addMetrics(outletListResponse);
             sleep(Math.random() * 1 + 0.5);
         }
 
         // Prepare for Order Create
-        const stockLocResponse = makeRequest('get', `${BASE_URL}/admin/stock-locations?depot_id=${DEPOT_ID_FILTER}&offset=0&limit=1000`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/stock-locations (For Order Create)');
-        addMetrics(stockLocResponse);
+        // const stockLocResponse = makeRequest('get', `${BASE_URL}/admin/stock-locations?depot_id=${depotId}&offset=0&limit=1000`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/stock-locations (For Order Create)');
+        // addMetrics(stockLocResponse);
 
-        const depotVariantsResponse1 = makeRequest('get', `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${DEPOT_ID_FILTER}&outlet_id=${outletId}&location_id=${LOCATION_ID_EDIT}&...`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/variants/depot-variants (For Order Create)');
-        addMetrics(depotVariantsResponse1);
-        sleep(1);
+        // const depotVariantsResponse1 = makeRequest('get', `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${outletId}&location_id=${LOCATION_ID_EDIT}&&include_empties_deposit=true&allow_empties_return=false&limit=20&offset=0&q=&expand=product.brand`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/variants/depot-variants (For Order Create)');
+        // addMetrics(depotVariantsResponse1);
+        // sleep(1);
 
-        const depotVariantsResponse2 = makeRequest('get', `${BASE_URL}/admin/variants/depot-variants?...&last_id=...`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/variants/depot-variants (For Order Create -last_id)');
-        addMetrics(depotVariantsResponse2);
-        sleep(1);
+        // const depotVariantsResponse2 = makeRequest('get', `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${outletId}&location_id=${LOCATION_ID_EDIT}&include_empties_deposit=true&allow_empties_return=false&limit=20&offset=0&q=&expand=product.brand&last_id=variant_01H77162NRR4FXV8QPWKMFSPJD`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/variants/depot-variants (For Order Create -last_id)');
+        // addMetrics(depotVariantsResponse2);
+        // sleep(1);
 
         // Perform Create Order
         const createPayload = {
             order_type: 'standard',
-            email: configData.userEmail || 'default-email@example.com', // Get email from configData if passed
+            email: configData.userEmail || 'nengahpuspayoga23@yopmail.com', // Get email from configData if passed
             region_id: REGION_ID,
             shipping_methods: [{ option_id: 'so_01H5P53FY82T6HVEPB37Z8PFPZ' }], // Parameterize?
-            shipping_address: { /* ... */ },
-            billing_address: { /* ... */ },
+            shipping_address: { address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104', country_code: 'id', first_name: 'NENGAH', last_name: '-' },
+            billing_address: { address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104', country_code: 'id', first_name: 'NENGAH', last_name: '-' },
             customer_id: configData.customerId || 'cus_01JM74671R0812YXBZEP4W2KKC', // Parameterize?
-            depot_id: DEPOT_ID_FILTER,
+            depot_id: depotId,
             outlet_id: outletId,
             include_brand: true,
             metadata: { source_system: 'OMS' },
@@ -126,8 +130,10 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
         const createOrderResponse = makeRequest('post', `${BASE_URL}/${ORDER_CREATE_URL}`, createPayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, '/admin/orders/create (Order Create)');
         addMetrics(createOrderResponse, createOrderResponse.status === 200); // Specific success check
 
-        sleep(1.5);
-
+        check(createOrderResponse, {
+            'Create Order - status is 200': (r) => r.status === 200,
+            'Create Order - body contains display_id': (r) => r.body && r.body.includes('display_id'),
+        });
         // --- Conditional Refresh ---
         let createdOrderId = null;
         let isCreateSuccessful = false;
@@ -143,17 +149,16 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
 
         if (isCreateSuccessful) {
             console.log(`VU ${__VU} Orders Create: Refreshing counts post-create.`);
-            const postCreateNumActive = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (After Order Created)');
+            const postCreateNumActive = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (After Order Created)');
             addMetrics(postCreateNumActive);
-            const postCreateNumNeedReview = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (After Order Created)');
+            const postCreateNumNeedReview = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (After Order Created)');
             addMetrics(postCreateNumNeedReview);
-            const postCreateList = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List orders page, After Order Created)');
+            const postCreateList = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List orders page, After Order Created)');
             addMetrics(postCreateList);
             sleep(0.5);
         } else {
             console.warn(`VU ${__VU} Orders Create: Skipping post-create checks.`);
             sleep(0.5);
         }
-        // --- End Conditional Refresh ---
     });
 }

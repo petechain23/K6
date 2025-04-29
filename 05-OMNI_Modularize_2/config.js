@@ -77,9 +77,39 @@ export const ramupWorkload = {
 }
 
 export const thresholdsSettings = {
+    // thresholds: {
+    //     http_req_duration: [{ threshold: 'p(99)<3500', abortOnFail: false }], //1000ms = 1s
+    //     http_req_failed: [{ threshold: 'rate<=0.1', abortOnFail: false }]
+    // }
     thresholds: {
-        http_req_duration: [{ threshold: 'p(99)<3500', abortOnFail: false }], //1000ms = 1s
-        http_req_failed: [{ threshold: 'rate<=0.1', abortOnFail: false }]
+        // --- Built-in Metrics (These were mostly correct) ---
+        'http_req_duration{name:/admin/auth - POST (Login)}': ['p(99)<1500'],
+        'http_req_duration{group:::Orders Create}': ['p(95)<2000'],
+        'http_req_duration{group:::Orders Update}': ['p(95)<2000'],
+        'http_req_duration{group:::Orders Edit}': ['p(95)<2000'],
+        'http_req_duration{group:::Login}': ['p(99)<1500'],
+        'http_req_duration{group:::Orders Export}': ['p(99)<1500'], // Consider if 1500ms is realistic for export trigger/poll
+        'http_req_duration': ['p(95)<1500'], // Global default
+        'http_req_failed': ['rate<0.02'], // Global failure rate
+        'checks': ['rate>0.98'], // Global check pass rate
+
+        // --- Custom Metrics (Corrected Syntax) ---
+
+        // Order Create
+        'orderCreate_SuccessRate': ['rate>0.95'], // Check the rate of the 'orderCreate_SuccessRate' metric
+        'orderCreate_ResponseTime': ['p(95)<2500'], // Check the p(95) of the 'orderCreate_ResponseTime' trend
+
+        // Order Edit
+        'editOrder_SuccessRate': ['rate>0.95'],
+        'editOrder_ResponseTime': ['p(95)<2500'],
+
+        // Order Update
+        'updateOrder_SuccessRate': ['rate>0.95'],
+        'updateOrder_ResponseTime': ['p(95)<2500'],
+
+        // Order Export
+        'exportOrder_SuccessRate': ['rate>0.95'],
+        'exportOrder_ResponseTime': ['p(95)<3000'], // Allow slightly more time for export-related requests
     }
 }
 

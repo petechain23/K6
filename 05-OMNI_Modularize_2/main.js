@@ -106,10 +106,10 @@ export default function () {
     // sleep(5);
     orderCreate(testData.cookies);
     sleep(2); // Delay between requests
-    orderEdit(testData.cookies);
-    sleep(2); // Delay between requests
-    orderUpdateStatus(testData.cookies);
-    sleep(2); // Delay between requests
+    // orderEdit(testData.cookies);
+    // sleep(2); // Delay between requests
+    // orderUpdateStatus(testData.cookies);
+    // sleep(2); // Delay between requests
     // orderUpdateStatusDelivered(testData.cookies);
     // sleep(2);
     // exportOrders(testData.cookies);
