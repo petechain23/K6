@@ -2,8 +2,8 @@
 import { group, check, sleep } from 'k6';
 import {
     BASE_URL, ORDER_EXPORT_URL, // Config constants
-    exportOrderResponseTime, exportOrderSuccessRate, exportOrderRequestCount, // Specific metrics
-} from '../../config.js'; // Adjust path as needed
+    orderExportResponseTime, orderExportSuccessRate, orderExportRequestCount // Specific metrics
+} from '../config.js'; // Adjust path as needed
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
 
 // Helper to add specific metrics for this flow
@@ -12,19 +12,24 @@ function addMetrics(response, isSuccessCheck = null) {
     const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
     const tags = { status: response.status }; // Add basic tags for specific metrics
 
-    exportOrderResponseTime.add(response.timings.duration, tags);
-    exportOrderSuccessRate.add(success, tags);
-    exportOrderRequestCount.add(1, tags);
+    orderExportResponseTime.add(response.timings.duration, tags);
+    orderExportSuccessRate.add(success, tags);
+    orderExportRequestCount.add(1, tags);
 }
 
 // configData might be used in the future to parameterize the export payload (dates, filters)
 export function ordersExportFlow(authToken, configData = {}) {
+
+    // Extract depotId from configData
+    const { depotId } = configData;
 
     group('Orders Export', function () {
         if (!authToken) {
             console.warn(`VU ${__VU} Orders Export: Skipping flow due to missing auth token.`);
             return;
         }
+        // Add check for depotId
+        if (!depotId) { console.warn(`VU ${__VU} Orders Export: Skipping flow due to missing depotId in configData.`); return; }
 
         const groupTags = { group: 'Orders Export' }; // Define tags for makeRequest
 
@@ -69,12 +74,10 @@ export function ordersExportFlow(authToken, configData = {}) {
                 },
                 filterable_fields: {
                     created_at: {
-                        // Consider parameterizing dates via configData or ENV variables
                         gt: configData.exportStartDate || '2025-03-01T00:00:00.000Z',
                         lt: configData.exportEndDate || '2025-03-31T23:59:59.999Z'
-                    }
-                    // Add other filters if needed (e.g., depot_id)
-                    // depot_id: DEPOT_ID_FILTER // Example
+                    },
+                    depot_id: [depotId] // Use the depotId from configData
                 }
             }
         };
@@ -114,122 +117,120 @@ export function ordersExportFlow(authToken, configData = {}) {
             return;
         }
 
-        // --- Poll Batch Job Status (Only if Trigger was successful) ---
-        if (batchJobId) {
-            console.log(`VU ${__VU} Orders Export: Proceeding to poll job ID: ${batchJobId}`);
+        // // --- Poll Batch Job Status (Only if Trigger was successful) ---
+        // if (batchJobId) {
+        //     console.log(`VU ${__VU} Orders Export: Proceeding to poll job ID: ${batchJobId}`);
 
-            // --- Recommended: Implement proper polling loop ---
-            const POLLING_INTERVAL_SECONDS = 5;
-            const POLLING_TIMEOUT_SECONDS = 180; // 3 minutes timeout
-            const startTime = Date.now();
-            let jobStatus = '';
-            let jobResultUrl = null; // To store the download URL if completed
-            let pollSucceeded = true; // Flag to track polling success
+        //     // --- Recommended: Implement proper polling loop ---
+        //     const POLLING_INTERVAL_SECONDS = 5;
+        //     const POLLING_TIMEOUT_SECONDS = 180; // 3 minutes timeout
+        //     const startTime = Date.now();
+        //     let jobStatus = '';
+        //     let jobResultUrl = null; // To store the download URL if completed
+        //     let pollSucceeded = true; // Flag to track polling success
 
-            while (Date.now() - startTime < POLLING_TIMEOUT_SECONDS * 1000) {
-                const pollRes = makeRequest(
-                    'get',
-                    `${BASE_URL}/${ORDER_EXPORT_URL}/${batchJobId}`, // Poll specific job ID
-                    null,
-                    { headers: createHeaders(authToken), tags: groupTags },
-                    `/admin/batch-jobs/{id} (Polling Loop ${batchJobId})`
-                );
-                // Add metrics for the poll request itself, expecting 200 OK
-                addMetrics(pollRes, pollRes.status === 200);
+        //     while (Date.now() - startTime < POLLING_TIMEOUT_SECONDS * 1000) {
+        //         const pollRes = makeRequest(
+        //             'get',
+        //             `${BASE_URL}/${ORDER_EXPORT_URL}/${batchJobId}`, // Poll specific job ID
+        //             null,
+        //             { headers: createHeaders(authToken), tags: groupTags },
+        //             `/admin/batch-jobs/{id} (Polling Loop ${batchJobId})`
+        //         );
+        //         // Add metrics for the poll request itself, expecting 200 OK
+        //         addMetrics(pollRes, pollRes.status === 200);
 
-                let pollBody = null;
-                try { pollBody = pollRes.json(); } catch (e) { /* Ignore parsing error, check handles status */ }
+        //         let pollBody = null;
+        //         try { pollBody = pollRes.json(); } catch (e) { /* Ignore parsing error, check handles status */ }
 
-                const pollCheck = check(pollRes, {
-                    'Polling Status is 200': (r) => r.status === 200,
-                    'Polling Response has status': () => pollBody?.batch_job?.status != null
-                });
+        //         const pollCheck = check(pollRes, {
+        //             'Polling Status is 200': (r) => r.status === 200,
+        //             'Polling Response has status': () => pollBody?.batch_job?.status != null
+        //         });
 
-                if (!pollCheck || !pollBody) {
-                    console.error(`VU ${__VU} Orders Export: Polling job ${batchJobId} failed or gave invalid response! Status: ${pollRes.status}, Body: ${pollRes.body}`);
-                    pollSucceeded = false;
-                    break; // Exit loop on poll failure
-                }
+        //         if (!pollCheck || !pollBody) {
+        //             console.error(`VU ${__VU} Orders Export: Polling job ${batchJobId} failed or gave invalid response! Status: ${pollRes.status}, Body: ${pollRes.body}`);
+        //             pollSucceeded = false;
+        //             break; // Exit loop on poll failure
+        //         }
 
-                jobStatus = pollBody.batch_job.status;
-                console.log(`VU ${__VU} Orders Export: Job ${batchJobId} status: ${jobStatus}`);
+        //         jobStatus = pollBody.batch_job.status;
+        //         console.log(`VU ${__VU} Orders Export: Job ${batchJobId} status: ${jobStatus}`);
 
-                if (jobStatus === 'completed') {
-                    // Adjust path based on actual response structure for the download key/URL
-                    jobResultUrl = pollBody.batch_job?.result?.file_key;
-                    console.log(`VU ${__VU} Orders Export: Job ${batchJobId} completed. File key: ${jobResultUrl}`);
-                    break; // Exit loop on completion
-                } else if (jobStatus === 'failed' || jobStatus === 'canceled') {
-                    console.error(`VU ${__VU} Orders Export: Job ${batchJobId} ended with status: ${jobStatus}`);
-                    pollSucceeded = false; // Mark as failed if job itself failed
-                    break; // Exit loop on final failure status
-                }
+        //         if (jobStatus === 'completed') {
+        //             // Adjust path based on actual response structure for the download key/URL
+        //             jobResultUrl = pollBody.batch_job?.result?.file_key;
+        //             console.log(`VU ${__VU} Orders Export: Job ${batchJobId} completed. File key: ${jobResultUrl}`);
+        //             break; // Exit loop on completion
+        //         } else if (jobStatus === 'failed' || jobStatus === 'canceled') {
+        //             console.error(`VU ${__VU} Orders Export: Job ${batchJobId} ended with status: ${jobStatus}`);
+        //             pollSucceeded = false; // Mark as failed if job itself failed
+        //             break; // Exit loop on final failure status
+        //         }
 
-                // Wait before the next poll
-                sleep(POLLING_INTERVAL_SECONDS);
-            } // End while loop
+        //         // Wait before the next poll
+        //         sleep(POLLING_INTERVAL_SECONDS);
+        //     } // End while loop
 
-            // Check for timeout
-            if (jobStatus !== 'completed' && jobStatus !== 'failed' && jobStatus !== 'canceled') {
-                console.error(`VU ${__VU} Orders Export: Polling job ${batchJobId} timed out after ${POLLING_TIMEOUT_SECONDS}s.`);
-                pollSucceeded = false;
-            }
+        //     // Check for timeout
+        //     if (jobStatus !== 'completed' && jobStatus !== 'failed' && jobStatus !== 'canceled') {
+        //         console.error(`VU ${__VU} Orders Export: Polling job ${batchJobId} timed out after ${POLLING_TIMEOUT_SECONDS}s.`);
+        //         pollSucceeded = false;
+        //     }
 
-            // --- Optionally Download File (Only if polling succeeded and job completed) ---
-            if (pollSucceeded && jobStatus === 'completed' && jobResultUrl) {
-                console.log(`VU ${__VU} Orders Export: Attempting to get download URL for ${jobResultUrl}`);
-                const downloadUrlPayload = { file_key: jobResultUrl };
-                const downloadUrlRes = makeRequest(
-                    'post',
-                    `${BASE_URL}/admin/uploads/download-url`, // Assuming this is the correct endpoint
-                    downloadUrlPayload,
-                    { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
-                    '/admin/uploads/download-url (Get Export URL)'
-                );
-                // Add metrics for getting the download URL, expecting 200 OK
-                addMetrics(downloadUrlRes, downloadUrlRes.status === 200);
+        //     // --- Optionally Download File (Only if polling succeeded and job completed) ---
+        //     if (pollSucceeded && jobStatus === 'completed' && jobResultUrl) {
+        //         console.log(`VU ${__VU} Orders Export: Attempting to get download URL for ${jobResultUrl}`);
+        //         const downloadUrlPayload = { file_key: jobResultUrl };
+        //         const downloadUrlRes = makeRequest(
+        //             'post',
+        //             `${BASE_URL}/admin/uploads/download-url`, // Assuming this is the correct endpoint
+        //             downloadUrlPayload,
+        //             { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
+        //             '/admin/uploads/download-url (Get Export URL)'
+        //         );
+        //         // Add metrics for getting the download URL, expecting 200 OK
+        //         addMetrics(downloadUrlRes, downloadUrlRes.status === 200);
 
-                let downloadUrlBody = null;
-                try { downloadUrlBody = downloadUrlRes.json(); } catch (e) { /* Ignore parsing error */ }
+        //         let downloadUrlBody = null;
+        //         try { downloadUrlBody = downloadUrlRes.json(); } catch (e) { /* Ignore parsing error */ }
 
-                const downloadUrlCheck = check(downloadUrlRes, {
-                    'Get Download URL status is 200': (r) => r.status === 200,
-                    'Get Download URL response has url': () => downloadUrlBody?.download_url != null
-                });
+        //         const downloadUrlCheck = check(downloadUrlRes, {
+        //             'Get Download URL status is 200': (r) => r.status === 200,
+        //             'Get Download URL response has url': () => downloadUrlBody?.download_url != null
+        //         });
 
-                if (downloadUrlCheck && downloadUrlBody?.download_url) {
-                    const actualDownloadUrl = downloadUrlBody.download_url;
-                    console.log(`VU ${__VU} Orders Export: Download URL received. Downloading from: ${actualDownloadUrl.substring(0, 50)}...`);
-                    // Note: k6 performs the GET but doesn't save the file by default.
-                    // Use appropriate headers (likely none needed for signed URLs)
-                    const downloadRes = makeRequest(
-                        'get',
-                        actualDownloadUrl,
-                        null,
-                        { headers: {}, tags: groupTags }, // No auth usually needed for signed URL
-                        'Download Exported File'
-                    );
-                    // Add metrics for the actual download, expecting 200 OK
-                    addMetrics(downloadRes, downloadRes.status === 200);
+        //         if (downloadUrlCheck && downloadUrlBody?.download_url) {
+        //             const actualDownloadUrl = downloadUrlBody.download_url;
+        //             console.log(`VU ${__VU} Orders Export: Download URL received. Downloading from: ${actualDownloadUrl.substring(0, 50)}...`);
+        //             // Note: k6 performs the GET but doesn't save the file by default.
+        //             // Use appropriate headers (likely none needed for signed URLs)
+        //             const downloadRes = makeRequest(
+        //                 'get',
+        //                 actualDownloadUrl,
+        //                 null,
+        //                 { headers: {}, tags: groupTags }, // No auth usually needed for signed URL
+        //                 'Download Exported File'
+        //             );
+        //             // Add metrics for the actual download, expecting 200 OK
+        //             addMetrics(downloadRes, downloadRes.status === 200);
 
-                    check(downloadRes, { 'Download status is 200': (r) => r.status === 200 });
-                    sleep(1); // Small sleep after download attempt
+        //             check(downloadRes, { 'Download status is 200': (r) => r.status === 200 });
+        //             sleep(1); // Small sleep after download attempt
 
-                } else {
-                    console.error(`VU ${__VU} Orders Export: Failed to get download URL. Status: ${downloadUrlRes.status}, Body: ${downloadUrlRes.body}`);
-                    sleep(1); // Compensate sleep
-                }
-            } else if (pollSucceeded && jobStatus === 'completed' && !jobResultUrl) {
-                 console.warn(`VU ${__VU} Orders Export: Job ${batchJobId} completed but no file key found in result.`);
-                 sleep(1); // Compensate sleep
-            } else {
-                 // If polling failed, timed out, or job failed/canceled
-                 console.warn(`VU ${__VU} Orders Export: Skipping download for job ${batchJobId} due to status: ${jobStatus} or polling failure.`);
-                 sleep(1); // Compensate sleep
-            }
-            // --- End Optional Download ---
-
-        } // End if(batchJobId)
-
-    }); // End group('Orders Export')
+        //         } else {
+        //             console.error(`VU ${__VU} Orders Export: Failed to get download URL. Status: ${downloadUrlRes.status}, Body: ${downloadUrlRes.body}`);
+        //             sleep(1); // Compensate sleep
+        //         }
+        //     } else if (pollSucceeded && jobStatus === 'completed' && !jobResultUrl) {
+        //          console.warn(`VU ${__VU} Orders Export: Job ${batchJobId} completed but no file key found in result.`);
+        //          sleep(1); // Compensate sleep
+        //     } else {
+        //          // If polling failed, timed out, or job failed/canceled
+        //          console.warn(`VU ${__VU} Orders Export: Skipping download for job ${batchJobId} due to status: ${jobStatus} or polling failure.`);
+        //          sleep(1); // Compensate sleep
+        //     }
+        //     // --- End Optional Download ---
+        // }
+    });
 }

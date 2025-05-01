@@ -1,3 +1,10 @@
+page prompt:
+- Update file ordersPromotionGetlist.js to use the defined structure current project.
+- Using depot depotExternalID and outletExternalID from the config.
+- Add Check
+
+outletId,depot_id,depot_External_Id,outlet_External_Id
+
 issue GET 2 API khi search order number: 
 https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01H6X2SJQBKCBW1HKAEFSB42WD&q=12345
 https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01H6X2SJQBKCBW1HKAEFSB42WD&q=12345
@@ -41,3 +48,153 @@ https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/orders/order_01JSPFYD
 Depot:
 https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/orders/order_01JSP7AXVBDS6NPSHS72G1CG7Z
 ?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,items.variant.product.brand,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system
+
+// Helper to add specific metrics for this flow
+function addMetrics(response, isSuccessCheck = null) {
+    const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
+    const tags = { status: response.status }; // Add basic tags for specific metrics
+
+    orderUpdatingResponseTime.add(response.timings.duration, tags);
+    orderUpdatingSuccessRate.add(success, tags);
+    orderUpdatingRequestCount.add(1, tags);
+}
+
+// Helper to add specific metrics for this flow
+function addMetrics(response, isSuccessCheck = null) {
+    const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
+    const tags = { status: response.status }; // Add basic tags for specific metrics
+
+    orderCreationResponseTime.add(response.timings.duration, tags);
+    orderCreationSuccessRate.add(success, tags);
+    orderCreationRequestCount.add(1, tags);
+}
+
+
+`${BASE_URL}/admin/orders?expand=outlet&fields=id&order_type=standard&offset=0&limit=1&order=-created_at&include_count=false&depot_id=${depotId}&extended_status[0]=pending`
+`${BASE_URL}/admin/orders?expand=outlet&fields=id&order_type=standard&offset=0&limit=1&order=-created_at&include_count=false&depot_id=${depotId}&extended_status[0]=processing`
+`${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}&extended_status[0]=invoiced`
+
+
+/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01HGYXPR1M5HQ229XGC8RDQSJE&extended_status[0]=pending
+/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01HGYXPR1M5HQ229XGC8RDQSJE&extended_status[0]=processing
+/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01HGYXPR1M5HQ229XGC8RDQSJE&extended_status[0]=confirmed
+/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01HGYXPR1M5HQ229XGC8RDQSJE&extended_status[0]=ready_for_delivery
+/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01HGYXPR1M5HQ229XGC8RDQSJE&extended_status[0]=shipped
+/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01HGYXPR1M5HQ229XGC8RDQSJE&extended_status[0]=delivered
+/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01HGYXPR1M5HQ229XGC8RDQSJE&extended_status[0]=paid
+/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01HGYXPR1M5HQ229XGC8RDQSJE&extended_status[0]=cancelled
+
+https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/orders/order_01JSKNF96A12HNRB5FFM980TDW?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,items.variant.product.brand,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system
+https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/order-event?order_id=order_01JSKNF96A12HNRB5FFM980TDW
+
+
+	
+expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=depot_01H6X2SJQBKCBW1HKAEFSB42WD&q=12345
+expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`;
+
+
+{"orders":[],"count":0,"offset":0,"limit":20}
+{"outlets":[],"count":0,"offset":0,"limit":20}
+
+   ✓ checks...........................: 100.00% ✓ 296      ✗ 0  
+     data_received....................: 4.8 MB  31 kB/s
+     data_sent........................: 79 kB   511 B/s
+     default_custom_request_count.....: 292     1.883392/s
+     default_custom_response_time.....: avg=307.819856 min=34.333   med=146.718  max=1563.927 p(90)=819.8925  p(95)=1151.4395
+     default_custom_success_rate......: 100.00% ✓ 146      ✗ 0  
+     group_duration...................: avg=8.81s      min=61.52ms  med=8.11s    max=20.85s   p(90)=17.83s    p(95)=20.07s   
+     http_req_blocked.................: avg=3.12ms     min=3µs      med=10µs     max=454.92ms p(90)=16µs      p(95)=17.74µs  
+     http_req_connecting..............: avg=221.58µs   min=0s       med=0s       max=32.35ms  p(90)=0s        p(95)=0s       
+   ✓ http_req_duration................: avg=307.81ms   min=34.33ms  med=146.71ms max=1.56s    p(90)=819.89ms  p(95)=1.15s    
+       { expected_response:true }.....: avg=307.81ms   min=34.33ms  med=146.71ms max=1.56s    p(90)=819.89ms  p(95)=1.15s    
+     ✓ { group:::Login }..............: avg=96.58ms    min=62.53ms  med=96.58ms  max=130.64ms p(90)=123.83ms  p(95)=127.23ms 
+     ✓ { group:::Orders Create }......: avg=164.46ms   min=71.17ms  med=97.15ms  max=483.38ms p(90)=339.85ms  p(95)=406ms    
+     ✓ { group:::Orders Edit }........: avg=401.73ms   min=40.67ms  med=140.95ms max=1.56s    p(90)=1.09s     p(95)=1.31s    
+     ✓ { group:::Orders Export }......: avg=0s         min=0s       med=0s       max=0s       p(90)=0s        p(95)=0s       
+     ✓ { group:::Orders Filter }......: avg=147.84ms   min=44.61ms  med=87.14ms  max=329.5ms  p(90)=303.64ms  p(95)=315.16ms 
+     ✓ { group:::Orders Scrolling }...: avg=437.8ms    min=380.37ms med=429.55ms max=595.6ms  p(90)=496.76ms  p(95)=507.33ms 
+     ✓ { group:::Orders Search }......: avg=683.38ms   min=294.35ms med=611.98ms max=1.21s    p(90)=1.17s     p(95)=1.2s     
+     ✓ { group:::Orders Update }......: avg=59.13ms    min=34.33ms  med=54.77ms  max=90.76ms  p(90)=87.48ms   p(95)=90.24ms  
+   ✓ http_req_failed..................: 0.00%   ✓ 0        ✗ 146
+     http_req_receiving...............: avg=5.54ms     min=40µs     med=1.75ms   max=155.15ms p(90)=8.1ms     p(95)=14.48ms  
+     http_req_sending.................: avg=47.57µs    min=12µs     med=37µs     max=1.14ms   p(90)=63µs      p(95)=77.49µs  
+     http_req_tls_handshaking.........: avg=599.26µs   min=0s       med=0s       max=87.49ms  p(90)=0s        p(95)=0s       
+     http_req_waiting.................: avg=302.22ms   min=34.28ms  med=133.95ms max=1.49s    p(90)=819.72ms  p(95)=1.14s    
+     http_reqs........................: 146     0.941696/s
+     iteration_duration...............: avg=1m17s      min=1m15s    med=1m17s    max=1m19s    p(90)=1m18s     p(95)=1m19s    
+     iterations.......................: 2       0.0129/s
+     login_request_count..............: 2       0.0129/s
+   ✓ login_response_time..............: avg=75.6035    min=70.315   med=75.6035  max=80.892   p(90)=79.8343   p(95)=80.36315 
+   ✓ login_success_rate...............: 100.00% ✓ 2        ✗ 0  
+     order_creation_request_count.....: 16      0.1032/s
+   ✓ order_creation_response_time.....: avg=304.330312 min=71.175   med=100.8505 max=1425.713 p(90)=812.24    p(95)=1212.2465
+   ✓ order_creation_success_rate......: 100.00% ✓ 16       ✗ 0  
+     order_editing_request_count......: 28      0.180599/s
+   ✓ order_editing_response_time......: avg=460.229464 min=40.679   med=146.718  max=1563.927 p(90)=1196.6592 p(95)=1336.1803
+   ✓ order_editing_success_rate.......: 100.00% ✓ 28       ✗ 0  
+     order_export_request_count.......: 2       0.0129/s
+   ✓ order_export_response_time.......: avg=76.669     min=59.618   med=76.669   max=93.72    p(90)=90.3098   p(95)=92.0149  
+   ✓ order_export_success_rate........: 100.00% ✓ 2        ✗ 0  
+     order_filter_request_count.......: 36      0.232199/s
+   ✓ order_filter_response_time.......: avg=147.849694 min=44.619   med=87.142   max=329.502  p(90)=303.6435  p(95)=315.16275
+   ✓ order_filter_success_rate........: 100.00% ✓ 36       ✗ 0  
+     order_scrolling_request_count....: 20      0.128999/s
+   ✓ order_scrolling_response_time....: avg=437.808    min=380.376  med=429.5595 max=595.609  p(90)=496.7603  p(95)=507.3312 
+   ✓ order_scrolling_success_rate.....: 100.00% ✓ 20       ✗ 0  
+     order_search_request_count.......: 12      0.0774/s
+   ✓ order_search_response_time.......: avg=683.386833 min=294.354  med=611.982  max=1211.95  p(90)=1176.081  p(95)=1203.9057
+   ✓ order_search_success_rate........: 100.00% ✓ 12       ✗ 0  
+     order_updating_request_count.....: 28      0.180599/s
+   ✓ order_updating_response_time.....: avg=157.459929 min=34.333   med=76.2505  max=637.041  p(90)=477.6753  p(95)=581.0429 
+   ✓ order_updating_success_rate......: 100.00% ✓ 28       ✗ 0  
+     vus..............................: 1       min=1      max=1
+
+
+{
+  "promotionList": [
+    {
+      "id": "proallo_01JRHB5E9P3D92DCYKG9N97XYF",
+      "promotion_name": "[Distributor] PROGRAM PROMO BINTANG ARAK BREMER (berlaku akumulasi) - L66661 - 5 PCS + 1",
+      "promotion_scheme": "PROGRAM PROMO BINTANG ARAK BREMER (berlaku akumulasi) - L66661 - 5 PCS + 1",
+      "qap_id": "2025010129_2859",
+      "periode_start": "2025-01-16T00:00:00.000Z",
+      "periode_end": "2025-05-31T00:00:00.000Z",
+      "promo_type": "Free Products",
+      "activity_type": "on_invoice",
+      "sku": "L66661",
+      "buy": 5,
+      "free": 1,
+      "cap": 0,
+      "discount": 0,
+      "subtotal": 0,
+      "distributor": "302-BBI",
+      "banner_url": null,
+      "include_empties": true,
+      "user_group": null,
+      "budget": "9000000000"
+    },
+    {
+      "id": "proallo_01JRHB5EB03D3GAZT27ZCY5J5H",
+      "promotion_name": "[Distributor] PROGRAM PROMO BINTANG ARAK PINT (berlaku akumulasi) - L66662 - 5 PCS + 1",
+      "promotion_scheme": "PROGRAM PROMO BINTANG ARAK BREMER (berlaku akumulasi) - L66662 - 5 PCS + 1",
+      "qap_id": "2025010129_2860",
+      "periode_start": "2025-01-16T00:00:00.000Z",
+      "periode_end": "2025-05-31T00:00:00.000Z",
+      "promo_type": "Free Products",
+      "activity_type": "on_invoice",
+      "sku": "L66662",
+      "buy": 5,
+      "free": 1,
+      "cap": 0,
+      "discount": 0,
+      "subtotal": 0,
+      "distributor": "302-BBI",
+      "banner_url": null,
+      "include_empties": true,
+      "user_group": null,
+      "budget": "9000000000"
+    }
+  ]
+}
+
+{"promotionList":[]}

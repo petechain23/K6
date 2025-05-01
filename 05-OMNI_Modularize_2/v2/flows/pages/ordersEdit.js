@@ -1,13 +1,13 @@
 // v2/flows/pages/ordersEdit.js
 import { group, check, sleep } from 'k6';
 import {
-    BASE_URL, ORDER_EDIT_URL, REGION_ID, LOCATION_ID_EDIT, // Config constants
+    BASE_URL, ORDER_EDIT_URL, REGION_ID, LOCATION_ID, // Config constants
     // Import ALL variant IDs used in the edit payload from config.js
-    VARIANT_ID_EDIT_1, VARIANT_ID_EDIT_2, VARIANT_ID_EDIT_3, VARIANT_ID_EDIT_4,
-    VARIANT_ID_EDIT_5, VARIANT_ID_EDIT_6, VARIANT_ID_EDIT_7, VARIANT_ID_EDIT_8,
-    VARIANT_ID_EDIT_9, VARIANT_ID_EDIT_10, // Add 11 and 12 if used
+    VARIANT_ID_1, VARIANT_ID_2, VARIANT_ID_3, VARIANT_ID_4,
+    VARIANT_ID_5, VARIANT_ID_6, VARIANT_ID_7, VARIANT_ID_8,
+    VARIANT_ID_9, VARIANT_ID_10, // Add 11 and 12 if used
     // Import specific metrics for this flow
-    editOrderResponseTime, editOrderSuccessRate, editOrderRequestCount,
+    orderEditingRequestCount, orderEditingSuccessRate, orderEditingResponseTime
 } from '../config.js'; // Adjust path as needed
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
 
@@ -17,9 +17,9 @@ function addMetrics(response, isSuccessCheck = null) {
     const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
     const tags = { status: response.status }; // Add basic tags for specific metrics
 
-    editOrderResponseTime.add(response.timings.duration, tags);
-    editOrderSuccessRate.add(success, tags);
-    editOrderRequestCount.add(1, tags);
+    orderEditingResponseTime.add(response.timings.duration, tags);
+    orderEditingSuccessRate.add(success, tags);
+    orderEditingRequestCount.add(1, tags);
 }
 
 export function ordersEditFlow(authToken, configData) {
@@ -95,41 +95,45 @@ export function ordersEditFlow(authToken, configData) {
             // EXPANDED CALL
             const stockLocEditRes = makeRequest(
                 'get', // method
-                `${BASE_URL}/admin/stock-locations?depot_id=${depotId}&offset=0&limit=1000`, // url
-                null, // body
-                { headers: createHeaders(authToken), tags: groupTags }, // params
-                '/admin/stock-locations (For Edit)' // name
+                `${BASE_URL}/admin/stock-locations?depot_id=${depotId}&offset=0&limit=1000`, null,
+                { headers: createHeaders(authToken), tags: groupTags },
+                '/admin/stock-locations (For Edit)'
             );
             addMetrics(stockLocEditRes);
+            if (stockLocEditRes.status >= 400) { // Log only errors
+                console.error(`VU ${__VU} StockLoc Error: Status ${stockLocEditRes.status}, Body: ${stockLocEditRes.body}`);
+            }
             // EXPANDED CALL
             const depotVariantsEditRes = makeRequest(
                 'get', // method
-                `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${dynamicOutletId}&include_empties_deposit=true&limit=20&offset=0&q=&location_id=${LOCATION_ID_EDIT}`, // url
-                null, // body
-                { headers: createHeaders(authToken), tags: groupTags }, // params
-                '/admin/variants/depot-variants (For Edit)' // name
+                `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${dynamicOutletId}&include_empties_deposit=true&limit=20&offset=0&q=&location_id=${LOCATION_ID}`, null,
+                { headers: createHeaders(authToken), tags: groupTags },
+                '/admin/variants/depot-variants (For Edit)'
             );
             addMetrics(depotVariantsEditRes);
 
-            sleep(3); // Keep sleep before performing edit
+            if (depotVariantsEditRes.status >= 400) { // Log only errors
+                console.error(`VU ${__VU} DepotVariants Error: Status ${depotVariantsEditRes.status}, Body: ${depotVariantsEditRes.body}`);
+            }
+            sleep(1); // Keep sleep before performing edit
 
             // Perform Edit - Using the provided orderIdToEdit
             const editPayload = {
-                metadata: { external_doc_number: `editing order VU ${__VU}` }, // Example metadata
+                metadata: { external_doc_number: `editing order` },
                 items: [ // Use VARIANT_ID constants imported from config.js
-                    { variant_id: VARIANT_ID_EDIT_1, quantity: 1, metadata: { item_category: 'YLGA' } },
-                    { variant_id: VARIANT_ID_EDIT_2, quantity: 8, metadata: { item_category: 'YLGA' } },
-                    { variant_id: VARIANT_ID_EDIT_3, quantity: 60, metadata: { item_category: 'YLGA' } },
-                    { variant_id: VARIANT_ID_EDIT_4, quantity: 16, metadata: { item_category: 'YLGA' } },
-                    { variant_id: VARIANT_ID_EDIT_5, quantity: 1, metadata: { item_category: 'YRLN' } },
-                    { variant_id: VARIANT_ID_EDIT_6, quantity: 1, metadata: { item_category: 'YVGA' } },
-                    { variant_id: VARIANT_ID_EDIT_7, quantity: 2, metadata: { item_category: 'YVGA' } },
-                    { variant_id: VARIANT_ID_EDIT_8, quantity: 3, metadata: { item_category: 'YVGA' } },
-                    { variant_id: VARIANT_ID_EDIT_9, quantity: 4, metadata: { item_category: 'YVGO' } },
-                    { variant_id: VARIANT_ID_EDIT_10, quantity: 5, metadata: { item_category: 'YVGA' } }
-                    // Add VARIANT_ID_EDIT_11, VARIANT_ID_EDIT_12 if needed
+                    { variant_id: VARIANT_ID_1, quantity: 1, metadata: { item_category: 'YLGA' } },
+                    { variant_id: VARIANT_ID_2, quantity: 8, metadata: { item_category: 'YLGA' } },
+                    { variant_id: VARIANT_ID_3, quantity: 60, metadata: { item_category: 'YLGA' } },
+                    { variant_id: VARIANT_ID_4, quantity: 16, metadata: { item_category: 'YLGA' } },
+                    { variant_id: VARIANT_ID_5, quantity: 1, metadata: { item_category: 'YRLN' } },
+                    { variant_id: VARIANT_ID_6, quantity: 1, metadata: { item_category: 'YVGA' } },
+                    { variant_id: VARIANT_ID_7, quantity: 2, metadata: { item_category: 'YVGA' } },
+                    { variant_id: VARIANT_ID_8, quantity: 3, metadata: { item_category: 'YVGA' } },
+                    { variant_id: VARIANT_ID_9, quantity: 4, metadata: { item_category: 'YVGO' } },
+                    { variant_id: VARIANT_ID_10, quantity: 5, metadata: { item_category: 'YVGA' } }
+                    // Add VARIANT_ID_11, VARIANT_ID_12 if needed
                 ],
-                location_id: LOCATION_ID_EDIT, // Use constant from config.js
+                location_id: LOCATION_ID, // Use constant from config.js
             };
             const editResponse = makeRequest(
                 'post',
@@ -144,11 +148,11 @@ export function ordersEditFlow(authToken, configData) {
             // --- ADDED CHECK ---
             check(editResponse, {
                 'Edit Order - status is 200': (r) => r.status === 200,
-                'Edit Order - metadata external_doc_number updated': (r) => {
+                'Edit Order - external_doc_number updated': (r) => {
                     try {
                         if (r.status !== 200) return false;
                         const body = r.json();
-                        return body?.order?.metadata?.external_doc_number === `editing order VU ${__VU}`;
+                        return body?.order?.metadata?.external_doc_number === `editing order`;
                     } catch (e) {
                         console.error(`VU ${__VU} Edit Order Check: Failed to parse JSON - ${e}`);
                         return false;
@@ -157,7 +161,7 @@ export function ordersEditFlow(authToken, configData) {
             });
             // --- END ADDED CHECK ---
 
-            sleep(3); // Keep sleep after performing edit
+            sleep(1); // Keep sleep after performing edit
 
             // --- Check if Edit was successful (based on status) and Refresh ---
             const isEditSuccessful = editResponse.status === 200;
@@ -205,11 +209,11 @@ export function ordersEditFlow(authToken, configData) {
                 );
                 addMetrics(orderEventAfterEditRes);
 
-                sleep(2); // Keep sleep after post-edit checks
+                sleep(1); // Keep sleep after post-edit checks
 
             } else {
                 console.warn(`VU ${__VU} Orders Edit: Edit failed for order ${orderIdToEdit} (Status: ${editResponse.status}). Skipping post-edit checks.`);
-                sleep(2); // Compensate for skipped sleep
+                sleep(1); // Compensate for skipped sleep
             }
             // --- End Conditional Refresh ---
 
@@ -217,7 +221,7 @@ export function ordersEditFlow(authToken, configData) {
             // This block is reached if fetching the outlet ID failed
             console.warn(`VU ${__VU} Orders Edit: Skipping Prepare/Edit sequence for order ${orderIdToEdit} because its outlet ID could not be determined.`);
             // Compensate for sleeps in the skipped block
-            sleep(3 + 3 + 2); // prepare(3) + edit(3) + post-edit(2)
+            sleep(2);
         }
         // --- End Prepare and Edit Order ---
 

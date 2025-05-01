@@ -2,10 +2,7 @@
 import http from 'k6/http'; // Ensure http is imported
 import { check } from 'k6';
 import {
-    FRONTEND_URL,
-    customTrendResponseTime,
-    customTrendSuccessRate,
-    customTrendRequestCount
+    FRONTEND_URL, defaultCustomResponseTime, defaultCustomSuccessRate, defaultCustomRequestCount
 } from './config.js';
 
 // ... createHeaders function remains the same ...
@@ -38,7 +35,6 @@ export function createHeaders(authToken, specificHeaders = {}) {
     return headers;
 }
 
-
 /**
  * Makes an HTTP request, adds basic checks, and records GENERIC metrics.
  * @param {string} method - HTTP method (e.g., 'get', 'post', 'del').
@@ -64,17 +60,18 @@ export function makeRequest(method, url, body, params = {}, name) {
     // Add tags for better filtering in results
     // NOW response.status will be a valid number (e.g., 200, 404, 500)
     const tags = { name: name, method: method.toUpperCase(), status: response.status, group: params.tags?.group || 'N/A' };
-    customTrendRequestCount.add(1, tags); // This should now work
+    defaultCustomRequestCount.add(1, tags);
 
-    // Basic check for success (2xx/3xx)
+    // Basic check for success (2xx)
     const isSuccess = response.status >= 200 && response.status < 400;
     check(response, {
-        [`${name} - status is 2xx/3xx`]: (r) => r.status >= 200 && r.status < 400,
+        [`${name} - status is 2xx`]: (r) => r.status >= 200 && r.status < 400,
     });
 
     // Add data to generic metrics
-    customTrendResponseTime.add(response.timings.duration, tags);
-    customTrendSuccessRate.add(isSuccess, tags); // isSuccess is boolean (true/false), which is valid for Rate metric
+    defaultCustomResponseTime.add(response.timings.duration, tags);
+    defaultCustomSuccessRate.add(isSuccess, tags); // isSuccess is boolean (true/false), which is valid for Rate metric
+    // defaultCustomRequestCount.add(1, tags); // Increment the request count
 
     return response; // Return the actual k6 response object
 }

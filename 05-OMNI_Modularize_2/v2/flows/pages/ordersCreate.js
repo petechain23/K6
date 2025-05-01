@@ -1,20 +1,20 @@
 // v2/flows/ordersCreate.js
 import { group, check, sleep } from 'k6';
 import {
-    BASE_URL, ORDER_CREATE_URL, REGION_ID, LOCATION_ID_EDIT,
-    VARIANT_ID_EDIT_6, VARIANT_ID_EDIT_10, VARIANT_ID_EDIT_11, VARIANT_ID_EDIT_12, // Use IDs from config
-    orderCreateResponseTime, orderCreateSuccessRate, orderCreateRequestCount, // Specific metrics
+    BASE_URL, ORDER_CREATE_URL, REGION_ID, LOCATION_ID,
+    VARIANT_ID_6, VARIANT_ID_10, VARIANT_ID_11, VARIANT_ID_12, // Use IDs from config
+    orderCreationRequestCount, orderCreationResponseTime, orderCreationSuccessRate, // Specific metrics
 } from '../config.js'; // Adjust path
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path
 
 // Helper to add specific metrics for this flow
 function addMetrics(response, isSuccessCheck = null) {
-    const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
+    const success = isSuccessCheck !== null ? isSuccessCheck : (response.status === 200);
     const tags = { status: response.status }; // Add basic tags for specific metrics
 
-    orderCreateResponseTime.add(response.timings.duration, tags);
-    orderCreateSuccessRate.add(success, tags);
-    orderCreateRequestCount.add(1, tags);
+    orderCreationResponseTime.add(response.timings.duration, tags);
+    orderCreationSuccessRate.add(success, tags);
+    orderCreationRequestCount.add(1, tags);
 }
 
 export function ordersCreateFlow(authToken, configData) { // Pass configData like outletId
@@ -58,53 +58,41 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
 
         sleep(0.5);
 
-        // --- Dynamic ID extraction and Conditional View ---
-        let orderIdView3 = null;
-        let foundThirdOrder = false;
-        try {
-             if (depotFilteredOrderCreate.status === 200) {
-                const depotFilteredListBody = depotFilteredOrderCreate.json();
-                if (depotFilteredListBody?.orders?.length > 0 && depotFilteredListBody.orders[0].id) {
-                    orderIdView3 = depotFilteredListBody.orders[0].id;
-                    foundThirdOrder = true;
-                    console.log(`VU ${__VU} Orders Create: Found order ID for view: ${orderIdView3}`);
-                } else { console.warn(`VU ${__VU} Orders Create: List successful but no orders found.`); }
-            } else { console.error(`VU ${__VU} Orders Create: Failed to get list. Status: ${depotFilteredOrderCreate.status}`); }
-        } catch (e) { console.error(`VU ${__VU} Orders Create: Failed to parse list JSON. Error: ${e.message}`); }
+        // // --- Dynamic ID extraction and Conditional View ---
+        // let orderIdView3 = null;
+        // let foundThirdOrder = false;
+        // try {
+        //      if (depotFilteredOrderCreate.status === 200) {
+        //         const depotFilteredListBody = depotFilteredOrderCreate.json();
+        //         if (depotFilteredListBody?.orders?.length > 0 && depotFilteredListBody.orders[0].id) {
+        //             orderIdView3 = depotFilteredListBody.orders[0].id;
+        //             foundThirdOrder = true;
+        //             console.log(`VU ${__VU} Orders Create: Found order ID for view: ${orderIdView3}`);
+        //         } else { console.warn(`VU ${__VU} Orders Create: List successful but no orders found.`); }
+        //     } else { console.error(`VU ${__VU} Orders Create: Failed to get list. Status: ${depotFilteredOrderCreate.status}`); }
+        // } catch (e) { console.error(`VU ${__VU} Orders Create: Failed to parse list JSON. Error: ${e.message}`); }
 
-        if (foundThirdOrder && orderIdView3) {
-            console.log(`VU ${__VU} Orders Create: Proceeding to view details for order ${orderIdView3}`);
-            const viewDetailsResponse = makeRequest('get', `${BASE_URL}/admin/orders/${orderIdView3}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/{id} (View Details 2)');
-            addMetrics(viewDetailsResponse);
-            const viewEventResponse = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${orderIdView3}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (View Details 2)');
-            addMetrics(viewEventResponse);
-            sleep(2);
-        } else {
-             console.warn(`VU ${__VU} Orders Create: Skipping 'View Order 2 Details'...`);
-             sleep(2);
-        }
-        // --- End Conditional View ---
+        // if (foundThirdOrder && orderIdView3) {
+        //     console.log(`VU ${__VU} Orders Create: Proceeding to view details for order ${orderIdView3}`);
+        //     const viewDetailsResponse = makeRequest('get', `${BASE_URL}/admin/orders/${orderIdView3}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/{id} (View Details 2)');
+        //     addMetrics(viewDetailsResponse);
+        //     const viewEventResponse = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${orderIdView3}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (View Details 2)');
+        //     addMetrics(viewEventResponse);
+        //     sleep(2);
+        // } else {
+        //      console.warn(`VU ${__VU} Orders Create: Skipping 'View Order 2 Details'...`);
+        //      sleep(2);
+        // }
+        // // --- End Conditional View ---
 
-        // Scrolling Outlet list
-        for (let i = 0; i < 5; i++) {
-            const offset = i * 20;
-            const outletPayload = { outletDepots: [depotId], include_address: true };
-            const outletListResponse = makeRequest('post', `${BASE_URL}/admin/outlets/fetch?offset=${offset}&limit=20&q=`, outletPayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, `/admin/outlets/fetch (List Outlets ${i + 1})`);
-            addMetrics(outletListResponse);
-            sleep(Math.random() * 1 + 0.5);
-        }
-
-        // Prepare for Order Create
-        // const stockLocResponse = makeRequest('get', `${BASE_URL}/admin/stock-locations?depot_id=${depotId}&offset=0&limit=1000`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/stock-locations (For Order Create)');
-        // addMetrics(stockLocResponse);
-
-        // const depotVariantsResponse1 = makeRequest('get', `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${outletId}&location_id=${LOCATION_ID_EDIT}&&include_empties_deposit=true&allow_empties_return=false&limit=20&offset=0&q=&expand=product.brand`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/variants/depot-variants (For Order Create)');
-        // addMetrics(depotVariantsResponse1);
-        // sleep(1);
-
-        // const depotVariantsResponse2 = makeRequest('get', `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${outletId}&location_id=${LOCATION_ID_EDIT}&include_empties_deposit=true&allow_empties_return=false&limit=20&offset=0&q=&expand=product.brand&last_id=variant_01H77162NRR4FXV8QPWKMFSPJD`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/variants/depot-variants (For Order Create -last_id)');
-        // addMetrics(depotVariantsResponse2);
-        // sleep(1);
+        // // Scrolling Outlet list
+        // for (let i = 0; i < 5; i++) {
+        //     const offset = i * 20;
+        //     const outletPayload = { outletDepots: [depotId], include_address: true };
+        //     const outletListResponse = makeRequest('post', `${BASE_URL}/admin/outlets/fetch?offset=${offset}&limit=20&q=`, outletPayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, `/admin/outlets/fetch (List Outlets ${i + 1})`);
+        //     addMetrics(outletListResponse);
+        //     sleep(Math.random() * 1 + 0.5);
+        // }
 
         // Perform Create Order
         const createPayload = {
@@ -119,12 +107,12 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
             outlet_id: outletId,
             include_brand: true,
             metadata: { source_system: 'OMS' },
-            location_id: LOCATION_ID_EDIT,
+            location_id: LOCATION_ID,
             items: [
-                { variant_id: VARIANT_ID_EDIT_6, quantity: 1, metadata: {} },
-                { variant_id: VARIANT_ID_EDIT_10, quantity: 2, metadata: {} },
-                { variant_id: VARIANT_ID_EDIT_11, quantity: 3, metadata: {} },
-                { variant_id: VARIANT_ID_EDIT_12, quantity: 4, metadata: {} }
+                { variant_id: VARIANT_ID_6, quantity: 1, metadata: {} },
+                { variant_id: VARIANT_ID_10, quantity: 2, metadata: {} },
+                { variant_id: VARIANT_ID_11, quantity: 3, metadata: {} },
+                { variant_id: VARIANT_ID_12, quantity: 4, metadata: {} }
             ]
         };
         const createOrderResponse = makeRequest('post', `${BASE_URL}/${ORDER_CREATE_URL}`, createPayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, '/admin/orders/create (Order Create)');

@@ -1,6 +1,6 @@
 // v2/flows/login.js
 import { group, check, sleep } from 'k6';
-import { BASE_URL, AUTH_URL, FRONTEND_URL } from '../config.js'; // Adjust path
+import { BASE_URL, AUTH_URL, loginRequestCount, loginResponseTime, loginSuccessRate } from '../config.js'; // Adjust path
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path
 // Import login-specific metrics from config.js if you define them
 
@@ -27,9 +27,9 @@ export function loginFlow(userEmail, userPassword) {
         );
 
         // Add specific login metrics here if needed, e.g.:
-        // loginResponseTime.add(response.timings.duration);
-        // loginSuccessRate.add(response.status === 200);
-        // loginRequestCount.add(1);
+        loginResponseTime.add(response.timings.duration);
+        loginSuccessRate.add(response.status === 200);
+        loginRequestCount.add(1);
 
         let userId = null;
         try {

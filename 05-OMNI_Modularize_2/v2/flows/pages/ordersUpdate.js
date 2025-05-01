@@ -1,11 +1,10 @@
-// v2/flows/ordersUpdate.js
+// v2/flows/pages/ordersUpdate.js
 import { group, check, sleep } from 'k6';
 import {
-    BASE_URL, DEPOT_ID_FILTER, REGION_ID, LOCATION_ID_EDIT, // Base config
+    BASE_URL, // Base config - depotId will come from configData
     ORDER_EXTEND_STATUS_UPDATE_URL, ORDER_PENDINGTOPROCESSING_URL, // Specific URLs
     ORDER_INVENTORY_CHECK_URL, ORDER_CREDIT_CHECK_URL, ORDER_PROMOTION_CHECK_URL,
-    CANCELLATION_REASON_ID, // IDs
-    updateOrderResponseTime, updateOrderSuccessRate, updateOrderRequestCount, // Specific metrics
+    orderUpdatingRequestCount, orderUpdatingResponseTime, orderUpdatingSuccessRate
 } from '../config.js'; // Adjust path as needed
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
 
@@ -15,23 +14,39 @@ function addMetrics(response, isSuccessCheck = null) {
     const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
     const tags = { status: response.status }; // Add basic tags for specific metrics
 
-    updateOrderResponseTime.add(response.timings.duration, tags);
-    updateOrderSuccessRate.add(success, tags);
-    updateOrderRequestCount.add(1, tags);
+    orderUpdatingResponseTime.add(response.timings.duration, tags);
+    orderUpdatingSuccessRate.add(success, tags);
+    orderUpdatingRequestCount.add(1, tags);
 }
 
 export function ordersUpdateFlow(authToken, configData) {
-    // Extract specific order IDs needed for this flow from the data passed by main.js
-    const { orderIdForStatusUpdate, orderIdToMarkProcessing } = configData;
+    // Extract specific order IDs and depotId needed for this flow from the data passed by main.js
+    // orderIdForStatusUpdate is intended for the main status update sequence (processing -> checks -> ready -> shipped -> delivered)
+    // orderIdToMarkProcessing is optional, used if we need to specifically mark a known pending order first
+    // depotId is required for filtering and context
+    const { orderIdForStatusUpdate, depotId } = configData; // Removed orderIdToMarkProcessing from extraction as it's no longer used
 
     group('Orders Update', function () {
+        // --- Initial Checks ---
         if (!authToken) {
             console.warn(`VU ${__VU} Orders Update: Skipping flow due to missing auth token.`);
             return;
         }
+        if (!depotId) {
+            console.warn(`VU ${__VU} Orders Update: Skipping flow due to missing depotId in configData.`);
+            return;
+        }
+        // orderIdForStatusUpdate is crucial for the main part of this flow
+        if (!orderIdForStatusUpdate) { // Now mandatory
+            console.error(`VU ${__VU} Orders Update: Skipping flow because orderIdForStatusUpdate was not provided in configData.`);
+            return; // Stop execution if the required ID is missing
+        }
+        // --- End Initial Checks ---
 
+        console.log(`VU ${__VU} Orders Update: Running with Depot ID: ${depotId}. Target Order for Status Update: ${orderIdForStatusUpdate}`);
         const groupTags = { group: 'Orders Update' }; // Define tags for makeRequest
 
+        /*
         // --- Initial Data Loading ---
         // These are often common across pages, consider if they truly belong only here
         // or if some could be cached/shared differently if performance is an issue.
@@ -41,71 +56,125 @@ export function ordersUpdateFlow(authToken, configData) {
         addMetrics(batchJobsInitialRes);
         const storeRes = makeRequest('get', `${BASE_URL}/admin/store/`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/store/');
         addMetrics(storeRes);
-        const numReadyInvoicedRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced');
-        addMetrics(numReadyInvoicedRes);
-        const numActiveRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active');
-        addMetrics(numActiveRes);
-        const numNeedReviewRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review');
-        addMetrics(numNeedReviewRes);
+        // Load counts for ALL depots initially
+        const numReadyInvoicedAllRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (All Depots)');
+        addMetrics(numReadyInvoicedAllRes);
+        const numActiveAllRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (All Depots)');
+        addMetrics(numActiveAllRes);
+        const numNeedReviewAllRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (All Depots)');
+        addMetrics(numNeedReviewAllRes);
 
-        // --- Initial List View & Select Depot ---
-        // (Keeping the view/select depot logic as it was in the original group)
-        const initialListResponse = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List orders page)');
+        // --- Initial List View (All Depots) & Select Specific Depot ---
+        const initialListResponse = makeRequest(
+            'get',
+            `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false`,
+            null,
+            { headers: createHeaders(authToken), tags: groupTags },
+            '/admin/orders (List orders page - All Depots)'
+        );
         addMetrics(initialListResponse);
         sleep(1);
         // ... [Optional: Conditional View Order 1 logic - addMetrics if kept] ...
 
-        const numReadySelectDepotRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (Select Depot)');
+        // --- Load counts for the SPECIFIC depot ---
+        const numReadySelectDepotRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (Select Depot)');
         addMetrics(numReadySelectDepotRes);
-        const numActiveSelectDepotRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (Select Depot)');
+        const numActiveSelectDepotRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (Select Depot)');
         addMetrics(numActiveSelectDepotRes);
-        const numNeedReviewSelectDepotRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (Select Depot)');
+        const numNeedReviewSelectDepotRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (Select Depot)');
         addMetrics(numNeedReviewSelectDepotRes);
 
-        const depotFilteredListResponse = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List orders page, Select Depot)');
+        // --- Load list filtered by the SPECIFIC depot ---
+        const depotFilteredListResponse = makeRequest(
+            'get',
+            `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`,
+            null,
+            { headers: createHeaders(authToken), tags: groupTags },
+            '/admin/orders (List orders page, Select Depot)'
+        );
         addMetrics(depotFilteredListResponse);
         sleep(0.5);
         // ... [Optional: Conditional View Order 2 logic - addMetrics if kept] ...
 
-        // --- Scrolling Orders List ---
+        // --- Scrolling Orders List (Filtered by Depot) ---
         for (let i = 1; i < 5; i++) {
             const offset = i * 20;
-            const scrollListRes = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&offset=${offset}&...&depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/orders (List Page ${i + 1}, Scrolling orders list)`);
+            const scrollListRes = makeRequest(
+                'get',
+                `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=${offset}&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`,
+                null,
+                { headers: createHeaders(authToken), tags: groupTags },
+                `/admin/orders (List Page ${i + 1}, Scrolling orders list)`
+            );
             addMetrics(scrollListRes);
             sleep(Math.random() * 1 + 0.5);
         }
 
-        // --- NOTE: Removed the misplaced 'Edit' block that was here in distributors.js ---
         // The logic for filtering processing orders and POSTing to /admin/orders/edit/{id}
         // belongs in the ordersEdit.js flow.
 
-        // --- Search Orders ---
+        // --- Search Orders (Filtered by Depot) ---
         // By Number
-        const search_numeric = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}&q=12345`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (Search 12345)');
+        const search_numeric = makeRequest(
+            'get',
+            `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}&q=12345`,
+            null,
+            { headers: createHeaders(authToken), tags: groupTags },
+            '/admin/orders (Search 12345)'
+        );
         addMetrics(search_numeric);
         // ... [Conditional View Search Result logic - addMetrics if kept] ...
         sleep(0.5);
-        const clearSearch1Res = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search1)');
+        // Clear Search (reload depot-filtered list)
+        const clearSearch1Res = makeRequest(
+            'get',
+            `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`,
+            null,
+            { headers: createHeaders(authToken), tags: groupTags },
+            '/admin/orders (List After Clear Search1)'
+        );
         addMetrics(clearSearch1Res);
         sleep(1);
 
         // By Text
-        const search_text = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}&q=OMS`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (Search OMS)');
+        const search_text = makeRequest(
+            'get',
+            `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}&q=OMS`,
+            null,
+            { headers: createHeaders(authToken), tags: groupTags },
+            '/admin/orders (Search OMS)'
+        );
         addMetrics(search_text);
         // ... [Conditional View Search Result logic - addMetrics if kept] ...
         sleep(0.5);
-        const clearSearch2Res = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search2)');
+        // Clear Search (reload depot-filtered list)
+        const clearSearch2Res = makeRequest(
+            'get',
+            `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`,
+            null,
+            { headers: createHeaders(authToken), tags: groupTags },
+            '/admin/orders (List After Clear Search2)'
+        );
         addMetrics(clearSearch2Res);
         sleep(1);
 
-        // --- Mark Pending Order as Processing ---
+        */
+
+        // --- Mark Pending Order as Processing (REMOVED as per request) ---
+        /*
         let targetPendingOrderId = orderIdToMarkProcessing; // Use ID from configData if available
         let foundPendingOrder = !!targetPendingOrderId; // Assume found if ID provided
 
         if (!targetPendingOrderId) {
             // If no ID provided, try filtering to find one
-            console.log(`VU ${__VU} Orders Update: No specific pending order ID provided, filtering...`);
-            const status_pending = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}&extended_status[0]=pending`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (Filter Status: Pending)');
+            console.log(`VU ${__VU} Orders Update: No specific pending order ID provided (orderIdToMarkProcessing), filtering within depot ${depotId}...`);
+            const status_pending = makeRequest(
+                'get',
+                `${BASE_URL}/admin/orders?expand=outlet&fields=id&order_type=standard&offset=0&limit=1&order=-created_at&include_count=false&depot_id=${depotId}&extended_status[0]=pending`, // Limit 1, only need ID
+                null,
+                { headers: createHeaders(authToken), tags: groupTags },
+                '/admin/orders (Filter Status: Pending)'
+            );
             addMetrics(status_pending);
             sleep(0.5);
             try {
@@ -115,11 +184,11 @@ export function ordersUpdateFlow(authToken, configData) {
                         targetPendingOrderId = body.orders[0].id;
                         foundPendingOrder = true;
                         console.log(`VU ${__VU} Orders Update: Found Pending Order via filter: ${targetPendingOrderId}`);
-                    } else { console.warn(`VU ${__VU} Orders Update: Filter successful but no pending orders found.`); }
-                } else { console.error(`VU ${__VU} Orders Update: Filter failed. Status: ${status_pending.status}`); }
+                    } else { console.warn(`VU ${__VU} Orders Update: Filter successful but no pending orders found in depot ${depotId}.`); }
+                } else { console.error(`VU ${__VU} Orders Update: Pending filter failed. Status: ${status_pending.status}`); }
             } catch (e) { console.error(`VU ${__VU} Orders Update: Failed to parse pending filter JSON. Error: ${e.message}`); }
         } else {
-             console.log(`VU ${__VU} Orders Update: Using provided pending order ID: ${targetPendingOrderId}`);
+             console.log(`VU ${__VU} Orders Update: Using provided pending order ID (orderIdToMarkProcessing): ${targetPendingOrderId}`);
         }
 
         if (foundPendingOrder && targetPendingOrderId) {
@@ -131,7 +200,14 @@ export function ordersUpdateFlow(authToken, configData) {
             // addMetrics(eventBeforeMarkRes);
             // sleep(0.5);
 
-            const markProcessingRes = makeRequest('post', `${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${targetPendingOrderId}`, { is_processing: true }, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, '/admin/orders/{id} (Mark Processing)');
+            const markProcessingPayload = { is_processing: true };
+            const markProcessingRes = makeRequest(
+                'post',
+                `${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${targetPendingOrderId}`, // Uses specific URL constant
+                markProcessingPayload,
+                { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
+                '/admin/orders/{id} (Mark Processing)'
+            );
             addMetrics(markProcessingRes, markProcessingRes.status === 200); // Expect 200 OK for this update
 
             sleep(0.5);
@@ -141,167 +217,244 @@ export function ordersUpdateFlow(authToken, configData) {
             sleep(1);
         } else {
             console.warn(`VU ${__VU} Orders Update: Skipping 'Mark Processing' block as no suitable pending order was found/provided.`);
-            sleep(2); // Compensate for skipped sleeps
+            sleep(0.5 + 0.5 + 1); // Compensate for skipped sleeps (filter + post + event)
         }
+        */
 
-        // --- Perform Checks & Status Updates on a Processing Order ---
-        let targetProcessingOrderId = orderIdForStatusUpdate; // Use ID from configData if available
-        let foundProcessingOrder = !!targetProcessingOrderId;
+        // --- Perform Checks & Status Updates on a Processing Order (Using orderIdForStatusUpdate) ---
+        // Directly use the mandatory orderIdForStatusUpdate provided via configData
+        const targetProcessingOrderId = orderIdForStatusUpdate;
+        console.log(`VU ${__VU} Orders Update: Proceeding with checks/status updates for order ${targetProcessingOrderId}.`);
 
-        if (!targetProcessingOrderId) {
-            // If no ID provided, try filtering to find one
-             console.log(`VU ${__VU} Orders Update: No specific processing order ID provided, filtering...`);
-            const status_processing = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}&extended_status[0]=processing`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (Filter Status: Processing)');
-            addMetrics(status_processing);
-            sleep(0.5);
-             try {
-                if (status_processing.status === 200) {
-                    const body = status_processing.json();
-                    if (body?.orders?.length > 0 && body.orders[0].id) {
-                        targetProcessingOrderId = body.orders[0].id;
-                        foundProcessingOrder = true;
-                        console.log(`VU ${__VU} Orders Update: Found Processing Order via filter: ${targetProcessingOrderId}`);
-                    } else { console.warn(`VU ${__VU} Orders Update: Filter successful but no processing orders found.`); }
-                } else { console.error(`VU ${__VU} Orders Update: Filter failed. Status: ${status_processing.status}`); }
-            } catch (e) { console.error(`VU ${__VU} Orders Update: Failed to parse processing filter JSON. Error: ${e.message}`); }
-        } else {
-             console.log(`VU ${__VU} Orders Update: Using provided processing order ID: ${targetProcessingOrderId}`);
-        }
+        // Optional: View before checks
+        // const viewBeforeChecksRes = makeRequest('get', `${BASE_URL}/admin/orders/${targetProcessingOrderId}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,items.variant.product.brand,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/{id} (View Before Checks)');
+        // addMetrics(viewBeforeChecksRes);
+        // const eventBeforeChecksRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (View Before Checks)');
+        // addMetrics(eventBeforeChecksRes);
+        // sleep(1);
 
+        // Perform Checks
+        const invCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/inventory-checked/{id}');
+        addMetrics(invCheckRes, invCheckRes.status === 200); // Assuming 200 OK
+        // Optional: View event after check
+        const eventAfterInvCheckRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (After Inv Check)');
+        addMetrics(eventAfterInvCheckRes);
 
-        if (foundProcessingOrder && targetProcessingOrderId) {
-            console.log(`VU ${__VU} Orders Update: Proceeding with checks/status updates for order ${targetProcessingOrderId}.`);
+        const creditCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/credit-checked/{id}');
+        addMetrics(creditCheckRes, creditCheckRes.status === 200); // Assuming 200 OK
+        // Optional: View event after check
+        const eventAfterCreditCheckRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (After Credit Check)');
+        addMetrics(eventAfterCreditCheckRes);
+        // Refresh counts after credit check (using specific depotId)
+        // const numNeedReviewAfterCreditRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (After Credit Check)');
+        // addMetrics(numNeedReviewAfterCreditRes);
+        // const numReadyAfterCreditRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (After Credit Check)');
+        // addMetrics(numReadyAfterCreditRes);
 
-            // Optional: View before checks
-            // const viewBeforeChecksRes = makeRequest('get', `${BASE_URL}/admin/orders/${targetProcessingOrderId}?expand=...`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/{id} (View Before Checks)');
-            // addMetrics(viewBeforeChecksRes);
-            // const eventBeforeChecksRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (View Before Checks)');
-            // addMetrics(eventBeforeChecksRes);
-            // sleep(1);
+        const promoCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/promotion-checked/{id}');
+        addMetrics(promoCheckRes, promoCheckRes.status === 200); // Assuming 200 OK
+        // Optional: View event after check
+        const eventAfterPromoCheckRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (After Promotion Check)');
+        addMetrics(eventAfterPromoCheckRes);
+        // Refresh counts after promo check (using specific depotId)
+        // const numNeedReviewAfterPromoRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (After Promotion Check)');
+        // addMetrics(numNeedReviewAfterPromoRes);
+        // const numReadyAfterPromoRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (After Promotion Check)');
+        // addMetrics(numReadyAfterPromoRes);
 
-            // Perform Checks
-            const invCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/inventory-checked/{id}');
-            addMetrics(invCheckRes, invCheckRes.status === 200); // Assuming 200 OK
-            // const eventAfterInvCheckRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (After Inv Check)');
-            // addMetrics(eventAfterInvCheckRes);
-            sleep(1);
+        // --- Chained Status Updates ---
+        let isPreviousStatusUpdateSuccessful = true; // Start assuming success to enter the first update
+        let targetStatus = '';
+        let statusUpdatePayload = {};
 
-            const creditCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/credit-checked/{id}');
-            addMetrics(creditCheckRes, creditCheckRes.status === 200); // Assuming 200 OK
-            // const eventAfterCreditCheckRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (After Credit Check)');
-            // addMetrics(eventAfterCreditCheckRes);
-            // Refresh counts after credit check
-            const numNeedReviewAfterCreditRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (After Credit Check)');
-            addMetrics(numNeedReviewAfterCreditRes);
-            const numReadyAfterCreditRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (After Credit Check)');
-            addMetrics(numReadyAfterCreditRes);
-            sleep(1);
+        // --- Update Status: Ready for Delivery ---
+        if (isPreviousStatusUpdateSuccessful) {
+            targetStatus = "ready_for_delivery";
+            statusUpdatePayload = { order_ids: [targetProcessingOrderId], status: targetStatus };
+            console.log(`VU ${__VU} Orders Update: Attempting update to '${targetStatus}' for order ${targetProcessingOrderId}`);
+            const resReady = makeRequest(
+                'post',
+                `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`,
+                statusUpdatePayload,
+                { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
+                `/admin/order-extend-status/update (${targetStatus})`
+            );
+            // Use the strict 201 check for metrics
+            addMetrics(resReady, resReady.status === 201);
 
-            const promoCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/promotion-checked/{id}');
-            addMetrics(promoCheckRes, promoCheckRes.status === 200); // Assuming 200 OK
-            // const eventAfterPromoCheckRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/order-event (After Promotion Check)');
-            // addMetrics(eventAfterPromoCheckRes);
-            // Refresh counts after promo check
-            const numNeedReviewAfterPromoRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (After Promotion Check)');
-            addMetrics(numNeedReviewAfterPromoRes);
-            const numReadyAfterPromoRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${DEPOT_ID_FILTER}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (After Promotion Check)');
-            addMetrics(numReadyAfterPromoRes);
-            sleep(1);
-
-            // --- Chained Status Updates ---
-            let isPreviousStatusUpdateSuccessful = true; // Start assuming success to enter the first update
-            let targetStatus = '';
-            let statusUpdatePayload = {};
-
-            // --- Update Status: Ready for Delivery ---
-            if (isPreviousStatusUpdateSuccessful) {
-                targetStatus = "ready_for_delivery";
-                statusUpdatePayload = { order_id: targetProcessingOrderId, status: targetStatus };
-                console.log(`VU ${__VU} Orders Update: Attempting update to '${targetStatus}' for order ${targetProcessingOrderId}`);
-                const resReady = makeRequest('post', `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, statusUpdatePayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, `/admin/order-extend-status/update (${targetStatus})`);
-                addMetrics(resReady, resReady.status === 201); // Expect 201 Created
-
-                isPreviousStatusUpdateSuccessful = resReady.status === 201; // Check actual success
-                check(resReady, { [`Update to ${targetStatus} - Status is 201`]: () => isPreviousStatusUpdateSuccessful });
-
-                if (isPreviousStatusUpdateSuccessful) {
-                    // const eventAfterReadyRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
-                    // addMetrics(eventAfterReadyRes);
-                    // sleep(1);
-                    // const batchJobsAfterReadyRes = makeRequest('get', `${BASE_URL}/admin/batch-jobs?limit=100`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/batch-jobs (After ${targetStatus})`);
-                    // addMetrics(batchJobsAfterReadyRes);
-                    sleep(1); // Reduced sleep if not checking events/jobs
-                } else {
-                    console.warn(`VU ${__VU} Orders Update: Update to ${targetStatus} failed. Halting further status updates for ${targetProcessingOrderId}.`);
-                    sleep(1 + 1); // Compensate for skipped sleeps
+            // *** UPDATED CHECK ***
+            check(resReady, {
+                [`Orders Update (${targetStatus}) - status is 201`]: (r) => r.status === 201,
+                [`Orders Update (${targetStatus}) - Order status updated successfully`]: (r) => {
+                    // Only check body if status is successful
+                    if (r.status !== 201) return false;
+                    try {
+                        const body = r.json();
+                        // Check if saved array exists and has the correct status
+                        return body?.saved?.length > 0 && body.saved[0]?.extended_status === targetStatus; // Check body content
+                    } catch (e) {
+                        console.error(`VU ${__VU} Orders Update Check (${targetStatus}): Failed to parse JSON - ${e}`);
+                        return false;
+                    }
                 }
+            });
+
+            // *** UPDATED CHAINING LOGIC ***
+            isPreviousStatusUpdateSuccessful = resReady.status === 201; // Base chaining ONLY on status 201
+
+            if (isPreviousStatusUpdateSuccessful) {
+                console.log(`VU ${__VU} Orders Update: Update to ${targetStatus} successful for ${targetProcessingOrderId}.`);
+                // GET order event after successful update
+                const eventAfterReadyRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
+                addMetrics(eventAfterReadyRes);
+                // ... (optional job checks) ...
+                sleep(1);
+            } else {
+                // Warning is logged here
+                console.warn(`VU ${__VU} Orders Update: Update to ${targetStatus} failed (Status: ${resReady.status}). Halting further status updates for ${targetProcessingOrderId}.`);
+                sleep(1); // Compensate
             }
+        } else { /* This else shouldn't be reachable for the first step */ }
 
-            // --- Update Status: Shipped ---
-            if (isPreviousStatusUpdateSuccessful) {
-                targetStatus = "shipped";
-                statusUpdatePayload = { order_id: targetProcessingOrderId, status: targetStatus };
-                console.log(`VU ${__VU} Orders Update: Attempting update to '${targetStatus}' for order ${targetProcessingOrderId}`);
-                const resShipped = makeRequest('post', `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, statusUpdatePayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, `/admin/order-extend-status/update (${targetStatus})`);
-                addMetrics(resShipped, resShipped.status === 201);
+        // --- Update Status: Shipped ---
+        if (isPreviousStatusUpdateSuccessful) { // Only proceed if previous step succeeded
+            targetStatus = "shipped";
+            statusUpdatePayload = { order_ids: [targetProcessingOrderId], status: targetStatus };
+            console.log(`VU ${__VU} Orders Update: Attempting update to '${targetStatus}' for order ${targetProcessingOrderId}`);
+            const resShipped = makeRequest(
+                'post',
+                `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`,
+                statusUpdatePayload,
+                { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
+                `/admin/order-extend-status/update (${targetStatus})`
+            );
+            addMetrics(resShipped, resShipped.status === 201); // Strict 201 check
 
-                isPreviousStatusUpdateSuccessful = resShipped.status === 201;
-                check(resShipped, { [`Update to ${targetStatus} - Status is 201`]: () => isPreviousStatusUpdateSuccessful });
-
-                if (isPreviousStatusUpdateSuccessful) {
-                    // const eventAfterShippedRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
-                    // addMetrics(eventAfterShippedRes);
-                    sleep(1);
-                } else {
-                    console.warn(`VU ${__VU} Orders Update: Update to ${targetStatus} failed. Halting further status updates for ${targetProcessingOrderId}.`);
-                    sleep(1); // Compensate
+            // *** UPDATED CHECK ***
+            check(resShipped, {
+                [`Orders Update (${targetStatus}) - status is 201`]: (r) => r.status === 201,
+                [`Orders Update (${targetStatus}) - Order status updated successfully`]: (r) => {
+                    if (r.status !== 201) return false;
+                    try {
+                        const body = r.json();
+                        return body?.saved?.length > 0 && body.saved[0]?.extended_status === targetStatus; // Check body content
+                    } catch (e) {
+                        console.error(`VU ${__VU} Orders Update Check (${targetStatus}): Failed to parse JSON - ${e}`);
+                        return false;
+                    }
                 }
-            } else { sleep(1); } // Compensate if previous failed
+            });
 
-            // --- Update Status: Delivered ---
+            // *** UPDATED CHAINING LOGIC ***
+            isPreviousStatusUpdateSuccessful = resShipped.status === 201; // Base chaining ONLY on status 201
+
             if (isPreviousStatusUpdateSuccessful) {
-                targetStatus = "delivered";
-                 statusUpdatePayload = { order_id: targetProcessingOrderId, status: targetStatus };
-                console.log(`VU ${__VU} Orders Update: Attempting update to '${targetStatus}' for order ${targetProcessingOrderId}`);
-                const resDelivered = makeRequest('post', `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, statusUpdatePayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, `/admin/order-extend-status/update (${targetStatus})`);
-                addMetrics(resDelivered, resDelivered.status === 201);
-
-                isPreviousStatusUpdateSuccessful = resDelivered.status === 201;
-                check(resDelivered, { [`Update to ${targetStatus} - Status is 201`]: () => isPreviousStatusUpdateSuccessful });
-
-                if (isPreviousStatusUpdateSuccessful) {
-                    // const eventAfterDeliveredRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
-                    // addMetrics(eventAfterDeliveredRes);
-                    sleep(3);
-                } else {
-                    console.warn(`VU ${__VU} Orders Update: Update to ${targetStatus} failed for ${targetProcessingOrderId}.`);
-                    sleep(3); // Compensate
-                }
-            } else { sleep(3); } // Compensate if previous failed
-
+                console.log(`VU ${__VU} Orders Update: Update to ${targetStatus} successful for ${targetProcessingOrderId}.`);
+                // GET order event after successful update
+                const eventAfterShippedRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
+                addMetrics(eventAfterShippedRes);
+                sleep(1);
+            } else {
+                console.warn(`VU ${__VU} Orders Update: Update to ${targetStatus} failed (Status: ${resShipped.status}). Halting further status updates for ${targetProcessingOrderId}.`);
+                sleep(1); // Compensate
+            }
         } else {
-            console.warn(`VU ${__VU} Orders Update: Skipping 'Checks & Status Updates' block as no suitable processing order was found/provided.`);
-            // Compensate for all sleeps within the skipped block
-            sleep(1 + 1 + 1 + 1 + 1 + 3); // Approx sum of sleeps
+            // If 'ready_for_delivery' failed, skip 'shipped' and compensate sleep
+            console.log(`VU ${__VU} Orders Update: Skipping update to shipped due to previous failure.`);
+            sleep(1); // Compensate for skipped shipped block sleep
         }
 
-        // --- Filter by Status: Invoiced ---
-        const status_invoiced = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&...&depot_id=${DEPOT_ID_FILTER}&extended_status[0]=invoiced`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (Filter Status: invoiced)');
-        addMetrics(status_invoiced);
-        sleep(0.5);
+        // --- Update Status: Delivered ---
+        if (isPreviousStatusUpdateSuccessful) { // Only proceed if previous step succeeded
+            targetStatus = "delivered";
+            statusUpdatePayload = { order_ids: [targetProcessingOrderId], status: targetStatus };
+            console.log(`VU ${__VU} Orders Update: Attempting update to '${targetStatus}' for order ${targetProcessingOrderId}`);
+            const resDelivered = makeRequest(
+                'post',
+                `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`,
+                statusUpdatePayload,
+                { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
+                `/admin/order-extend-status/update (${targetStatus})`
+            );
+            addMetrics(resDelivered, resDelivered.status === 201); // Strict 201 check
 
-        // --- Multi-Update / Cancel Logic (Placeholder) ---
-        // Add logic for multi-updates or cancellations here if needed.
-        // Remember to use makeRequest and addMetrics.
-        // Use IDs passed via configData where possible.
-        // Example:
-        // const orderIdToCancel = configData.orderIdToCancel;
-        // if (orderIdToCancel) {
-        //    const cancelPayload = { cancellation_reason_id: CANCELLATION_REASON_ID, ... };
-        //    const cancelRes = makeRequest('post', `${BASE_URL}/admin/orders/${orderIdToCancel}/cancel`, cancelPayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, '/admin/orders/{id}/cancel');
-        //    addMetrics(cancelRes, cancelRes.status === 200);
-        //    sleep(1);
-        // }
+            // *** UPDATED CHECK ***
+            check(resDelivered, {
+                [`Orders Update (${targetStatus}) - status is 201`]: (r) => r.status === 201,
+                [`Orders Update (${targetStatus}) - Order status updated successfully`]: (r) => {
+                    if (r.status !== 201) return false;
+                    try {
+                        const body = r.json();
+                        return body?.saved?.length > 0 && body.saved[0]?.extended_status === targetStatus; // Check body content
+                    } catch (e) {
+                        console.error(`VU ${__VU} Orders Update Check (${targetStatus}): Failed to parse JSON - ${e}`);
+                        return false;
+                    }
+                }
+            });
 
-    }); // End group('Orders Update')
+            // *** UPDATED CHAINING LOGIC ***
+            isPreviousStatusUpdateSuccessful = resDelivered.status === 201; // Base chaining ONLY on status 201
+
+            if (isPreviousStatusUpdateSuccessful) {
+                console.log(`VU ${__VU} Orders Update: Update to ${targetStatus} successful for ${targetProcessingOrderId}.`);
+                // GET order event after successful update
+                const eventAfterDeliveredRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
+                addMetrics(eventAfterDeliveredRes);
+                sleep(3);
+            } else {
+                console.warn(`VU ${__VU} Orders Update: Update to ${targetStatus} failed (Status: ${resDelivered.status}) for ${targetProcessingOrderId}.`);
+                sleep(2); // Compensate
+            }
+        } else {
+            // If 'shipped' failed (or was skipped), skip 'delivered' and compensate sleep
+            console.log(`VU ${__VU} Orders Update: Skipping update to delivered due to previous failure.`);
+            sleep(2); // Compensate for skipped delivered block sleep
+        }
+        // --- Update Status: Paid ---
+        if (isPreviousStatusUpdateSuccessful) { // Only proceed if 'delivered' succeeded
+            targetStatus = "paid";
+            statusUpdatePayload = { order_ids: [targetProcessingOrderId], status: targetStatus };
+            console.log(`VU ${__VU} Orders Update: Attempting update to '${targetStatus}' for order ${targetProcessingOrderId}`);
+            const resPaid = makeRequest(
+                'post',
+                `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`,
+                statusUpdatePayload,
+                { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
+                `/admin/order-extend-status/update (${targetStatus})`
+            );
+            addMetrics(resPaid, resPaid.status === 201); // Strict 201 check
+
+            // *** UPDATED CHECK ***
+            check(resPaid, {
+                [`Orders Update (${targetStatus}) - status is 201`]: (r) => r.status === 201,
+                [`Orders Update (${targetStatus}) - Order status updated successfully`]: (r) => {
+                    if (r.status !== 201) return false;
+                    try {
+                        const body = r.json();
+                        return body?.saved?.length > 0 && body.saved[0]?.extended_status === targetStatus; // Check body content
+                    } catch (e) {
+                        console.error(`VU ${__VU} Orders Update Check (${targetStatus}): Failed to parse JSON - ${e}`);
+                        return false;
+                    }
+                }
+            });
+
+            isPreviousStatusUpdateSuccessful = resPaid.status === 201;
+
+            if (isPreviousStatusUpdateSuccessful) {
+                console.log(`VU ${__VU} Orders Update: Update to ${targetStatus} successful for ${targetProcessingOrderId}.`);
+                const eventAfterPaidRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
+                addMetrics(eventAfterPaidRes);
+                sleep(1);
+            } else {
+                console.warn(`VU ${__VU} Orders Update: Update to ${targetStatus} failed (Status: ${resPaid.status}) for ${targetProcessingOrderId}.`);
+                sleep(1);
+            }
+        } else {
+            // If 'delivered' failed (or was skipped), skip 'paid' and compensate sleep
+            console.log(`VU ${__VU} Orders Update: Skipping update to paid due to previous failure.`);
+            sleep(1); // Compensate for skipped paid block sleep
+        }
+    });
 }

@@ -45,130 +45,219 @@ export const orderId2 = new SharedArray('orderId2', function () {
 });
 
 export const outlet_depot = new SharedArray('outlet_depot', function () {
-    return papaparse.parse(open('../../../../02-K6 Files/id_qa_promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id && row.depot_external_id);
 });
 
 export const DEPOT_ID_FILTER = [
-    // 'depot_01HGYXPR1M5HQ229XGC8RDQSJE',  // Klungkung
-    'depot_01H6X2SJQBKCBW1HKAEFSB42WD', // NUSA DUA
-    'depot_01H6X2SJQBKCBW1HKAEFSB42WD' // NUSA DUA
-    // 'depot_01H5W4GM27TYHKGH9RKTWDEYF6', // D01-MAIN - test invalid case
+    'depot_01HGYXPR1M5HQ229XGC8RDQSJE', // Klungkung
+    // 'depot_01H6X2SJQBKCBW1HKAEFSB42WD', // NUSA DUA
+    'depot_01HGYXPR1M5HQ229XGC8RDQSJE' /// Klungkung
+    // 'depot_01H5W4GM27TYHKGH9RKTWDEYF6' // D01-MAIN - test invalid case
 ];
-// --- Hardcoded IDs (Parameterize where possible) ---
+
+// --- Hardcoded IDs ---
 export const REGION_ID = 'reg_01H5P3E6X97YGENVSW4Z7A5446';
-// export const DEPOT_ID_FILTER = 'depot_01HGYXPR1M5HQ229XGC8RDQSJE'; // Klungkung
-export const LOCATION_ID_EDIT = 'sloc_01HGYYZND43JR5B4F1D0HG80Z9';// Klungkung
-export const VARIANT_ID_EDIT_1 = 'variant_01H771AV5J5D62ZAKQ340JQJ7S';
-export const VARIANT_ID_EDIT_2 = 'variant_01H729MHHAW56JTRXCC8HYCV1X';
-export const VARIANT_ID_EDIT_3 = 'variant_01H7717GHMWJNHPHAEJVXRN8CS';
-export const VARIANT_ID_EDIT_4 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
-export const VARIANT_ID_EDIT_5 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
-export const VARIANT_ID_EDIT_6 = 'variant_01H5PMESX1AR52H7BJ4CTHHE80';
-export const VARIANT_ID_EDIT_7 = 'variant_01H77192YY9TWRM0GB6F479YQX';
-export const VARIANT_ID_EDIT_8 = 'variant_01HAB20FVGTTJVH12WRE725AC0';
-export const VARIANT_ID_EDIT_9 = 'variant_01HKPZ9PVK8WZQZNYJ76MBNNJ9';
-export const VARIANT_ID_EDIT_10 = 'variant_01H5PMH3V5H3BQDM49D8K88MMJ';
-export const VARIANT_ID_EDIT_11 = 'variant_01H5XTJ97RNCWNM9HAR02D257T';
-export const VARIANT_ID_EDIT_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA';
+export const LOCATION_ID = 'sloc_01HGYYZND43JR5B4F1D0HG80Z9';// Klungkung
+export const VARIANT_ID_1 = 'variant_01H771AV5J5D62ZAKQ340JQJ7S';
+export const VARIANT_ID_2 = 'variant_01H729MHHAW56JTRXCC8HYCV1X';
+export const VARIANT_ID_3 = 'variant_01H7717GHMWJNHPHAEJVXRN8CS';
+export const VARIANT_ID_4 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
+export const VARIANT_ID_5 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
+export const VARIANT_ID_6 = 'variant_01H5PMESX1AR52H7BJ4CTHHE80';
+export const VARIANT_ID_7 = 'variant_01H77192YY9TWRM0GB6F479YQX';
+export const VARIANT_ID_8 = 'variant_01HAB20FVGTTJVH12WRE725AC0';
+export const VARIANT_ID_9 = 'variant_01HKPZ9PVK8WZQZNYJ76MBNNJ9';
+export const VARIANT_ID_10 = 'variant_01H5PMH3V5H3BQDM49D8K88MMJ';
+export const VARIANT_ID_11 = 'variant_01H5XTJ97RNCWNM9HAR02D257T';
+export const VARIANT_ID_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA';
 export const CANCELLATION_REASON_ID = 'reason_01JHPP5TQYXJEJ0Y8AG6SGWRES';
-// ... other IDs ...
 
 // --- Workload Settings ---
-export const pervuiterations = {
-    executor: 'per-vu-iterations',
-    vus: 2,
-    iterations: 1,
+export const pervuIterationsWorkload= {
+    executor: 'per-vu-iterations', //thresdhold configures based this mode vus: 1, iterations: 2
+    vus: 5,
+    iterations: 2,
     // maxDuration: '30s'
 }
 
 export const constantWorkload = {
     executor: 'constant-vus',
-    vus: 5,
-    duration: '20m'
-}
-
-export const sharedWorkload = {
-    executor: 'shared-iterations',
-    vus: 5,
-    iterations: 10000,
-    maxDuration: '24h'
+    vus: 10,
+    duration: '5m'
 }
 
 export const ramupWorkload = {
     executor: 'ramping-vus',
     gracefulStop: '5s',
     stages: [
-        { target: 5, duration: '1m' },
-        // { target: 10, duration: '10m' },
-        // { target: 15, duration: '10m' },
-        // { target: 20, duration: '20m' },
-        // { target: 30, duration: '20m' },
-        { target: 10, duration: '2m' },
-        { target: 5, duration: '1m' },
+        { target: 5, duration: '1m' },  // Ramp up to 5 VUs over 1 min
+        { target: 10, duration: '10m' }, // Ramp up from 5 to 10 VUs over 10 mins
+        { target: 15, duration: '10m' }, // Ramp up from 10 to 15 VUs over 10 mins
+        { target: 20, duration: '15m' }, // Ramp up from 15 to 20 VUs over 15 mins
+        { target: 30, duration: '20m' }, // Ramp up from 20 to 30 VUs over 20 mins
+        { target: 5, duration: '1m' },   // Ramp down from 30 to 5 VUs over 1 min
     ],
     gracefulRampDown: '5s'
+}
+
+export const constantArrivalRateWorkload = {
+    executor: 'constant-arrival-rate',
+    rate: 60, // Target iterations per timeUnit (e.g., 60 iterations per minute)
+    timeUnit: '1m', // The period during which 'rate' iterations should start
+    duration: '10m', // Total duration of this scenario
+    preAllocatedVUs: 10, // Start with 10 VUs, k6 will scale up if needed
+    maxVUs: 50, // Allow k6 to scale up to 50 VUs to maintain the rate
+}
+
+export const rampingArrivalRateWorkload = {
+    executor: 'ramping-arrival-rate',
+    startRate: 30, // Start at 30 iterations per timeUnit
+    timeUnit: '1m',
+    preAllocatedVUs: 5, // Initial VUs
+    maxVUs: 100, // Max VUs k6 can use
+    stages: [
+        { target: 120, duration: '5m' }, // Ramp up to 120 iterations/min over 5 minutes
+        { target: 120, duration: '10m' }, // Stay at 120 iterations/min for 10 minutes
+        { target: 0, duration: '2m' },   // Ramp down to 0 iterations/min over 2 minutes
+    ],
+}
+
+export const shortBurstSharedWorkload = {
+    executor: 'shared-iterations',
+    vus: 20, // Use 20 VUs
+    iterations: 200, // Complete a total of 200 iterations among the VUs
+    maxDuration: '2m', // Stop after 2 minutes even if iterations aren't done
 }
 
 // --- Threshold Settings ---
 export const thresholdsSettings = {
     thresholds: {
-        // --- Built-in Metrics (These were mostly correct) ---
-        'http_req_duration{name:/admin/auth - POST (Login)}': ['p(99)<1500'],
-        'http_req_duration{group:::Orders Create}': ['p(95)<2500'],
-        'http_req_duration{group:::Orders Update}': ['p(95)<2500'],
-        'http_req_duration{group:::Orders Edit}': ['p(95)<2500'],
-        'http_req_duration{group:::Login}': ['p(99)<1500'],
-        'http_req_duration{group:::Orders Export}': ['p(99)<1500'], // Consider if 1500ms is realistic for export trigger/poll
+        // --- Built-in Metrics ---
         'http_req_duration': ['p(95)<1500'], // Global default
         'http_req_failed': ['rate<0.02'], // Global failure rate
         'checks': ['rate>0.98'], // Global check pass rate
 
-        // --- Custom Metrics (Corrected Syntax) ---
+        // --- Custom Metrics (For certain Group URL) ---
+        'http_req_duration{group:::Login}': ['p(99)<1500'],
+        'http_req_duration{group:::Orders Create}': ['p(95)<2000'],
+        'http_req_duration{group:::Orders Edit}': ['p(95)<2000'],
+        'http_req_duration{group:::Orders Update}': ['p(95)<2000'],
+        'http_req_duration{group:::Orders Filter}': ['p(95)<1000'],
+        'http_req_duration{group:::Orders Scrolling}': ['p(95)<1000'],
+        'http_req_duration{group:::Orders Search}': ['p(95)<1500'],
+        'http_req_duration{group:::Orders Export}': ['p(95)<1500'],
+        'http_req_duration{group:::Outlets Search}': ['p(95)<1000'],
+        'http_req_duration{group:::Orders Promotions Get List}': ['p(95)<1500'],
+        'http_req_duration{group:::Orders PL Scrolling}': ['p(95)<3000'],
+
+        // --- Custom Metrics (For certain URL) ---
+        // 'http_req_duration{name:/admin/auth - POST (Login)}': ['p(99)<1500'],
+
+        // --- Custom Metrics ---
+        // Login
+        'login_success_rate': ['rate>0.95'],
+        'login_response_time': ['p(95)<1000'],
 
         // Order Create
-        'orderCreate_SuccessRate': ['rate>0.95'], // Check the rate of the 'orderCreate_SuccessRate' metric
-        'orderCreate_ResponseTime': ['p(95)<2500'], // Check the p(95) of the 'orderCreate_ResponseTime' trend
+        'order_creation_success_rate': ['rate>0.95'],// Check the rate of the 'Order Create Success Rate' metric
+        'order_creation_response_time': ['p(95)<1500'],// Check the p(95) of the 'Order Create Response Time' trend
 
         // Order Edit
-        'editOrder_SuccessRate': ['rate>0.95'],
-        'editOrder_ResponseTime': ['p(95)<3000'],
+        'order_editing_success_rate': ['rate>0.95'],
+        'order_editing_response_time': ['p(95)<1800'],
 
         // Order Update
-        'updateOrder_SuccessRate': ['rate>0.95'],
-        'updateOrder_ResponseTime': ['p(95)<2500'],
+        'order_updating_success_rate': ['rate>0.95'],
+        'order_updating_response_time': ['p(95)<1500'],
+
+        // Order Filter
+        'order_filter_success_rate': ['rate>0.99'],
+        'order_filter_response_time': ['p(95)<1000'],
+
+        // Order Scrolling
+        'order_scrolling_success_rate': ['rate>0.99'],
+        'order_scrolling_response_time': ['p(95)<1000'],
+
+        // Order Search
+        'order_search_success_rate': ['rate>0.95'],
+        'order_search_response_time': ['p(95)<1500'],
 
         // Order Export
-        'exportOrder_SuccessRate': ['rate>0.95'],
-        'exportOrder_ResponseTime': ['p(95)<3000'], // Allow slightly more time for export-related requests
+        'order_export_success_rate': ['rate>0.95'],
+        'order_export_response_time': ['p(95)<1500'],
+
+        // Outlet Search
+        'outlet_search_success_rate': ['rate>0.95'],
+        'outlet_search_response_time': ['p(95)<1000'],
+
+        // Orders Promotions Get List
+        'promo_get_list_success_rate': ['rate>0.98'],
+        'promo_get_list_response_time': ['p(95)<1500'],
+
+        // Orders PL Scrolling
+        'pl_scrolling_success_rate': ['rate>0.98'],
+        'pl_scrolling_response_time': ['p(95)<3000'],
     }
 };
-
 
 // --- Custom Metrics Definitions ---
 
 // Generic
-export const customTrendResponseTime = new Trend('customTrendResponseTime');
-export const customTrendSuccessRate = new Rate('customTrendSuccessRate');
-export const customTrendRequestCount = new Counter('customTrendRequestCount');
+export const defaultCustomResponseTime = new Trend('default_custom_response_time');
+export const defaultCustomSuccessRate = new Rate('default_custom_success_rate');
+export const defaultCustomRequestCount = new Counter('default_custom_request_count');
+
+// Login
+export const loginResponseTime = new Trend('login_response_time');
+export const loginSuccessRate = new Rate('login_success_rate');
+export const loginRequestCount = new Counter('login_request_count');
 
 // Orders Create
-export const orderCreateResponseTime = new Trend('orderCreate_ResponseTime');
-export const orderCreateSuccessRate = new Rate('orderCreate_SuccessRate');
-export const orderCreateRequestCount = new Counter('orderCreate_RequestCount');
+export const orderCreationResponseTime = new Trend('order_creation_response_time');
+export const orderCreationSuccessRate = new Rate('order_creation_success_rate');
+export const orderCreationRequestCount = new Counter('order_creation_request_count');
 
 // Orders Edit
-export const editOrderResponseTime = new Trend('editOrder_ResponseTime');
-export const editOrderSuccessRate = new Rate('editOrder_SuccessRate');
-export const editOrderRequestCount = new Counter('editOrder_RequestCount');
+export const orderEditingResponseTime = new Trend('order_editing_response_time');
+export const orderEditingSuccessRate = new Rate('order_editing_success_rate');
+export const orderEditingRequestCount = new Counter('order_editing_request_count');
 
-// Orders Update (Combined - includes status updates, checks etc. from the original group)
-export const updateOrderResponseTime = new Trend('updateOrder_ResponseTime');
-export const updateOrderSuccessRate = new Rate('updateOrder_SuccessRate');
-export const updateOrderRequestCount = new Counter('updateOrder_RequestCount');
+// Orders Update
+export const orderUpdatingResponseTime = new Trend('order_updating_response_time');
+export const orderUpdatingSuccessRate = new Rate('order_updating_success_rate');
+export const orderUpdatingRequestCount = new Counter('order_updating_request_count');
+
+// Orders Filter
+export const orderFilterResponseTime = new Trend('order_filter_response_time');
+export const orderFilterSuccessRate = new Rate('order_filter_success_rate');
+export const orderFilterRequestCount = new Counter('order_filter_request_count');
+
+// Orders Scrolling
+export const orderScrollingResponseTime = new Trend('order_scrolling_response_time');
+export const orderScrollingSuccessRate = new Rate('order_scrolling_success_rate');
+export const orderScrollingRequestCount = new Counter('order_scrolling_request_count');
+
+// Orders Search
+export const orderSearchResponseTime = new Trend('order_search_response_time');
+export const orderSearchSuccessRate = new Rate('order_search_success_rate');
+export const orderSearchRequestCount = new Counter('order_search_request_count');
 
 // Orders Export
-export const exportOrderResponseTime = new Trend('exportOrder_ResponseTime');
-export const exportOrderSuccessRate = new Rate('exportOrder_SuccessRate');
-export const exportOrderRequestCount = new Counter('exportOrder_RequestCount');
+export const orderExportResponseTime = new Trend('order_export_response_time');
+export const orderExportSuccessRate = new Rate('order_export_success_rate');
+export const orderExportRequestCount = new Counter('order_export_request_count');
 
-// Add other specific metrics if needed (e.g., for Promotions, Inventory...)
+// Outlets Search
+export const outletSearchResponseTime = new Trend('outlet_search_response_time');
+export const outletSearchSuccessRate = new Rate('outlet_search_success_rate');
+export const outletSearchRequestCount = new Counter('outlet_search_request_count');
+
+// Orders Promotions Get List
+export const promoGetListResponseTime = new Trend('promo_get_list_response_time');
+export const promoGetListSuccessRate = new Rate('promo_get_list_success_rate');
+export const promoGetListRequestCount = new Counter('promo_get_list_request_count');
+
+// Orders PL Scrolling
+export const plScrollingResponseTime = new Trend('pl_scrolling_response_time');
+export const plScrollingSuccessRate = new Rate('pl_scrolling_success_rate');
+export const plScrollingRequestCount = new Counter('pl_scrolling_request_count');
