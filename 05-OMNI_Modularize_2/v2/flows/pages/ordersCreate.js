@@ -99,14 +99,14 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
             order_type: 'standard',
             email: configData.userEmail || 'nengahpuspayoga23@yopmail.com', // Get email from configData if passed
             region_id: REGION_ID,
-            shipping_methods: [{ option_id: 'so_01H5P53FY82T6HVEPB37Z8PFPZ' }], // Parameterize?
+            shipping_methods: [{ option_id: 'so_01H5P53FY82T6HVEPB37Z8PFPZ' }], // Indonesia
             shipping_address: { address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104', country_code: 'id', first_name: 'NENGAH', last_name: '-' },
             billing_address: { address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104', country_code: 'id', first_name: 'NENGAH', last_name: '-' },
             customer_id: configData.customerId || 'cus_01JM74671R0812YXBZEP4W2KKC', // Parameterize?
             depot_id: depotId,
             outlet_id: outletId,
-            include_brand: true,
-            metadata: { source_system: 'OMS' },
+            // include_brand: true, //not used ID-Hotfix 
+            metadata: { source_system: 'OMS' }, 
             location_id: LOCATION_ID,
             items: [
                 { variant_id: VARIANT_ID_6, quantity: 1, metadata: {} },
@@ -122,6 +122,8 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
             'Create Order - status is 200': (r) => r.status === 200,
             'Create Order - body contains display_id': (r) => r.body && r.body.includes('display_id'),
         });
+        // console.log(createOrderResponse.body);
+
         // --- Conditional Refresh ---
         let createdOrderId = null;
         let isCreateSuccessful = false;

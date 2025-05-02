@@ -65,6 +65,7 @@ export function ordersEditFlow(authToken, configData) {
         // --- Fetch Outlet ID ---
         let dynamicOutletId = null;
         let canProceedToEdit = false;
+        let isOrderInEditableState = false; // Flag to check order status
         console.log(`VU ${__VU} Orders Edit: Fetching outlet ID for order ${orderIdToEdit}`);
         // EXPANDED CALL
         const viewOrderRes = makeRequest(
@@ -72,7 +73,7 @@ export function ordersEditFlow(authToken, configData) {
             `${BASE_URL}/admin/orders/${orderIdToEdit}?expand=outlet&fields=id,outlet_id`, // url
             null, // body
             { headers: createHeaders(authToken), tags: groupTags }, // params
-            '/admin/orders/{id} (View to get OutletID)' // name
+            '/admin/orders/{id} (View to get OutletID & Status)' // name
         );
         addMetrics(viewOrderRes);
         try {
@@ -80,10 +81,16 @@ export function ordersEditFlow(authToken, configData) {
                 dynamicOutletId = viewOrderRes.json('order.outlet_id') || viewOrderRes.json('order.outlet.id');
                 if (dynamicOutletId) {
                     canProceedToEdit = true;
-                    console.log(`VU ${__VU} Orders Edit: Found outlet ID ${dynamicOutletId} for order ${orderIdToEdit}.`);
+                    // --- ADDED STATUS CHECK ---
+                    const allowedEditStatuses = ['pending', 'processing', 'invoiced', 'ready_for_delivery']; // Define allowed statuses
+                    const orderStatus = viewOrderRes.json('order.extended_status'); // Or 'order.status' if that's the relevant field
+                    isOrderInEditableState = allowedEditStatuses.includes(orderStatus); // Check if status is in the allowed list
+                    console.log(`VU ${__VU} Orders Edit: Found outlet ID ${dynamicOutletId} for order ${orderIdToEdit}. Status: ${orderStatus}. Editable (in ${allowedEditStatuses.join(', ')}): ${isOrderInEditableState}`);
+                    // --- END ADDED STATUS CHECK ---
                 } else { console.error(`VU ${__VU} Orders Edit: Status 200 but outlet_id not found for order ${orderIdToEdit}. Body: ${viewOrderRes.body}`); }
             } else { console.error(`VU ${__VU} Orders Edit: Failed to view order ${orderIdToEdit} to get outlet ID. Status: ${viewOrderRes.status}`); }
         } catch (e) { console.error(`VU ${__VU} Orders Edit: Failed to parse view response for outlet ID. Error: ${e.message}`); }
+
         // --- End Fetch Outlet ID ---
 
 
@@ -91,6 +98,12 @@ export function ordersEditFlow(authToken, configData) {
         if (canProceedToEdit) {
             console.log(`VU ${__VU} Orders Edit: Proceeding to Prepare/Edit order ${orderIdToEdit}`);
 
+            // --- ADDED: Skip if not in editable state ---
+            if (!isOrderInEditableState) {
+                console.warn(`VU ${__VU} Orders Edit: Skipping edit for order ${orderIdToEdit} because its status ('${viewOrderRes.json('order.extended_status')}') is not one of ['pending', 'processing', 'invoiced', 'ready_for_delivery'].`);
+                // Compensate for skipped sleeps later if needed, though the main sleeps are conditional below
+                return; // Exit the 'Orders Edit' group for this iteration
+            }
             // Prepare for Edit - Load related data
             // EXPANDED CALL
             const stockLocEditRes = makeRequest(
@@ -139,11 +152,23 @@ export function ordersEditFlow(authToken, configData) {
                 'post',
                 `${BASE_URL}/${ORDER_EDIT_URL}/${orderIdToEdit}`, // Use constant and provided ID
                 editPayload,
-                { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
+                {
+                    headers: createHeaders(authToken, { 'content-type': 'application/json' }),
+                    tags: groupTags
+                },
                 '/admin/orders/edit/{id} (Perform Edit)'
             );
+
             // Add specific success check for the edit action (expecting 200 OK)
             addMetrics(editResponse, editResponse.status === 200);
+
+
+            // --- ADD TEMPORARY LOGGING ---
+            // Log the response body specifically if a 409 Conflict occurs
+            if (editResponse.status === 409) {
+                console.error(`VU ${__VU} Edit Order 409 Conflict Body: ${editResponse.body}`);
+            }
+            // --- END TEMPORARY LOGGING ---
 
             // --- ADDED CHECK ---
             check(editResponse, {
@@ -161,7 +186,7 @@ export function ordersEditFlow(authToken, configData) {
             });
             // --- END ADDED CHECK ---
 
-            sleep(1); // Keep sleep after performing edit
+            sleep(3); // Keep sleep after performing edit
 
             // --- Check if Edit was successful (based on status) and Refresh ---
             const isEditSuccessful = editResponse.status === 200;
@@ -221,7 +246,7 @@ export function ordersEditFlow(authToken, configData) {
             // This block is reached if fetching the outlet ID failed
             console.warn(`VU ${__VU} Orders Edit: Skipping Prepare/Edit sequence for order ${orderIdToEdit} because its outlet ID could not be determined.`);
             // Compensate for sleeps in the skipped block
-            sleep(2);
+            sleep(1 + 3 + 1); // Compensate for: prepare(1), edit(3), post-edit(1)
         }
         // --- End Prepare and Edit Order ---
 

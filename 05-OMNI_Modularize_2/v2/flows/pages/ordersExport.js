@@ -46,7 +46,7 @@ export function ordersExportFlow(authToken, configData = {}) {
                     skip: 0,
                     take: 100, // Consider parameterizing or increasing
                     order: { order_created_at: 'DESC' },
-                    select: [ /* ... Keep your extensive select list ... */
+                    select: [ /*2898 line item in ID-Hotfix */
                         'line_item_id', 'order_id', 'order_display_id', 'order_status',
                         'order_created_at', 'order_currency_code', 'order_fulfillment_status',
                         'order_payment_status', 'order_extended_status', 'order_external_number',

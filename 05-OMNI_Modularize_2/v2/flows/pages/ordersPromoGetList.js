@@ -81,6 +81,7 @@ export function ordersPromoGetListFlow(authToken, configData) {
                 return typeof firstItem === 'object' && firstItem !== null && firstItem.hasOwnProperty('id') && firstItem.hasOwnProperty('promotion_name');
             }
         });
+        // console.log(promoListResponse.body)
 
         sleep(0.5); // Think time after getting list
 
@@ -88,7 +89,7 @@ export function ordersPromoGetListFlow(authToken, configData) {
         // Note: The SKU list is very long and hardcoded. Consider parameterizing if needed.
         const depotVariantsResponse = makeRequest(
             'post',
-            `${BASE_URL}/admin/variants/depot-variants-external?limit=0&expand=product.brand`, // Added expand back
+            `${BASE_URL}/admin/variants/depot-variants-external?limit=0`, // Added &expand=product.brand in ID QA
             `{"include_empties_deposit":true,"sku":["L66661","L66662","50074","50074","50074","50074","54027","54027","54027","54027","46903","46903","46903","46903","54026","54026","54026","54026","50074",
         "50074","50074","50074","54027","54027","54027","54027","46903","46903","46903","46903","54026","54026","54026","54026","53031","53031","53031","53709","53709","53709","53063","53063","53063",
         "54070","54070","54070","54071","54071","54071","60075","60075","60075","53031","53031","53031","53709","53709","53709","53063","53063","53063","54070","54070","54070","54071","54071","54071",

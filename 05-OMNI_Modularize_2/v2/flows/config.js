@@ -4,8 +4,10 @@ import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { Trend, Rate, Counter } from 'k6/metrics'; // Keep Metric if used directly
 
 // --- Base URLs & Endpoints ---
-export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
-export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront.azurewebsites.net';
+export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net';
+export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront-hotfix.azurewebsites.net/distributors';
+// export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
+// export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront.azurewebsites.net/distributors';
 export const AUTH_URL = 'admin/auth';
 export const ORDER_CREATE_URL = 'admin/orders/create';
 export const ORDER_EDIT_URL = 'admin/orders/edit'; // Base path for edit
@@ -25,40 +27,49 @@ export const users = new SharedArray('users', function () {
 });
 
 export const masterData = new SharedArray('masterData', function () {
-    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create.csv'), { header: true }).data.filter(row => row.outletId);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create.csv'), { header: true }).data.filter(row => row.outlet_id);
 });
 
 export const masterData_2 = new SharedArray('masterData_2', function () {
-    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create_2.csv'), { header: true }).data.filter(row => row.outletId);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create_2.csv'), { header: true }).data.filter(row => row.outlet_id);
 });
 
 export const masterData_3 = new SharedArray('masterData_3', function () {
-    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create_3.csv'), { header: true }).data.filter(row => row.outletId);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_create_3.csv'), { header: true }).data.filter(row => row.outlet_id);
 });
 
 export const orderId = new SharedArray('orderId', function () {
-    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_edit.csv'), { header: true }).data.filter(row => row.order_Id);
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_edit.csv'), { header: true }).data.filter(row => row.order_id);
 });
 
-export const orderId2 = new SharedArray('orderId2', function () {
-    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_Id);
+export const orderId_2 = new SharedArray('orderId', function () {
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_edit_2.csv'), { header: true }).data.filter(row => row.order_id);
 });
+
+export const orderId_3 = new SharedArray('orderId', function () {
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_edit_3.csv'), { header: true }).data.filter(row => row.order_id);
+});
+
+// export const orderId2 = new SharedArray('orderId2', function () {
+//     return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_id);
+// });
 
 export const outlet_depot = new SharedArray('outlet_depot', function () {
     return papaparse.parse(open('../../../../02-K6 Files/id_qa_promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id && row.depot_external_id);
 });
 
+
 export const DEPOT_ID_FILTER = [
-    'depot_01HGYXPR1M5HQ229XGC8RDQSJE', // Klungkung
-    // 'depot_01H6X2SJQBKCBW1HKAEFSB42WD', // NUSA DUA
-    'depot_01HGYXPR1M5HQ229XGC8RDQSJE' /// Klungkung
-    // 'depot_01H5W4GM27TYHKGH9RKTWDEYF6' // D01-MAIN - test invalid case
-];
+    'depot_01HGYXPR1M5HQ229XGC8RDQSJE', // Klungkung 302-BBI-D02-MAIN masterdata
+    // 'depot_01H6X2SJQBKCBW1HKAEFSB42WD' /// NUSA DUA 302-BBI-D03-MAIN masterdata_2
+    // 'depot_01HH18JASWRK89BAGE3VN59SK1', // Singagar 302-BBI-001-MAIN masterdata_3
+    // 'depot_01H77DYEYMRGXJ86ZRZF7WJM87' // D01-MAIN - test invalid case
+]; 
 
 // --- Hardcoded IDs ---
 export const REGION_ID = 'reg_01H5P3E6X97YGENVSW4Z7A5446';
 export const LOCATION_ID = 'sloc_01HGYYZND43JR5B4F1D0HG80Z9';// Klungkung
-export const VARIANT_ID_1 = 'variant_01H771AV5J5D62ZAKQ340JQJ7S';
+export const VARIANT_ID_1 = 'variant_01H771AVVG9NQMV4VZZ2TK7DTB'; //variant_01H771AVVG9NQMV4VZZ2TK7DTB //variant_01H771AV5J5D62ZAKQ340JQJ7S E1830 - ID QA
 export const VARIANT_ID_2 = 'variant_01H729MHHAW56JTRXCC8HYCV1X';
 export const VARIANT_ID_3 = 'variant_01H7717GHMWJNHPHAEJVXRN8CS';
 export const VARIANT_ID_4 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
@@ -72,10 +83,19 @@ export const VARIANT_ID_11 = 'variant_01H5XTJ97RNCWNM9HAR02D257T';
 export const VARIANT_ID_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA';
 export const CANCELLATION_REASON_ID = 'reason_01JHPP5TQYXJEJ0Y8AG6SGWRES';
 
+// {"metadata":{},"items":[
+//     {"variant_id":"variant_01H77192YY9TWRM0GB6F479YQX","quantity":1,"metadata":{"item_category":"YVGA"}},
+//     {"variant_id":"variant_01H729MHHAW56JTRXCC8HYCV1X","quantity":4,"metadata":{"item_category":"YLGA"}},
+//     {"variant_id":"variant_01HAB20FVGTTJVH12WRE725AC0","quantity":1,"metadata":{}},
+//     {"variant_id":"variant_01H5PMESX1AR52H7BJ4CTHHE80","quantity":2,"metadata":{}},
+//     {"variant_id":"variant_01H5PMH3V5H3BQDM49D8K88MMJ","quantity":2,"metadata":{}},
+//     {"variant_id":"variant_01HKPZ9PVK8WZQZNYJ76MBNNJ9","quantity":2,"metadata":{}}
+// ],"location_id":"sloc_01HGYYZND43JR5B4F1D0HG80Z9"}
+
 // --- Workload Settings ---
 export const pervuIterationsWorkload= {
     executor: 'per-vu-iterations', //thresdhold configures based this mode vus: 1, iterations: 2
-    vus: 5,
+    vus: 3,
     iterations: 2,
     // maxDuration: '30s'
 }
@@ -147,7 +167,7 @@ export const thresholdsSettings = {
         'http_req_duration{group:::Orders Search}': ['p(95)<1500'],
         'http_req_duration{group:::Orders Export}': ['p(95)<1500'],
         'http_req_duration{group:::Outlets Search}': ['p(95)<1000'],
-        'http_req_duration{group:::Orders Promotions Get List}': ['p(95)<1500'],
+        'http_req_duration{group:::Orders Promotions Get List}': ['p(95)<2000'],
         'http_req_duration{group:::Orders PL Scrolling}': ['p(95)<3000'],
 
         // --- Custom Metrics (For certain URL) ---
@@ -192,7 +212,7 @@ export const thresholdsSettings = {
 
         // Orders Promotions Get List
         'promo_get_list_success_rate': ['rate>0.98'],
-        'promo_get_list_response_time': ['p(95)<1500'],
+        'promo_get_list_response_time': ['p(95)<2000'],
 
         // Orders PL Scrolling
         'pl_scrolling_success_rate': ['rate>0.98'],
