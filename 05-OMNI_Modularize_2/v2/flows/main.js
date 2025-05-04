@@ -7,10 +7,10 @@ import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 import {
     thresholdsSettings, // Thresholds
     DEPOT_ID_FILTER, users,  // Data loaders
-    orderId, orderId_2, orderId_3, // <-- Keep all orderId arrays for selection
-    // orderId2, // <-- REMOVED import for orderId2
-    outlet_depot,
+    orderId, orderId_2, orderId_3,
+    orderIdUpdate, orderIdUpdate_2, orderIdUpdate_3,
     masterData, masterData_2, masterData_3,
+    outlet_depot,
     pervuIterationsWorkload, constantWorkload, ramupWorkload,
     shortBurstSharedWorkload, rampingArrivalRateWorkload, constantArrivalRateWorkload
 } from './config.js';
@@ -28,6 +28,7 @@ import { ordersExportFlow } from './pages/ordersExport.js';
 import { ordersPromoGetListFlow } from './pages/ordersPromoGetList.js';
 import { outletsSearchFlow } from './pages/outletsSearch.js';
 import { ordersPLScrollingFlow } from './pages/ordersPLScrolling.js';
+import { performanceDistributorFlow } from './pages/performanceDistributor.js';
 
 // --- k6 Options ---
 // Define scenarios using imported workloads
@@ -38,9 +39,9 @@ export const options = {
     },
     scenarios: {
         // Choose one or more scenarios
-        debug_run: pervuIterationsWorkload,
+        // debug_run: pervuIterationsWorkload,
         // load_run: ramupWorkload,
-        // endurance_run: constantWorkload
+        endurance_run: constantWorkload
     },
     thresholds: thresholdsSettings.thresholds, // Use thresholds from config
 };
@@ -59,23 +60,26 @@ export default function () {
 
     // --- UPDATED: Select appropriate master data AND orderId arrays based on depot index ---
     let selectedMasterDataArray;
-    let selectedOrderIdArray; // Variable to hold the chosen orderId array
+    let selectedOrderIdEditArray; // Variable to hold the chosen orderId array
+    let selectedOrderIdUpdateArray; // Variable to hold the chosen orderId array
 
     if (depotIndex === 0) {
         selectedMasterDataArray = masterData;
-        selectedOrderIdArray = orderId; // Use orderId for index 0
+        selectedOrderIdEditArray = orderId; // Use orderId for index 0
+        selectedOrderIdUpdateArray = orderIdUpdate; // Use orderId for index 0
         console.log(`VU ${__VU}: Using masterData and orderId (Index 0)`);
     } else if (depotIndex === 1) {
         selectedMasterDataArray = masterData_2;
-        selectedOrderIdArray = orderId_2; // Use orderId_2 for index 1
+        selectedOrderIdEditArray = orderId_2; // Use orderId for index 1
+        selectedOrderIdUpdateArray = orderIdUpdate_2; // Use orderId_2 for index 1
         console.log(`VU ${__VU}: Using masterData_2 and orderId_2 (Index 1)`);
     } else { // Assuming index 2 (or any other index if DEPOT_ID_FILTER grows)
         selectedMasterDataArray = masterData_3;
-        selectedOrderIdArray = orderId_3; // Use orderId_3 for index 2
+        selectedOrderIdEditArray = orderId_3; // Use orderId for index 2
+        selectedOrderIdUpdateArray = orderIdUpdate_3; // Use orderId_3 for index 2
         console.log(`VU ${__VU}: Using masterData_3 and orderId_3 (Index 2)`);
     }
     // --- END UPDATED SELECTION ---
-
     // Select RANDOM master data (e.g., outlet for creation) FROM THE CHOSEN ARRAY
     let currentMasterData = null;
     if (selectedMasterDataArray && selectedMasterDataArray.length > 0) {
@@ -88,10 +92,21 @@ export default function () {
 
     // --- UPDATED: Select RANDOM order for editing FROM THE CHOSEN orderId ARRAY ---
     let editOrderData = null;
-    if (selectedOrderIdArray && selectedOrderIdArray.length > 0) {
+    if (selectedOrderIdEditArray && selectedOrderIdEditArray.length > 0) {
         // Use Math.random() for random selection in each iteration
-        const editIndex = Math.floor(Math.random() * selectedOrderIdArray.length);
-        editOrderData = selectedOrderIdArray[editIndex];
+        const editIndex = Math.floor(Math.random() * selectedOrderIdEditArray.length);
+        editOrderData = selectedOrderIdEditArray[editIndex];
+    } else {
+        console.error(`VU ${__VU}: Selected orderId array (Index ${depotIndex}) is empty or undefined! Cannot select order for edit/update.`);
+    }
+    // --- END UPDATED SELECTION ---
+
+    // --- UPDATED: Select RANDOM order for updating FROM THE CHOSEN orderId ARRAY ---
+    let updateOrderData = null;
+    if (selectedOrderIdUpdateArray && selectedOrderIdUpdateArray.length > 0) {
+        // Use Math.random() for random selection in each iteration
+        const editIndex = Math.floor(Math.random() * selectedOrderIdUpdateArray.length);
+        updateOrderData = selectedOrderIdUpdateArray[editIndex];
     } else {
         console.error(`VU ${__VU}: Selected orderId array (Index ${depotIndex}) is empty or undefined! Cannot select order for edit/update.`);
     }
@@ -109,17 +124,24 @@ export default function () {
 
 
     // Prepare config data object to pass to flows
-    const flowConfigData = {
-        // Data needed by various flows
-        outletId: currentMasterData?.outlet_id, // Use optional chaining
-        externalId2: currentMasterData?.['outlet_External_Id'],
-        userEmail: currentUser.username,
+    const flowConfigData = {       
+        // for order edit
         orderIdToEdit: editOrderData?.order_id, // Use the selected edit order data
-        orderIdForStatusUpdate: editOrderData?.order_id, // Use the selected update order data
-        depotExternalId: promoData?.depot_external_id,
-        outletExternalId: promoData?.outlet_external_id,
+        locationIdToEdit: editOrderData?.location_id,
+        
+        // for order update
+        orderIdForStatusUpdate: updateOrderData?.order_id, // Use the selected update order data
+        
+        // for order promotion
+        depotExternalId: currentMasterData?.depot_external_id,
+        outletExternalId: currentMasterData?.outlet_external_id,
+        
+        // for order Create
         depotId: currentDepotId,
-        // Add other dynamic data as needed by your flows
+        outletId: currentMasterData?.outlet_id,
+        customerId: currentMasterData?.['customer_id'],
+        userEmail: currentMasterData?.['customer_email'],
+        locationId: currentMasterData?.['location_id']
     };
 
     // Check if essential data like outletId is present before proceeding
@@ -129,7 +151,7 @@ export default function () {
     }
 
     // Log the randomly selected outlet ID and potentially the edit/update order ID
-    console.log(`VU ${__VU} starting iteration with User ${currentUser.username}, using Depot ${currentDepotId}, Outlet Id ${currentMasterData?.outlet_id}, Edit Order ${editOrderData?.order_id || 'N/A'}, Update Order ${editOrderData?.order_id || 'N/A'}, Promo Depot ${promoData?.depot_external_id || 'N/A'}`);
+    // console.log(`VU ${__VU} starting iteration with User ${currentUser.username}, using Depot ${currentDepotId}, Outlet Id ${currentMasterData?.outlet_id}, Edit Order ${editOrderData?.order_id || 'N/A'}, Update Order ${updateOrderData?.order_id || 'N/A'}, Promo Depot ${promoData?.depot_external_id || 'N/A'}`);
 
     // 1. Login
     const authToken = loginFlow(currentUser.username, currentUser.password);
@@ -143,11 +165,11 @@ export default function () {
     // sleep(1);
     // ordersCreateFlow(authToken, flowConfigData);
 
-    sleep(1); // issue order edit
-    ordersEditFlow(authToken, flowConfigData); // Will now receive orderId based on depotIndex
+    // sleep(1); // issue order edit
+    // ordersEditFlow(authToken, flowConfigData);
 
     // sleep(1);
-    // ordersUpdateFlow(authToken, flowConfigData); // Now receives the same orderId as edit
+    // ordersUpdateFlow(authToken, flowConfigData); 
 
     // sleep(1);
     // ordersFilterFlow(authToken, flowConfigData);
@@ -169,6 +191,9 @@ export default function () {
 
     // sleep(1);
     // ordersPLScrollingFlow(authToken, flowConfigData);
+
+    sleep(1);
+    performanceDistributorFlow(authToken, flowConfigData);
 
     sleep(1); // Think time before logout
 
@@ -219,6 +244,9 @@ export function handleSummary(data) {
     }
     if (data.metrics.pl_scrolling_success_rate) {
         console.log(`Products List Scrolling Success Rate: ${(data.metrics.pl_scrolling_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.performance_distributor_success_rate) {
+        console.log(`Products List Scrolling Success Rate: ${(data.metrics.performance_distributor_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     console.log("-----------------------------------------------------------------");
 

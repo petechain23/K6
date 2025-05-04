@@ -104,11 +104,11 @@ export default function () {
     //   ordersGetList(testData.cookies); // Execute the test function
     // promotions(testData.cookies);
     // sleep(5);
-    orderCreate(testData.cookies);
-    sleep(2); // Delay between requests
+    // orderCreate(testData.cookies);
+    // sleep(2); // Delay between requests
     // orderEdit(testData.cookies);
     // sleep(2); // Delay between requests
-    // orderUpdateStatus(testData.cookies);
+    orderUpdateStatus(testData.cookies);
     // sleep(2); // Delay between requests
     // orderUpdateStatusDelivered(testData.cookies);
     // sleep(2);

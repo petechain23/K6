@@ -1,7 +1,7 @@
 // v2/flows/ordersCreate.js
 import { group, check, sleep } from 'k6';
 import {
-    BASE_URL, ORDER_CREATE_URL, REGION_ID, LOCATION_ID,
+    BASE_URL, ORDER_CREATE_URL, REGION_ID,
     VARIANT_ID_6, VARIANT_ID_10, VARIANT_ID_11, VARIANT_ID_12, // Use IDs from config
     orderCreationRequestCount, orderCreationResponseTime, orderCreationSuccessRate, // Specific metrics
 } from '../config.js'; // Adjust path
@@ -17,8 +17,14 @@ function addMetrics(response, isSuccessCheck = null) {
     orderCreationRequestCount.add(1, tags);
 }
 
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 export function ordersCreateFlow(authToken, configData) { // Pass configData like outletId
-    const { outletId, depotId, userEmail, customerId } = configData; // Extract needed data from the object passed by main.js
+    const { outletId, depotId, userEmail, customerId, locationId } = configData;
 
     group('Orders Create', function () {
         if (!authToken) {
@@ -33,18 +39,32 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
             console.warn(`VU ${__VU} Orders Create: Skipping flow due to missing depotId in configData.`);
             return;
        }
+    //    // Add checks for the newly required fields
+    //    if (!locationId) {
+    //         console.warn(`VU ${__VU} Orders Create: Skipping flow due to missing locationId in configData.`);
+    //         return;
+    //    }
+    //    if (!customerId) {
+    //         console.warn(`VU ${__VU} Orders Create: Skipping flow due to missing customerId in configData.`);
+    //    }
+
+        // Log the randomly selected outlet ID and potentially the edit/update order ID
+        console.log(`VU ${__VU} starting iteration: using Depot ${depotId}, Outlet Id ${outletId}}`);
 
         const groupTags = { group: 'Orders Create' }; // Define tags for makeRequest
 
         // Select Depot
         const numReadyResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (Select Depot)');
         addMetrics(numReadyResponse);
+        randomSleep(0.5);
 
         const numActiveResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (Select Depot)');
         addMetrics(numActiveResponse);
+        randomSleep(0.5);
 
         const numNeedReviewResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (Select Depot)');
         addMetrics(numNeedReviewResponse);
+        randomSleep(0.5);
 
         // Fetch the actual list of the first 20 orders, filtered by the selected depot
         const depotFilteredOrderCreate = makeRequest(
@@ -55,8 +75,7 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
             '/admin/orders (List orders page, Select Depot)'
         );
         addMetrics(depotFilteredOrderCreate);
-
-        sleep(0.5);
+        randomSleep();
 
         // // --- Dynamic ID extraction and Conditional View ---
         // let orderIdView3 = null;
@@ -97,17 +116,17 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
         // Perform Create Order
         const createPayload = {
             order_type: 'standard',
-            email: configData.userEmail || 'nengahpuspayoga23@yopmail.com', // Get email from configData if passed
+            email: userEmail || 'nengahpuspayoga23@yopmail.com',
             region_id: REGION_ID,
             shipping_methods: [{ option_id: 'so_01H5P53FY82T6HVEPB37Z8PFPZ' }], // Indonesia
             shipping_address: { address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104', country_code: 'id', first_name: 'NENGAH', last_name: '-' },
             billing_address: { address_1: 'BR. UMA DAWE PEJENG KANGIN - TAMPAKSIRING 3022302738 Block A TAMPAK SIRING - GIANYAR, 30104', country_code: 'id', first_name: 'NENGAH', last_name: '-' },
-            customer_id: configData.customerId || 'cus_01JM74671R0812YXBZEP4W2KKC', // Parameterize?
+            customer_id: customerId || 'cus_01JM74671R0812YXBZEP4W2KKC',
             depot_id: depotId,
             outlet_id: outletId,
-            // include_brand: true, //not used ID-Hotfix 
+            // include_brand: true, //not used ID-Hotfix
             metadata: { source_system: 'OMS' }, 
-            location_id: LOCATION_ID,
+            location_id: locationId, // Use locationId directly from configData
             items: [
                 { variant_id: VARIANT_ID_6, quantity: 1, metadata: {} },
                 { variant_id: VARIANT_ID_10, quantity: 2, metadata: {} },
@@ -116,14 +135,14 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
             ]
         };
         const createOrderResponse = makeRequest('post', `${BASE_URL}/${ORDER_CREATE_URL}`, createPayload, { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags }, '/admin/orders/create (Order Create)');
-        addMetrics(createOrderResponse, createOrderResponse.status === 200); // Specific success check
-
         check(createOrderResponse, {
             'Create Order - status is 200': (r) => r.status === 200,
             'Create Order - body contains display_id': (r) => r.body && r.body.includes('display_id'),
         });
+        addMetrics(createOrderResponse, createOrderResponse.status === 200);
+        randomSleep();
         // console.log(createOrderResponse.body);
-
+        // console.log(createOrderResponse.status);
         // --- Conditional Refresh ---
         let createdOrderId = null;
         let isCreateSuccessful = false;
@@ -140,15 +159,20 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
         if (isCreateSuccessful) {
             console.log(`VU ${__VU} Orders Create: Refreshing counts post-create.`);
             const postCreateNumActive = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (After Order Created)');
+            
             addMetrics(postCreateNumActive);
+            randomSleep(0.5);
+            
             const postCreateNumNeedReview = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (After Order Created)');
             addMetrics(postCreateNumNeedReview);
+            randomSleep(0.5);
+            
             const postCreateList = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List orders page, After Order Created)');
             addMetrics(postCreateList);
-            sleep(0.5);
+            randomSleep(0.5);
         } else {
             console.warn(`VU ${__VU} Orders Create: Skipping post-create checks.`);
-            sleep(0.5);
+            randomSleep(1);
         }
     });
 }

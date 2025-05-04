@@ -19,6 +19,12 @@ function addMetrics(response, isSuccessCheck = null) {
     orderSearchRequestCount.add(1, tags);
 }
 
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 // Helper function to view details of the first search result (Optional)
 function viewFirstSearchResult(searchResponse, authToken, groupTags, searchTerm) {
     let firstOrderId = null;
@@ -51,11 +57,11 @@ function viewFirstSearchResult(searchResponse, authToken, groupTags, searchTerm)
             { headers: createHeaders(authToken), tags: groupTags },
             `/admin/orders/{id} (View Details after Search '${searchTerm}')`
         );
+        randomSleep();
         addMetrics(viewDetailsRes); // Add metrics for this specific request
-        sleep(0.5);
     } else {
         console.warn(`VU ${__VU} Orders Search: Skipping detail view for '${searchTerm}' as no order ID was extracted.`);
-        sleep(0.5); // Compensate sleep
+        randomSleep(1);
     }
 }
 
@@ -83,27 +89,28 @@ export function ordersSearchFlow(authToken, configData) {
         check(searchNumericRes, { // Check added for numeric search
             [`Search by Number (${numericSearchTerm}) - status is 200`]: (r) => r.status === 200,
         });
+        randomSleep();
         addMetrics(searchNumericRes);
-        viewFirstSearchResult(searchNumericRes, authToken, groupTags, numericSearchTerm); // Uncomment to view result
-        sleep(0.5);
+        // viewFirstSearchResult(searchNumericRes, authToken, groupTags, numericSearchTerm);
+        
         // Clear Search
         const clearSearch1Res = makeRequest('get', `${BASE_URL}/admin/orders?${baseListParams}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search1)');
-        // addMetrics(clearSearch1Res);
-        sleep(0.5);
-
+        randomSleep(0.5);
+        addMetrics(clearSearch1Res);
+        
         // --- Search by Text ---
         const textSearchTerm = 'OMS';
         const searchTextRes = makeRequest('get', `${BASE_URL}/admin/orders?${baseListParams}&q=${textSearchTerm}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/orders (Search ${textSearchTerm})`);
         check(searchTextRes, { // Check added for text search
             [`Search by Text (${textSearchTerm}) - status is 200`]: (r) => r.status === 200,
         });
+        randomSleep(0.5);
         addMetrics(searchTextRes);
-        viewFirstSearchResult(searchTextRes, authToken, groupTags, textSearchTerm); // Uncomment to view result
-        sleep(0.5);
+        // viewFirstSearchResult(searchTextRes, authToken, groupTags, textSearchTerm);
+
         // Clear Search
         const clearSearch2Res = makeRequest('get', `${BASE_URL}/admin/orders?${baseListParams}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search2)');
-        // addMetrics(clearSearch2Res);
-        sleep(0.5);
-
+        randomSleep(0.5);
+        addMetrics(clearSearch2Res);
     });
 }

@@ -19,6 +19,12 @@ function addMetrics(response, isSuccessCheck = null) {
     promoGetListRequestCount.add(1, tags);
 }
 
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 export function ordersPromoGetListFlow(authToken, configData) {
     // Extract needed data from configData passed by main.js
     const { depotExternalId, outletExternalId } = configData;
@@ -40,7 +46,6 @@ export function ordersPromoGetListFlow(authToken, configData) {
         // --- Get Promotions List ---
         // Construct URL dynamically using data from configData
         const promoListUrl = `${BASE_URL}/admin/promotions/get-list?depot_external_id=${depotExternalId}&outlet_external_id=${outletExternalId}&start_before=2025-05-01T00:00:00.000Z&end_after=2025-05-01T00:00:00.000Z`;
-
         const promoListResponse = makeRequest(
             'get',
             promoListUrl,
@@ -48,6 +53,7 @@ export function ordersPromoGetListFlow(authToken, configData) {
             { headers: createHeaders(authToken), tags: groupTags },
             '/admin/promotions/get-list'
         );
+        randomSleep();
         addMetrics(promoListResponse);
 
         // Optimize checks by parsing JSON once
@@ -68,22 +74,36 @@ export function ordersPromoGetListFlow(authToken, configData) {
                 // Check structure using the pre-parsed body, only if parsing succeeded
                 return parsedPromoListBody !== null && typeof parsedPromoListBody === 'object' && Array.isArray(parsedPromoListBody.promotionList);
             },
-            // New check for content structure (empty array or array with objects having 'id')
-            'Get Promotions List - content is valid (empty or has items with id/name)': (r) => {
+            // Enhanced check for content structure (empty array or array with objects having expected properties)
+            'Get Promotions List - content is valid (empty or has items with expected structure)': (r) => {
                 // Reuse parsedBody, check only if parsing succeeded and basic structure is okay
+                let isValid = false; // Assume invalid initially
                 if (parsedPromoListBody === null || typeof parsedPromoListBody !== 'object' || !Array.isArray(parsedPromoListBody.promotionList)) {
-                    return false;
+                    isValid = false;
+                } else if (parsedPromoListBody.promotionList.length === 0) {
+                    // If the array is empty, it's valid
+                    isValid = true;
+                } else {
+                    // If not empty, check the first element's structure for key properties
+                    const firstItem = parsedPromoListBody.promotionList[0];
+                    isValid = typeof firstItem === 'object' && firstItem !== null &&
+                           firstItem.hasOwnProperty('id') && typeof firstItem.id === 'string' &&
+                           firstItem.hasOwnProperty('promotion_name') && typeof firstItem.promotion_name === 'string';// &&
+                        //    firstItem.hasOwnProperty('promo_type') && typeof firstItem.promo_type === 'string' &&
+                        //    firstItem.hasOwnProperty('activity_type') && typeof firstItem.activity_type === 'string' &&
+                        //    firstItem.hasOwnProperty('periode_start') && typeof firstItem.periode_start === 'string'; // Add more checks as needed
                 }
-                // If the array is empty, it's valid
-                if (parsedPromoListBody.promotionList.length === 0) return true;
-                // If not empty, check the first element's structure
-                const firstItem = parsedPromoListBody.promotionList[0];
-                return typeof firstItem === 'object' && firstItem !== null && firstItem.hasOwnProperty('id') && firstItem.hasOwnProperty('promotion_name');
+
+                // If the structure is not valid, log the response body
+                if (!isValid) {
+                    console.warn(`VU ${__VU} Orders Promotions: Unexpected promo list structure. Response Body: ${r.body}`);
+                }
+                return isValid; // Return the result of the validation
             }
         });
         // console.log(promoListResponse.body)
 
-        sleep(0.5); // Think time after getting list
+        randomSleep(); // Think time after getting list
 
         // --- Get Depot Variants (External) ---
         // Note: The SKU list is very long and hardcoded. Consider parameterizing if needed.
@@ -101,6 +121,7 @@ export function ordersPromoGetListFlow(authToken, configData) {
             { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
             '/admin/variants/depot-variants-external'
         );
+        randomSleep();
         addMetrics(depotVariantsResponse);
 
         // Optimize checks by parsing JSON once

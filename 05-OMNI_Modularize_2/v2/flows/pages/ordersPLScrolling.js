@@ -3,7 +3,7 @@ import { group, check, sleep } from 'k6';
 import {
     BASE_URL, // Base config
     // Import specific metrics for this flow
-    plScrollingResponseTime, plScrollingSuccessRate, plScrollingRequestCount, REGION_ID, LOCATION_ID // Import constants
+    plScrollingResponseTime, plScrollingSuccessRate, plScrollingRequestCount, REGION_ID
 } from '../config.js'; // Adjust path as needed
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
 
@@ -19,10 +19,15 @@ function addMetrics(response, isSuccessCheck = null) {
     plScrollingRequestCount.add(1, tags);
 }
 
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 export function ordersPLScrollingFlow(authToken, configData) {
-    // Extract needed data from configData passed by main.js
-    // Use REGION_ID and LOCATION_ID from config, only need depotId and outletId from configData
-    const { depotId, outletId } = configData;
+    // Use LOCATION_ID , depotId and outletId from configData
+    const { depotId, outletId, locationId } = configData;
 
     group('Orders PL Scrolling', function () {
         // --- Initial Checks ---
@@ -31,8 +36,8 @@ export function ordersPLScrollingFlow(authToken, configData) {
             return;
         }
         // Check only for IDs coming from configData
-        if (!depotId || !outletId) {
-            console.warn(`VU ${__VU} Orders PL Scrolling: Skipping flow due to missing IDs in configData (Depot: ${depotId}, Outlet: ${outletId}). Using REGION_ID: ${REGION_ID}, LOCATION_ID: ${LOCATION_ID} from config.`);
+        if (!depotId || !outletId || !locationId) {
+            console.warn(`VU ${__VU} Orders PL Scrolling: Skipping flow due to missing IDs in configData (Depot: ${depotId}, Outlet: ${outletId}). Using REGION_ID: ${REGION_ID}, LOCATION_ID: ${locationId} from config.`);
             return;
         }
         // --- End Initial Checks ---
@@ -43,7 +48,7 @@ export function ordersPLScrollingFlow(authToken, configData) {
         const maxScrolls = 3; // Limit how many pages we scroll to avoid infinite loops in test
         let currentLastId = null;
         // Construct the base URL outside the loop
-        const baseUrl = `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${outletId}&location_id=${LOCATION_ID}&include_empties_deposit=true&allow_empties_return=false&limit=${limit}&offset=0&q=&expand=product.brand`; // Added expand=product.brand as per comment
+        const baseUrl = `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${outletId}&location_id=${locationId}&include_empties_deposit=true&allow_empties_return=false&limit=${limit}&offset=0&q=&expand=product.brand`; // Added expand=product.brand as per comment
 
         for (let i = 0; i <= maxScrolls; i++) {
             let url = baseUrl; // Start with the base URL
@@ -58,7 +63,7 @@ export function ordersPLScrollingFlow(authToken, configData) {
                 { headers: createHeaders(authToken), tags: groupTags },
                 `/admin/variants/depot-variants (Scroll ${i})` // Tagged endpoint name
             );
-            
+            randomSleep();
             addMetrics(scrollResponse);
 
             let parsedBody = null;
@@ -94,10 +99,10 @@ export function ordersPLScrollingFlow(authToken, configData) {
 
             // If we've done the max number of scrolls, log it and break
             if (i === maxScrolls) {
-                 console.log(`VU ${__VU} Orders PL Scrolling: Reached max scroll limit (${maxScrolls}).`);
-                 break;
+                console.log(`VU ${__VU} Orders PL Scrolling: Reached max scroll limit (${maxScrolls}).`);
+                break;
             }
-            // sleep(0.5); // Think time between scrolls
+            randomSleep(1);
         }
-    }); // End group
+    });
 }

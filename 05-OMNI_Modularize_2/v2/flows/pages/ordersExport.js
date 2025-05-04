@@ -17,6 +17,12 @@ function addMetrics(response, isSuccessCheck = null) {
     orderExportRequestCount.add(1, tags);
 }
 
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 // configData might be used in the future to parameterize the export payload (dates, filters)
 export function ordersExportFlow(authToken, configData = {}) {
 
@@ -90,9 +96,11 @@ export function ordersExportFlow(authToken, configData = {}) {
             { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
             '/admin/batch-jobs (Trigger Orders Export)'
         );
+        
         // Add specific metrics, expecting 201 Created for trigger
         addMetrics(triggerResponse, triggerResponse.status === 201);
-
+        randomSleep();
+        
         let batchJobId = null;
         let triggerBody = null;
 

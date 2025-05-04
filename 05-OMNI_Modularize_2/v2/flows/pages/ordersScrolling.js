@@ -19,6 +19,12 @@ function addMetrics(response, isSuccessCheck = null) {
     orderScrollingRequestCount.add(1, tags);
 }
 
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 export function ordersScrollingFlow(authToken, configData) {
     // Extract needed data
     const { depotId } = configData;
@@ -62,6 +68,7 @@ export function ordersScrollingFlow(authToken, configData) {
                 { headers: createHeaders(authToken), tags: groupTags }, // Use standard headers
                 requestName
             );
+            randomSleep();
 
             // console.log(`Orders Scrolling: Response for ${requestName}:`, JSON.stringify(scrollResponse, null, 2));
 
@@ -88,10 +95,10 @@ export function ordersScrollingFlow(authToken, configData) {
                 [`Scrolling Page ${page} - body has correct structure`]: (r) => {
                     // Check structure using the pre-parsed body, only if parsing succeeded
                     return responseBody && typeof responseBody === 'object' &&
-                           Array.isArray(responseBody.orders) &&
-                           typeof responseBody.count === 'number' &&
-                           typeof responseBody.offset === 'number' &&
-                           typeof responseBody.limit === 'number';
+                        Array.isArray(responseBody.orders) &&
+                        typeof responseBody.count === 'number' &&
+                        typeof responseBody.offset === 'number' &&
+                        typeof responseBody.limit === 'number';
                 },
                 [`Scrolling Page ${page} - offset matches expected (${offset})`]: () => responseBody?.offset === offset,
                 [`Scrolling Page ${page} - limit matches expected (${limitPerPage})`]: () => responseBody?.limit === limitPerPage,
@@ -105,9 +112,8 @@ export function ordersScrollingFlow(authToken, configData) {
                 console.log(`VU ${__VU} Orders Scrolling: Stopping scroll at page ${page}. Status: ${scrollResponse.status}, Orders received: ${ordersCount}`);
                 break; // Exit the loop
             }
-
             // Simulate think time between scrolling actions
-            sleep(Math.random() * 2 + 0.5); // Pause 0.5s to 2.5s
+            randomSleep();
         }
     });
 }

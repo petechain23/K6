@@ -8,6 +8,7 @@ export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend-ho
 export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront-hotfix.azurewebsites.net/distributors';
 // export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
 // export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront.azurewebsites.net/distributors';
+
 export const AUTH_URL = 'admin/auth';
 export const ORDER_CREATE_URL = 'admin/orders/create';
 export const ORDER_EDIT_URL = 'admin/orders/edit'; // Base path for edit
@@ -22,7 +23,6 @@ export const ORDER_INVOICE_GENERATE_URL = 'admin/invoices/generate';
 
 // --- Data Loading ---
 export const users = new SharedArray('users', function () {
-    // Use relative path from the project root where k6 is run
     return papaparse.parse(open('../../../../02-K6 Files/id_credentals.csv'), { header: true }).data.filter(row => row.username);
 });
 
@@ -42,17 +42,25 @@ export const orderId = new SharedArray('orderId', function () {
     return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_edit.csv'), { header: true }).data.filter(row => row.order_id);
 });
 
-export const orderId_2 = new SharedArray('orderId', function () {
+export const orderId_2 = new SharedArray('orderId_2', function () {
     return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_edit_2.csv'), { header: true }).data.filter(row => row.order_id);
 });
 
-export const orderId_3 = new SharedArray('orderId', function () {
+export const orderId_3 = new SharedArray('orderId_3', function () {
     return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_edit_3.csv'), { header: true }).data.filter(row => row.order_id);
 });
 
-// export const orderId2 = new SharedArray('orderId2', function () {
-//     return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_id);
-// });
+export const orderIdUpdate = new SharedArray('orderIdUpdate', function () {
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_id);
+});
+
+export const orderIdUpdate_2 = new SharedArray('orderIdUpdate_2', function () {
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_update_status_2.csv'), { header: true }).data.filter(row => row.order_id);
+});
+
+export const orderIdUpdate_3 = new SharedArray('orderIdUpdate_3', function () {
+    return papaparse.parse(open('../../../../02-K6 Files/id_qa_order_update_status_3.csv'), { header: true }).data.filter(row => row.order_id);
+});
 
 export const outlet_depot = new SharedArray('outlet_depot', function () {
     return papaparse.parse(open('../../../../02-K6 Files/id_qa_promotion_outlet_depot.csv'), { header: true }).data.filter(row => row.outlet_external_id && row.depot_external_id);
@@ -61,7 +69,7 @@ export const outlet_depot = new SharedArray('outlet_depot', function () {
 
 export const DEPOT_ID_FILTER = [
     'depot_01HGYXPR1M5HQ229XGC8RDQSJE', // Klungkung 302-BBI-D02-MAIN masterdata
-    // 'depot_01H6X2SJQBKCBW1HKAEFSB42WD' /// NUSA DUA 302-BBI-D03-MAIN masterdata_2
+    'depot_01H6X2SJQBKCBW1HKAEFSB42WD' /// NUSA DUA 302-BBI-D03-MAIN masterdata_2
     // 'depot_01HH18JASWRK89BAGE3VN59SK1', // Singagar 302-BBI-001-MAIN masterdata_3
     // 'depot_01H77DYEYMRGXJ86ZRZF7WJM87' // D01-MAIN - test invalid case
 ]; 
@@ -69,7 +77,7 @@ export const DEPOT_ID_FILTER = [
 // --- Hardcoded IDs ---
 export const REGION_ID = 'reg_01H5P3E6X97YGENVSW4Z7A5446';
 export const LOCATION_ID = 'sloc_01HGYYZND43JR5B4F1D0HG80Z9';// Klungkung
-export const VARIANT_ID_1 = 'variant_01H771AVVG9NQMV4VZZ2TK7DTB'; //variant_01H771AVVG9NQMV4VZZ2TK7DTB //variant_01H771AV5J5D62ZAKQ340JQJ7S E1830 - ID QA
+export const VARIANT_ID_1 = 'variant_01H771AVVG9NQMV4VZZ2TK7DTB'; //variant_01H771AVVG9NQMV4VZZ2TK7DTB - ID Hotfix //variant_01H771AV5J5D62ZAKQ340JQJ7S E1830 - ID QA
 export const VARIANT_ID_2 = 'variant_01H729MHHAW56JTRXCC8HYCV1X';
 export const VARIANT_ID_3 = 'variant_01H7717GHMWJNHPHAEJVXRN8CS';
 export const VARIANT_ID_4 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
@@ -81,16 +89,6 @@ export const VARIANT_ID_9 = 'variant_01HKPZ9PVK8WZQZNYJ76MBNNJ9';
 export const VARIANT_ID_10 = 'variant_01H5PMH3V5H3BQDM49D8K88MMJ';
 export const VARIANT_ID_11 = 'variant_01H5XTJ97RNCWNM9HAR02D257T';
 export const VARIANT_ID_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA';
-export const CANCELLATION_REASON_ID = 'reason_01JHPP5TQYXJEJ0Y8AG6SGWRES';
-
-// {"metadata":{},"items":[
-//     {"variant_id":"variant_01H77192YY9TWRM0GB6F479YQX","quantity":1,"metadata":{"item_category":"YVGA"}},
-//     {"variant_id":"variant_01H729MHHAW56JTRXCC8HYCV1X","quantity":4,"metadata":{"item_category":"YLGA"}},
-//     {"variant_id":"variant_01HAB20FVGTTJVH12WRE725AC0","quantity":1,"metadata":{}},
-//     {"variant_id":"variant_01H5PMESX1AR52H7BJ4CTHHE80","quantity":2,"metadata":{}},
-//     {"variant_id":"variant_01H5PMH3V5H3BQDM49D8K88MMJ","quantity":2,"metadata":{}},
-//     {"variant_id":"variant_01HKPZ9PVK8WZQZNYJ76MBNNJ9","quantity":2,"metadata":{}}
-// ],"location_id":"sloc_01HGYYZND43JR5B4F1D0HG80Z9"}
 
 // --- Workload Settings ---
 export const pervuIterationsWorkload= {
@@ -102,7 +100,7 @@ export const pervuIterationsWorkload= {
 
 export const constantWorkload = {
     executor: 'constant-vus',
-    vus: 10,
+    vus: 5,
     duration: '5m'
 }
 
@@ -281,3 +279,42 @@ export const promoGetListRequestCount = new Counter('promo_get_list_request_coun
 export const plScrollingResponseTime = new Trend('pl_scrolling_response_time');
 export const plScrollingSuccessRate = new Rate('pl_scrolling_success_rate');
 export const plScrollingRequestCount = new Counter('pl_scrolling_request_count');
+
+// --- Performance Distributor ---
+export const performanceDistributorResponseTime = new Trend('performance_distributor_response_time', true);
+export const performanceDistributorSuccessRate = new Rate('performance_distributor_success_rate');
+export const performanceDistributorRequestCount = new Counter('performance_distributor_request_count'); // Keep this for overall count if needed
+
+// --- Performance Distributor - Specific Endpoints ---
+// Chart Settings
+export const perfDistChartSettingsResponseTime = new Trend('perf_dist_chart_settings_response_time', true);
+export const perfDistChartSettingsSuccessRate = new Rate('perf_dist_chart_settings_success_rate');
+export const perfDistChartSettingsRequestCount = new Counter('perf_dist_chart_settings_request_count');
+// Sales Volume Information
+export const perfDistSalesVolInfoResponseTime = new Trend('perf_dist_sales_vol_info_response_time', true);
+export const perfDistSalesVolInfoSuccessRate = new Rate('perf_dist_sales_vol_info_success_rate');
+export const perfDistSalesVolInfoRequestCount = new Counter('perf_dist_sales_vol_info_request_count');
+// Sales Case Fill Rate
+export const perfDistSalesCaseFillRateResponseTime = new Trend('perf_dist_sales_case_fill_rate_response_time', true);
+export const perfDistSalesCaseFillRateSuccessRate = new Rate('perf_dist_sales_case_fill_rate_success_rate');
+export const perfDistSalesCaseFillRateRequestCount = new Counter('perf_dist_sales_case_fill_rate_request_count');
+// Transaction Capture
+export const perfDistTransCaptureResponseTime = new Trend('perf_dist_trans_capture_response_time', true);
+export const perfDistTransCaptureSuccessRate = new Rate('perf_dist_trans_capture_success_rate');
+export const perfDistTransCaptureRequestCount = new Counter('perf_dist_trans_capture_request_count');
+// Distribution Compliance
+export const perfDistDistComplianceResponseTime = new Trend('perf_dist_dist_compliance_response_time', true);
+export const perfDistDistComplianceSuccessRate = new Rate('perf_dist_dist_compliance_success_rate');
+export const perfDistDistComplianceRequestCount = new Counter('perf_dist_dist_compliance_request_count');
+// Order SLA
+export const perfDistOrderSlaResponseTime = new Trend('perf_dist_order_sla_response_time', true);
+export const perfDistOrderSlaSuccessRate = new Rate('perf_dist_order_sla_success_rate');
+export const perfDistOrderSlaRequestCount = new Counter('perf_dist_order_sla_request_count');
+// Call Effectiveness
+export const perfDistCallEffectivenessResponseTime = new Trend('perf_dist_call_effectiveness_response_time', true);
+export const perfDistCallEffectivenessSuccessRate = new Rate('perf_dist_call_effectiveness_success_rate');
+export const perfDistCallEffectivenessRequestCount = new Counter('perf_dist_call_effectiveness_request_count');
+// Chart ASO
+export const perfDistChartAsoResponseTime = new Trend('perf_dist_chart_aso_response_time', true);
+export const perfDistChartAsoSuccessRate = new Rate('perf_dist_chart_aso_success_rate');
+export const perfDistChartAsoRequestCount = new Counter('perf_dist_chart_aso_request_count');

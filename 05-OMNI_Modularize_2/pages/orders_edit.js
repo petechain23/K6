@@ -12,10 +12,10 @@ export function orderEdit(cookies) {
   const vuID = __VU;
 
   const randomOrder = orderId[Math.floor(Math.random() * orderId.length)];
-  const order_Id = randomOrder?.order_Id;
+  const order_id = randomOrder?.order_id;
 
-  if (!order_Id) {
-    console.error(`VU#${vuID}: No order_Id available.`);
+  if (!order_id) {
+    console.error(`VU#${vuID}: No order_id available.`);
     return;
   }
 
@@ -38,7 +38,7 @@ export function orderEdit(cookies) {
     location_id: 'sloc_01HGYYZND43JR5B4F1D0HG80Z9',
   };
 
-  const url = `${BASE_URL}/${ORDER_EDIT_URL}/${order_Id}`;
+  const url = `${BASE_URL}/${ORDER_EDIT_URL}/${order_id}`;
 
   const res = http.post(url, JSON.stringify(payload), { 
     headers: { cookies: cookies, 'Content-Type': 'application/json' }});
@@ -70,7 +70,7 @@ export function orderEdit(cookies) {
       console.error(`VU#${vuID}: Failed to parse JSON response: ${e.message}`);
     }
   } else {
-    console.error(`VU#${vuID}: Unexpected response - Status: ${res.status}`);
+    console.error(`VU#${vuID}: Unexpected response - Status: ${res.status} - Body: ${res.body}`);
   }
 
   sleep(2); // Short think time between iterations

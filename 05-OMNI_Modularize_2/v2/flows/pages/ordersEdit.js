@@ -1,7 +1,7 @@
 // v2/flows/pages/ordersEdit.js
 import { group, check, sleep } from 'k6';
 import {
-    BASE_URL, ORDER_EDIT_URL, REGION_ID, LOCATION_ID, // Config constants
+    BASE_URL, ORDER_EDIT_URL, REGION_ID, LOCATION_ID,
     // Import ALL variant IDs used in the edit payload from config.js
     VARIANT_ID_1, VARIANT_ID_2, VARIANT_ID_3, VARIANT_ID_4,
     VARIANT_ID_5, VARIANT_ID_6, VARIANT_ID_7, VARIANT_ID_8,
@@ -22,10 +22,16 @@ function addMetrics(response, isSuccessCheck = null) {
     orderEditingRequestCount.add(1, tags);
 }
 
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 export function ordersEditFlow(authToken, configData) {
     // Extract needed data from the object passed by main.js
     // These are now REQUIRED for the flow to proceed meaningfully
-    const { orderIdToEdit, depotId } = configData;
+    const { orderIdToEdit, locationIdToEdit, depotId } = configData;
 
     group('Orders Edit', function () {
         // --- Initial Checks ---
@@ -41,24 +47,40 @@ export function ordersEditFlow(authToken, configData) {
             console.warn(`VU ${__VU} Orders Edit: Skipping flow because no orderIdToEdit was provided in configData.`);
             return;
         }
+        // if (!locationIdToEdit) {
+        //     console.warn(`VU ${__VU} Orders Edit: Skipping flow because no locationIdToEdit was provided in configData.`);
+        //     return;
+        // }
         // --- End Initial Checks ---
 
+        // Log the randomly selected outlet ID and potentially the edit/update order ID        
         console.log(`VU ${__VU} Orders Edit: Attempting to edit order ${orderIdToEdit} in depot ${depotId}`);
         const groupTags = { group: 'Orders Edit' };
 
         // --- Initial Data Loading ---
-        const depotsCurrentUserRes = makeRequest('get', `${BASE_URL}/admin/depots/current-user`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/depots/current-user');
-        addMetrics(depotsCurrentUserRes);
-        const batchJobsInitialRes = makeRequest('get', `${BASE_URL}/admin/batch-jobs?limit=100`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/batch-jobs (Initial)');
-        addMetrics(batchJobsInitialRes);
-        const storeRes = makeRequest('get', `${BASE_URL}/admin/store/`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/store/');
-        addMetrics(storeRes);
+        // const depotsCurrentUserRes = makeRequest('get', `${BASE_URL}/admin/depots/current-user`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/depots/current-user');
+        // randomSleep(0.25);
+        // addMetrics(depotsCurrentUserRes);
+
+        // const batchJobsInitialRes = makeRequest('get', `${BASE_URL}/admin/batch-jobs?limit=100`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/batch-jobs (Initial)');
+        // randomSleep(0.25);
+        // addMetrics(batchJobsInitialRes);
+
+        // const storeRes = makeRequest('get', `${BASE_URL}/admin/store/`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/store/');
+        // randomSleep(0.25);
+        // addMetrics(storeRes);
+
         const numReadyInvoicedRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (Select Depot)');
         addMetrics(numReadyInvoicedRes);
+        randomSleep(0.5);
+
         const numActiveRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (Select Depot)');
+        randomSleep(0.5);
         addMetrics(numActiveRes);
+
         const numNeedReviewRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (Select Depot)');
         addMetrics(numNeedReviewRes);
+        randomSleep(0.5);
         // --- End Initial Data Loading ---
 
 
@@ -70,12 +92,14 @@ export function ordersEditFlow(authToken, configData) {
         // EXPANDED CALL
         const viewOrderRes = makeRequest(
             'get', // method
-            `${BASE_URL}/admin/orders/${orderIdToEdit}?expand=outlet&fields=id,outlet_id`, // url
-            null, // body
+            `${BASE_URL}/admin/orders/${orderIdToEdit}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description`,
+            null,
             { headers: createHeaders(authToken), tags: groupTags }, // params
             '/admin/orders/{id} (View to get OutletID & Status)' // name
         );
+        // console.log(viewOrderRes.body);
         addMetrics(viewOrderRes);
+        randomSleep();
         try {
             if (viewOrderRes.status === 200) {
                 dynamicOutletId = viewOrderRes.json('order.outlet_id') || viewOrderRes.json('order.outlet.id');
@@ -83,7 +107,7 @@ export function ordersEditFlow(authToken, configData) {
                     canProceedToEdit = true;
                     // --- ADDED STATUS CHECK ---
                     const allowedEditStatuses = ['pending', 'processing', 'invoiced', 'ready_for_delivery']; // Define allowed statuses
-                    const orderStatus = viewOrderRes.json('order.extended_status'); // Or 'order.status' if that's the relevant field
+                    const orderStatus = viewOrderRes.json('order.extended_status');
                     isOrderInEditableState = allowedEditStatuses.includes(orderStatus); // Check if status is in the allowed list
                     console.log(`VU ${__VU} Orders Edit: Found outlet ID ${dynamicOutletId} for order ${orderIdToEdit}. Status: ${orderStatus}. Editable (in ${allowedEditStatuses.join(', ')}): ${isOrderInEditableState}`);
                     // --- END ADDED STATUS CHECK ---
@@ -101,11 +125,8 @@ export function ordersEditFlow(authToken, configData) {
             // --- ADDED: Skip if not in editable state ---
             if (!isOrderInEditableState) {
                 console.warn(`VU ${__VU} Orders Edit: Skipping edit for order ${orderIdToEdit} because its status ('${viewOrderRes.json('order.extended_status')}') is not one of ['pending', 'processing', 'invoiced', 'ready_for_delivery'].`);
-                // Compensate for skipped sleeps later if needed, though the main sleeps are conditional below
-                return; // Exit the 'Orders Edit' group for this iteration
+                return;
             }
-            // Prepare for Edit - Load related data
-            // EXPANDED CALL
             const stockLocEditRes = makeRequest(
                 'get', // method
                 `${BASE_URL}/admin/stock-locations?depot_id=${depotId}&offset=0&limit=1000`, null,
@@ -113,22 +134,25 @@ export function ordersEditFlow(authToken, configData) {
                 '/admin/stock-locations (For Edit)'
             );
             addMetrics(stockLocEditRes);
-            if (stockLocEditRes.status >= 400) { // Log only errors
+            randomSleep();
+            if (stockLocEditRes.status >= 400) {
                 console.error(`VU ${__VU} StockLoc Error: Status ${stockLocEditRes.status}, Body: ${stockLocEditRes.body}`);
             }
-            // EXPANDED CALL
+
             const depotVariantsEditRes = makeRequest(
                 'get', // method
-                `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${dynamicOutletId}&include_empties_deposit=true&limit=20&offset=0&q=&location_id=${LOCATION_ID}`, null,
+                `${BASE_URL}/admin/variants/depot-variants?region_id=${REGION_ID}&depot_id=${depotId}&outlet_id=${dynamicOutletId}&include_empties_deposit=true&limit=20&offset=0&q=&location_id=${locationIdToEdit}`, null,
                 { headers: createHeaders(authToken), tags: groupTags },
                 '/admin/variants/depot-variants (For Edit)'
             );
+            
             addMetrics(depotVariantsEditRes);
+            randomSleep();
 
             if (depotVariantsEditRes.status >= 400) { // Log only errors
                 console.error(`VU ${__VU} DepotVariants Error: Status ${depotVariantsEditRes.status}, Body: ${depotVariantsEditRes.body}`);
             }
-            sleep(1); // Keep sleep before performing edit
+            randomSleep();
 
             // Perform Edit - Using the provided orderIdToEdit
             const editPayload = {
@@ -144,13 +168,12 @@ export function ordersEditFlow(authToken, configData) {
                     { variant_id: VARIANT_ID_8, quantity: 3, metadata: { item_category: 'YVGA' } },
                     { variant_id: VARIANT_ID_9, quantity: 4, metadata: { item_category: 'YVGO' } },
                     { variant_id: VARIANT_ID_10, quantity: 5, metadata: { item_category: 'YVGA' } }
-                    // Add VARIANT_ID_11, VARIANT_ID_12 if needed
                 ],
-                location_id: LOCATION_ID, // Use constant from config.js
+                location_id: locationIdToEdit || LOCATION_ID
             };
             const editResponse = makeRequest(
                 'post',
-                `${BASE_URL}/${ORDER_EDIT_URL}/${orderIdToEdit}`, // Use constant and provided ID
+                `${BASE_URL}/${ORDER_EDIT_URL}/${orderIdToEdit}`,
                 editPayload,
                 {
                     headers: createHeaders(authToken, { 'content-type': 'application/json' }),
@@ -158,17 +181,9 @@ export function ordersEditFlow(authToken, configData) {
                 },
                 '/admin/orders/edit/{id} (Perform Edit)'
             );
-
-            // Add specific success check for the edit action (expecting 200 OK)
+            
             addMetrics(editResponse, editResponse.status === 200);
-
-
-            // --- ADD TEMPORARY LOGGING ---
-            // Log the response body specifically if a 409 Conflict occurs
-            if (editResponse.status === 409) {
-                console.error(`VU ${__VU} Edit Order 409 Conflict Body: ${editResponse.body}`);
-            }
-            // --- END TEMPORARY LOGGING ---
+            randomSleep();
 
             // --- ADDED CHECK ---
             check(editResponse, {
@@ -186,8 +201,6 @@ export function ordersEditFlow(authToken, configData) {
             });
             // --- END ADDED CHECK ---
 
-            sleep(3); // Keep sleep after performing edit
-
             // --- Check if Edit was successful (based on status) and Refresh ---
             const isEditSuccessful = editResponse.status === 200;
             check(editResponse, { 'Edit Order - status is 200 (for refresh logic)': () => isEditSuccessful });
@@ -204,6 +217,7 @@ export function ordersEditFlow(authToken, configData) {
                     '/admin/orders/number-of-order-ready-invoiced (After Edit)' // name
                 );
                 addMetrics(numReadyAfterEditRes);
+                sleep(0.5);
                 // EXPANDED CALL
                 const numNeedReviewAfterEditRes = makeRequest(
                     'get', // method
@@ -213,17 +227,18 @@ export function ordersEditFlow(authToken, configData) {
                     '/admin/orders/number-of-order-need-review (After Edit)' // name
                 );
                 addMetrics(numNeedReviewAfterEditRes);
-
+                sleep(0.5);
                 // View order details after edit
                 // EXPANDED CALL
                 const viewAfterEditRes = makeRequest(
                     'get', // method
-                    `${BASE_URL}/admin/orders/${orderIdToEdit}?expand=outlet,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot&fields=id,display_id,outlet_id,status,extended_status`, // url
+                    `${BASE_URL}/admin/orders/${orderIdToEdit}?expand=outlet,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot&fields=id,display_id,outlet_id,status,extended_status`,
                     null, // body
                     { headers: createHeaders(authToken), tags: groupTags }, // params
                     '/admin/orders/{id} (View After Edit)' // name
                 );
                 addMetrics(viewAfterEditRes);
+                randomSleep();
                 // EXPANDED CALL
                 const orderEventAfterEditRes = makeRequest(
                     'get', // method
@@ -232,12 +247,10 @@ export function ordersEditFlow(authToken, configData) {
                     { headers: createHeaders(authToken), tags: groupTags }, // params
                     '/admin/order-event (After Edit)' // name
                 );
+                sleep(0.5);
                 addMetrics(orderEventAfterEditRes);
-
-                sleep(1); // Keep sleep after post-edit checks
-
             } else {
-                console.warn(`VU ${__VU} Orders Edit: Edit failed for order ${orderIdToEdit} (Status: ${editResponse.status}). Skipping post-edit checks.`);
+                console.warn(`VU ${__VU} Orders Edit: Edit failed for order ${orderIdToEdit} (Status: ${editResponse.status}) (Boby: ${editResponse.body}).. Skipping post-edit checks.`);
                 sleep(1); // Compensate for skipped sleep
             }
             // --- End Conditional Refresh ---
@@ -246,9 +259,8 @@ export function ordersEditFlow(authToken, configData) {
             // This block is reached if fetching the outlet ID failed
             console.warn(`VU ${__VU} Orders Edit: Skipping Prepare/Edit sequence for order ${orderIdToEdit} because its outlet ID could not be determined.`);
             // Compensate for sleeps in the skipped block
-            sleep(1 + 3 + 1); // Compensate for: prepare(1), edit(3), post-edit(1)
+            sleep(1);
         }
         // --- End Prepare and Edit Order ---
-
-    }); // End group('Orders Edit')
+    });
 }

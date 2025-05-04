@@ -49,6 +49,9 @@ Depot:
 https://hei-oms-apac-qa-id-backend.azurewebsites.net/admin/orders/order_01JSP7AXVBDS6NPSHS72G1CG7Z
 ?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,items.variant.product.brand,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system
 
+
+
+
 // Helper to add specific metrics for this flow
 function addMetrics(response, isSuccessCheck = null) {
     const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
@@ -198,3 +201,28 @@ expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id
 }
 
 {"promotionList":[]}
+
+
+/admin/orders/${orderIdToEdit}
+?expand=outlet&fields=id,outlet_id
+
+/admin/orders/order_01JT86ZZGQZW1HKY1TDAJRX91Q
+?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description
+
+https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders
+?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=20&limit=20&order=-created_at&include_count=false
+
+{{baseURL}}/admin/orders
+?q=233850&order_type=standard&offset=0&limit=30&order=-created_at&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&expand=outlet
+
+ customer_id: configData.customerId || 'cus_01JM74671R0812YXBZEP4W2KKC',
+ email: configData.userEmail || 'nengahpuspayoga23@yopmail.com',
+
+
+
+ 
+https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders/order_01JTA16A6YYE5D1F14EZFNTAFA
+?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description
+
+https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders/order_01JTA2CEA2HVAHAKQ3AWA5YZYA
+?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description

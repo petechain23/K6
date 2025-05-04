@@ -27,12 +27,12 @@ export const masterData = new SharedArray('masterData', function () {
 
 // Load order_id for edit order
 export const orderId = new SharedArray('orderId', function () {
-    return papaparse.parse(open('../../02-K6 Files/id_qa_order_edit.csv'), { header: true }).data.filter(row => row.order_Id)
+    return papaparse.parse(open('../../02-K6 Files/id_qa_order_edit.csv'), { header: true }).data.filter(row => row.order_id)
 });
 
 // Load order_id for update order status
 export const orderId2 = new SharedArray('orderId2', function () {
-    return papaparse.parse(open('../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_Id)
+    return papaparse.parse(open('../../02-K6 Files/id_qa_order_update_status.csv'), { header: true }).data.filter(row => row.order_id)
 });
 
 // Load outlet_external_id for query promotions
@@ -43,7 +43,7 @@ export const outlet_depot = new SharedArray('outlet_depot', function () {
 //Settings for different workloads
 export const pervuiterations = {
     executor: 'per-vu-iterations',
-    vus: 1,
+    vus: 2,
     iterations: 1,
     // maxDuration: '30s'
 }
@@ -51,7 +51,7 @@ export const pervuiterations = {
 export const constantWorkload = {
     executor: 'constant-vus',
     vus: 5,
-    duration: '20m'
+    duration: '5m'
 }
 
 export const sharedWorkload = {

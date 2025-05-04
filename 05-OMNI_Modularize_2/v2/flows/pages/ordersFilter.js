@@ -28,7 +28,12 @@ function addMetrics(response, statusTag = 'none', isSuccessCheck = null) {
     }
 }
 
-// Helper function to view details and events (remains the same)
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 // Optimization: Accept status to pass down to addMetrics
 function viewFirstOrderDetailsAndEvents(filterResponse, authToken, groupTags, status) {
     let firstOrderId = null;
@@ -64,7 +69,9 @@ function viewFirstOrderDetailsAndEvents(filterResponse, authToken, groupTags, st
             { headers: createHeaders(authToken), tags: groupTags },
             `/admin/orders/{id} (View Details after Filter)`
         );
+        
         addMetrics(viewDetailsRes, `view_after_${status}`); // Pass status context
+        randomSleep();
 
         // View Events Request
         const viewEventsRes = makeRequest(
@@ -75,16 +82,14 @@ function viewFirstOrderDetailsAndEvents(filterResponse, authToken, groupTags, st
             `/admin/order-event (View Events after Filter)`
         );
         addMetrics(viewEventsRes, `view_after_${status}`); // Pass status context
-
-        sleep(0.5); // Add a small sleep after viewing details/events
-
+        sleep(0.1); // Add a small sleep after viewing details/events
+        
     } else {
         // If no order was found or filter failed, skip and maybe compensate sleep
         console.warn(`VU ${__VU} Orders Filter: Skipping detail/event view as no order ID was extracted.`);
-        sleep(0.5); // Compensate for the skipped sleep
+        sleep(0.1); // Compensate for the skipped sleep
     }
 }
-
 
 export function ordersFilterFlow(authToken, configData) {
     // Extract needed data
@@ -127,21 +132,18 @@ export function ordersFilterFlow(authToken, configData) {
                 { headers: createHeaders(authToken), tags: groupTags },
                 requestName
             );
-            
-            // console.log (filterResponse.orders[0].id)
 
+            randomSleep();
+            // console.log (filterResponse.orders[0].id)
             check(filterResponse, {
                 [`Filter by ${status} - status is 200`]: (r) => r.status === 200,
             });
-
-            addMetrics(filterResponse, status); // Pass the status directly
+            addMetrics(filterResponse, status);
 
             // Call helper to view details/events of the first result
-            viewFirstOrderDetailsAndEvents(filterResponse, authToken, groupTags, status); // Pass status
-
-            // Sleep after each filter + view combo
-            sleep(Math.random() * 2 + 0.5);
+            viewFirstOrderDetailsAndEvents(filterResponse, authToken, groupTags, status);
+            randomSleep();
         }
 
-    }); // End group('Orders Filter')
+    });
 }

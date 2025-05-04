@@ -54,7 +54,10 @@ export function makeRequest(method, url, body, params = {}, name) {
         requestBody = JSON.stringify(body);
     }
 
-    const response = http[method](url, requestBody, requestParams);
+    // const response = http[method](url, requestBody, requestParams);
+    
+    // Ensure the method name is lowercase for k6's http object
+    const response = http[method.toLowerCase()](url, requestBody, requestParams);
 
     // Increment generic total request counter
     // Add tags for better filtering in results
