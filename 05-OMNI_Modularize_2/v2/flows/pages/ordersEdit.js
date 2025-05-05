@@ -72,15 +72,15 @@ export function ordersEditFlow(authToken, configData) {
 
         const numReadyInvoicedRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (Select Depot)');
         addMetrics(numReadyInvoicedRes);
-        randomSleep(0.5);
+        sleep(0.5)
 
         const numActiveRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (Select Depot)');
-        randomSleep(0.5);
+        sleep(0.5)
         addMetrics(numActiveRes);
 
         const numNeedReviewRes = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (Select Depot)');
         addMetrics(numNeedReviewRes);
-        randomSleep(0.5);
+        sleep(0.5)
         // --- End Initial Data Loading ---
 
 
@@ -258,8 +258,7 @@ export function ordersEditFlow(authToken, configData) {
         } else {
             // This block is reached if fetching the outlet ID failed
             console.warn(`VU ${__VU} Orders Edit: Skipping Prepare/Edit sequence for order ${orderIdToEdit} because its outlet ID could not be determined.`);
-            // Compensate for sleeps in the skipped block
-            sleep(1);
+            randomSleep();
         }
         // --- End Prepare and Edit Order ---
     });

@@ -75,9 +75,10 @@ export function outletsSearchFlow(authToken, configData = {}) {
             { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
             '/admin/outlets/fetch (by ID)'
         );
-        randomSleep();
-        addMetrics(resSearchById);
+        
         checkSearchResponse(resSearchById, 'Outlets Search (by ID)');
+        addMetrics(resSearchById);
+        randomSleep();
 
         // --- Clear Search (List all in depot) --- [First Clear]
         console.log(`VU ${__VU} Outlets Search: Outlets Search (Clear 1) with query ''`);
@@ -88,9 +89,10 @@ export function outletsSearchFlow(authToken, configData = {}) {
             { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
             '/admin/outlets/fetch (Clear Search 1)'
         );
-        randomSleep();
-        addMetrics(resClearSearch1);
+        
         checkSearchResponse(resClearSearch1, 'Outlets Search (Clear 1)');
+        addMetrics(resClearSearch1);
+        randomSleep();
 
         // --- 2. Search by Text ---
         console.log(`VU ${__VU} Outlets Search: Outlets Search (by Text) with query '${searchByTextTerm}'`);
@@ -101,11 +103,11 @@ export function outletsSearchFlow(authToken, configData = {}) {
             { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
             '/admin/outlets/fetch (by Text)'
         );
-        randomSleep();
-        addMetrics(resSearchByText);
+        
         checkSearchResponse(resSearchByText, 'Outlets Search (by Text)');
+        addMetrics(resSearchByText);
         // Simulate think time between scrolling actions
-        sleep(Math.random() * 1 + 0.5); // Pause 0.5s to 2.5s
+        randomSleep();
 
         // --- Clear Search (List all in depot) --- [Second Clear]
         console.log(`VU ${__VU} Outlets Search: Outlets Search (Clear 2) with query ''`);
@@ -116,9 +118,8 @@ export function outletsSearchFlow(authToken, configData = {}) {
             { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
             '/admin/outlets/fetch (Clear Search 2)'
         );
-        randomSleep();
-        addMetrics(resClearSearch2);
         checkSearchResponse(resClearSearch2, 'Outlets Search (Clear 2)');
-        // No sleep after the last action in the group usually
+        addMetrics(resClearSearch2);
+        andomSleep();
     });
 }

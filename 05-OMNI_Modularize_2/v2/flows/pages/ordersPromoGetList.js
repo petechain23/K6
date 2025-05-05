@@ -53,8 +53,8 @@ export function ordersPromoGetListFlow(authToken, configData) {
             { headers: createHeaders(authToken), tags: groupTags },
             '/admin/promotions/get-list'
         );
-        randomSleep();
         addMetrics(promoListResponse);
+        randomSleep();
 
         // Optimize checks by parsing JSON once
         let parsedPromoListBody = null;
@@ -121,8 +121,8 @@ export function ordersPromoGetListFlow(authToken, configData) {
             { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
             '/admin/variants/depot-variants-external'
         );
-        randomSleep();
         addMetrics(depotVariantsResponse);
+        randomSleep();
 
         // Optimize checks by parsing JSON once
         let parsedDepotVariantsBody = null;

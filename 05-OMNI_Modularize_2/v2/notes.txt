@@ -1,7 +1,8 @@
 page prompt:
-- Update file ordersPromotionGetlist.js to use the defined structure current project.
-- Using depot depotExternalID and outletExternalID from the config.
-- Add Check
+- Update file ordersEditRetry.js to use the defined structure of current project.
+- Using orderToEdit, depotId from the config.
+- Add randomSleep
+- Add Metric and Check
 
 outletId,depot_id,depot_External_Id,outlet_External_Id
 

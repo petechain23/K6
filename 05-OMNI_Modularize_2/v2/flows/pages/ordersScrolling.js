@@ -20,7 +20,7 @@ function addMetrics(response, isSuccessCheck = null) {
 }
 
 // --- Helper function for random sleep ---
-function randomSleep(min = 1, max = 3) {
+function randomSleep(min = 1, max = 2) {
     const duration = Math.random() * (max - min) + min;
     sleep(duration);
 }
@@ -106,6 +106,7 @@ export function ordersScrollingFlow(authToken, configData) {
 
             // Add metrics for this scroll request
             addMetrics(scrollResponse);
+            randomSleep();
 
             // If the request failed (non-200) or returned no orders, stop scrolling
             if (scrollResponse.status !== 200 || ordersCount === 0) {

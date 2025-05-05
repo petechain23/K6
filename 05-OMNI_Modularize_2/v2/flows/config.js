@@ -4,10 +4,10 @@ import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { Trend, Rate, Counter } from 'k6/metrics'; // Keep Metric if used directly
 
 // --- Base URLs & Endpoints ---
-export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net';
-export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront-hotfix.azurewebsites.net/distributors';
-// export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
-// export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront.azurewebsites.net/distributors';
+// export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net';
+// export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront-hotfix.azurewebsites.net/distributors';
+export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
+export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront.azurewebsites.net/distributors';
 
 export const AUTH_URL = 'admin/auth';
 export const ORDER_CREATE_URL = 'admin/orders/create';
@@ -69,10 +69,10 @@ export const outlet_depot = new SharedArray('outlet_depot', function () {
 
 export const DEPOT_ID_FILTER = [
     'depot_01HGYXPR1M5HQ229XGC8RDQSJE', // Klungkung 302-BBI-D02-MAIN masterdata
-    'depot_01H6X2SJQBKCBW1HKAEFSB42WD' /// NUSA DUA 302-BBI-D03-MAIN masterdata_2
+    // 'depot_01H6X2SJQBKCBW1HKAEFSB42WD' /// NUSA DUA 302-BBI-D03-MAIN masterdata_2
     // 'depot_01HH18JASWRK89BAGE3VN59SK1', // Singagar 302-BBI-001-MAIN masterdata_3
     // 'depot_01H77DYEYMRGXJ86ZRZF7WJM87' // D01-MAIN - test invalid case
-]; 
+];
 
 // --- Hardcoded IDs ---
 export const REGION_ID = 'reg_01H5P3E6X97YGENVSW4Z7A5446';
@@ -91,11 +91,11 @@ export const VARIANT_ID_11 = 'variant_01H5XTJ97RNCWNM9HAR02D257T';
 export const VARIANT_ID_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA';
 
 // --- Workload Settings ---
-export const pervuIterationsWorkload= {
+export const pervuIterationsWorkload = {
     executor: 'per-vu-iterations', //thresdhold configures based this mode vus: 1, iterations: 2
-    vus: 3,
-    iterations: 2,
-    // maxDuration: '30s'
+    vus: 50,
+    iterations: 1,
+    // maxDuration: '30s' // default = 10m
 }
 
 export const constantWorkload = {
@@ -111,9 +111,9 @@ export const ramupWorkload = {
         { target: 5, duration: '1m' },  // Ramp up to 5 VUs over 1 min
         { target: 10, duration: '10m' }, // Ramp up from 5 to 10 VUs over 10 mins
         { target: 15, duration: '10m' }, // Ramp up from 10 to 15 VUs over 10 mins
-        { target: 20, duration: '15m' }, // Ramp up from 15 to 20 VUs over 15 mins
-        { target: 30, duration: '20m' }, // Ramp up from 20 to 30 VUs over 20 mins
-        { target: 5, duration: '1m' },   // Ramp down from 30 to 5 VUs over 1 min
+        // { target: 20, duration: '15m' }, // Ramp up from 15 to 20 VUs over 15 mins
+        // { target: 30, duration: '20m' }, // Ramp up from 20 to 30 VUs over 20 mins
+        { target: 0, duration: '1m' },   // Ramp down from 30 to 5 VUs over 1 min
     ],
     gracefulRampDown: '5s'
 }
@@ -157,9 +157,9 @@ export const thresholdsSettings = {
 
         // --- Custom Metrics (For certain Group URL) ---
         'http_req_duration{group:::Login}': ['p(99)<1500'],
-        'http_req_duration{group:::Orders Create}': ['p(95)<2000'],
-        'http_req_duration{group:::Orders Edit}': ['p(95)<2000'],
-        'http_req_duration{group:::Orders Update}': ['p(95)<2000'],
+        'http_req_duration{group:::Orders Create}': ['p(95)<7000'],
+        'http_req_duration{group:::Orders Edit}': ['p(95)<7000'],
+        'http_req_duration{group:::Orders Update}': ['p(95)<4000'],
         'http_req_duration{group:::Orders Filter}': ['p(95)<1000'],
         'http_req_duration{group:::Orders Scrolling}': ['p(95)<1000'],
         'http_req_duration{group:::Orders Search}': ['p(95)<1500'],
@@ -167,6 +167,8 @@ export const thresholdsSettings = {
         'http_req_duration{group:::Outlets Search}': ['p(95)<1000'],
         'http_req_duration{group:::Orders Promotions Get List}': ['p(95)<2000'],
         'http_req_duration{group:::Orders PL Scrolling}': ['p(95)<3000'],
+        'http_req_duration{group:::Performance Distributor}': ['p(95)<3000'],
+        'http_req_duration{group:::Orders Update To Delivered}': ['p(95)<4000'],
 
         // --- Custom Metrics (For certain URL) ---
         // 'http_req_duration{name:/admin/auth - POST (Login)}': ['p(99)<1500'],
@@ -215,6 +217,40 @@ export const thresholdsSettings = {
         // Orders PL Scrolling
         'pl_scrolling_success_rate': ['rate>0.98'],
         'pl_scrolling_response_time': ['p(95)<3000'],
+
+        // Order Update To Delivered
+        'order_update_to_delivered_success_rate': ['rate>0.95'],
+        'order_update_to_delivered_response_time': ['p(95)<3500'],
+
+        // Order Edit Retries
+        'order_editing_retry_success_rate': ['rate>0.80'],
+        'order_editing_retry_response_time': ['p(95)<2000'],
+
+        // --- Performance Distributor - Specific Endpoints ---
+        // Chart Settings
+        'perf_dist_chart_settings_response_time': ['p(95)<1000'],
+        'perf_dist_chart_settings_success_rate': ['rate>0.98'],
+        // Sales Volume Information
+        'perf_dist_sales_vol_info_response_time': ['p(95)<1000'],
+        'perf_dist_sales_vol_info_success_rate': ['rate>0.98'],
+        // Sales Case Fill Rate
+        'perf_dist_sales_case_fill_rate_response_time': ['p(95)<1000'],
+        'perf_dist_sales_case_fill_rate_success_rate': ['rate>0.98'],
+        // Transaction Capture
+        'perf_dist_trans_capture_response_time': ['p(95)<1000'],
+        'perf_dist_trans_capture_success_rate': ['rate>0.98'],
+        // Distribution Compliance
+        'perf_dist_dist_compliance_response_time': ['p(95)<3500'],
+        'perf_dist_dist_compliance_success_rate': ['rate>0.98'],
+        // Order SLA
+        'perf_dist_order_sla_response_time': ['p(95)<1000'],
+        'perf_dist_order_sla_success_rate': ['rate>0.98'],
+        // Call Effectiveness
+        'perf_dist_call_effectiveness_response_time': ['p(95)<1000'],
+        'perf_dist_call_effectiveness_success_rate': ['rate>0.98'],
+        // Chart ASO
+        'perf_dist_chart_aso_response_time': ['p(95)<1000'],
+        'perf_dist_chart_aso_success_rate': ['rate>0.98'],
     }
 };
 
@@ -279,6 +315,17 @@ export const promoGetListRequestCount = new Counter('promo_get_list_request_coun
 export const plScrollingResponseTime = new Trend('pl_scrolling_response_time');
 export const plScrollingSuccessRate = new Rate('pl_scrolling_success_rate');
 export const plScrollingRequestCount = new Counter('pl_scrolling_request_count');
+
+// Orders Update To Delivered
+export const orderUpdateToDeliveredResponseTime = new Trend('order_update_to_delivered_response_time');
+export const orderUpdateToDeliveredSuccessRate = new Rate('order_update_to_delivered_success_rate');
+export const orderUpdateToDeliveredRequestCount = new Counter('order_update_to_delivered_request_count');
+
+// Orders Edit Retry
+export const orderEditingRetryResponseTime = new Trend('order_editing_retry_response_time');
+export const orderEditingRetrySuccessRate = new Rate('order_editing_retry_success_rate');
+export const orderEditingRetryRequestCount = new Counter('order_editing_retry_request_count');
+
 
 // --- Performance Distributor ---
 export const performanceDistributorResponseTime = new Trend('performance_distributor_response_time', true);

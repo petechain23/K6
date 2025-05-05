@@ -153,11 +153,11 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
                  isCreateSuccessful = !!createdOrderId; // True if ID exists
                  if(isCreateSuccessful) console.log(`VU ${__VU} Orders Create: Order created successfully with ID: ${createdOrderId}`);
                  else console.warn(`VU ${__VU} Orders Create: Status 200 but ID not found.`);
-            } else { console.error(`VU ${__VU} Orders Create: Create failed. Status: ${createOrderResponse.status}`);}
+            } else { console.error(`VU ${__VU} Orders Create: Create failed. Status: ${createOrderResponse.status} Body: ${createOrderResponse.body}`);}
          } catch(e) { console.error(`VU ${__VU} Orders Create: Failed to parse create response JSON. Error: ${e.message}`); }
 
         if (isCreateSuccessful) {
-            console.log(`VU ${__VU} Orders Create: Refreshing counts post-create.`);
+            // console.log(`VU ${__VU} Orders Create: Refreshing counts post-create.`);
             const postCreateNumActive = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (After Order Created)');
             
             addMetrics(postCreateNumActive);

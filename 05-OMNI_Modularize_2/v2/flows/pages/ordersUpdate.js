@@ -58,7 +58,7 @@ export function ordersUpdateFlow(authToken, configData) {
     // orderIdForStatusUpdate, depotId is required
     const { orderIdForStatusUpdate, depotId } = configData;
 
-    group('Orders Update', function () {
+    group('Orders Update Full', function () {
         // --- Initial Checks ---
         if (!authToken) {
             console.warn(`VU ${__VU} Orders Update: Skipping flow due to missing auth token.`);
@@ -83,17 +83,17 @@ export function ordersUpdateFlow(authToken, configData) {
 
         // Perform Checks
         const invCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/inventory-checked/{id}');
-        randomSleep(0.5);
+        sleep(0.5)
         addMetrics(invCheckRes, invCheckRes.status === 200);
 
         // Credit Checks
         const creditCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/credit-checked/{id}');
-        randomSleep(0.5);
+        sleep(0.5)
         addMetrics(creditCheckRes, creditCheckRes.status === 200);
 
         // Promotion Checks
         const promoCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/promotion-checked/{id}');
-        randomSleep(0.5);
+        sleep(0.5)
         addMetrics(promoCheckRes, promoCheckRes.status === 200);
 
         // --- Chained Status Updates ---
@@ -117,8 +117,6 @@ export function ordersUpdateFlow(authToken, configData) {
                         { headers: createHeaders(authToken), tags: groupTags },
                         `/admin/orders/{id} (Verify Status: ${targetStatus})`
                     );
-                    randomSleep();
-                    addMetrics(verifyStatusRes); // Add metrics for the verification request
                     check(verifyStatusRes, {
                         [`Verify Status Update (${targetStatus}) - status is 200`]: (r) => r.status === 200,
                         [`Verify Status Update (${targetStatus}) - extended_status is ${targetStatus}`]: (r) => {
@@ -133,26 +131,31 @@ export function ordersUpdateFlow(authToken, configData) {
                             } catch (e) { return false; /* JSON parsing failed */ }
                         },
                     });
+  
+                    addMetrics(verifyStatusRes); // Add metrics for the verification request
+                    randomSleep();
+                    
                     // --- End Verification Step ---
 
                     // Fetch order events (optional)
                     const eventAfterUpdateRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
-                    randomSleep();
+                    
                     addMetrics(eventAfterUpdateRes);
+                    randomSleep();
 
                     if (targetStatus === 'paid') {
-                        randomSleep();
+                        sleep(1);
                     } else {
-                        randomSleep(1);
+                        randomSleep();
                     }
                 } else {
                     // If update failed, log is handled in helper. Halt further updates.
                     console.error(`VU ${__VU} Orders Update: Halting further status updates for ${targetProcessingOrderId} due to failure at '${targetStatus}'.`);
                     // Compensate sleep with random duration
                     if (targetStatus === 'paid') {
-                        randomSleep();
+                        sleep(1);
                     } else {
-                        randomSleep(1);
+                        randomSleep();
                     }
                     break; // Exit the loop
                 }
@@ -161,9 +164,9 @@ export function ordersUpdateFlow(authToken, configData) {
                 console.log(`VU ${__VU} Orders Update: Skipping update to ${targetStatus} due to previous failure.`);
                 // Compensate sleep with random duration
                 if (targetStatus === 'paid') {
-                    randomSleep(1);
+                    sleep(1);
                 } else {
-                    randomSleep(1);
+                    randomSleep();
                 }
             }
         }

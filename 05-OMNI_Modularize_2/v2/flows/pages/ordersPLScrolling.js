@@ -63,8 +63,8 @@ export function ordersPLScrollingFlow(authToken, configData) {
                 { headers: createHeaders(authToken), tags: groupTags },
                 `/admin/variants/depot-variants (Scroll ${i})` // Tagged endpoint name
             );
-            randomSleep();
             addMetrics(scrollResponse);
+            randomSleep();
 
             let parsedBody = null;
             let parseError = null;
@@ -102,7 +102,7 @@ export function ordersPLScrollingFlow(authToken, configData) {
                 console.log(`VU ${__VU} Orders PL Scrolling: Reached max scroll limit (${maxScrolls}).`);
                 break;
             }
-            randomSleep(1);
+            randomSleep();
         }
     });
 }

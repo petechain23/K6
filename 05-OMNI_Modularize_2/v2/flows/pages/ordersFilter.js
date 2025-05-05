@@ -82,12 +82,12 @@ function viewFirstOrderDetailsAndEvents(filterResponse, authToken, groupTags, st
             `/admin/order-event (View Events after Filter)`
         );
         addMetrics(viewEventsRes, `view_after_${status}`); // Pass status context
-        sleep(0.1); // Add a small sleep after viewing details/events
+        sleep(0.5);
         
     } else {
         // If no order was found or filter failed, skip and maybe compensate sleep
         console.warn(`VU ${__VU} Orders Filter: Skipping detail/event view as no order ID was extracted.`);
-        sleep(0.1); // Compensate for the skipped sleep
+        sleep(0.5);
     }
 }
 

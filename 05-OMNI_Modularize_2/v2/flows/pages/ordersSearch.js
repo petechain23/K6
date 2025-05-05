@@ -57,11 +57,12 @@ function viewFirstSearchResult(searchResponse, authToken, groupTags, searchTerm)
             { headers: createHeaders(authToken), tags: groupTags },
             `/admin/orders/{id} (View Details after Search '${searchTerm}')`
         );
-        randomSleep();
+        
         addMetrics(viewDetailsRes); // Add metrics for this specific request
+        randomSleep();
     } else {
         console.warn(`VU ${__VU} Orders Search: Skipping detail view for '${searchTerm}' as no order ID was extracted.`);
-        randomSleep(1);
+        randomSleep();
     }
 }
 
@@ -89,14 +90,15 @@ export function ordersSearchFlow(authToken, configData) {
         check(searchNumericRes, { // Check added for numeric search
             [`Search by Number (${numericSearchTerm}) - status is 200`]: (r) => r.status === 200,
         });
-        randomSleep();
+
         addMetrics(searchNumericRes);
+        randomSleep();
         // viewFirstSearchResult(searchNumericRes, authToken, groupTags, numericSearchTerm);
         
         // Clear Search
-        const clearSearch1Res = makeRequest('get', `${BASE_URL}/admin/orders?${baseListParams}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search1)');
-        randomSleep(0.5);
+        const clearSearch1Res = makeRequest('get', `${BASE_URL}/admin/orders?${baseListParams}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search1)');;
         addMetrics(clearSearch1Res);
+        randomSleep();
         
         // --- Search by Text ---
         const textSearchTerm = 'OMS';
@@ -104,13 +106,15 @@ export function ordersSearchFlow(authToken, configData) {
         check(searchTextRes, { // Check added for text search
             [`Search by Text (${textSearchTerm}) - status is 200`]: (r) => r.status === 200,
         });
-        randomSleep(0.5);
+
         addMetrics(searchTextRes);
+        randomSleep();
         // viewFirstSearchResult(searchTextRes, authToken, groupTags, textSearchTerm);
 
         // Clear Search
         const clearSearch2Res = makeRequest('get', `${BASE_URL}/admin/orders?${baseListParams}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search2)');
-        randomSleep(0.5);
+
         addMetrics(clearSearch2Res);
+        randomSleep();
     });
 }
