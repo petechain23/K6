@@ -31,6 +31,8 @@ import { ordersPLScrollingFlow } from './pages/ordersPLScrolling.js';
 import { performanceDistributorFlow } from './pages/performanceDistributor.js';
 import { ordersUpdateToDeliveredFlow } from './pages/ordersUpdateToDelivered.js';
 import { ordersEditWithRetryFlow } from './pages/ordersEditRetry.js';
+import { ordersInvoiceFlow } from './pages/ordersInvoice.js';
+
 
 // --- k6 Options ---
 // Define scenarios using imported workloads
@@ -95,9 +97,10 @@ export default function () {
     // --- UPDATED: Select RANDOM order for editing FROM THE CHOSEN orderId ARRAY ---
     let editOrderData = null;
     if (selectedOrderIdEditArray && selectedOrderIdEditArray.length > 0) {
-        // // Use Math.random() for random selection in each iteration
+        // Use Math.random() for random selection in each iteration
         // const editIndex = Math.floor(Math.random() * selectedOrderIdEditArray.length);
         // editOrderData = selectedOrderIdEditArray[editIndex];
+
         // Use VU number for sequential selection within the VU's assigned array
         const editIndex = __VU % selectedOrderIdEditArray.length; // Cycle through the array based on VU number
         editOrderData = selectedOrderIdEditArray[editIndex]; // Pick the order at the calculated index
@@ -110,8 +113,13 @@ export default function () {
     let updateOrderData = null;
     if (selectedOrderIdUpdateArray && selectedOrderIdUpdateArray.length > 0) {
         // Use Math.random() for random selection in each iteration
-        const editIndex = Math.floor(Math.random() * selectedOrderIdUpdateArray.length);
-        updateOrderData = selectedOrderIdUpdateArray[editIndex];
+        // const editIndex = Math.floor(Math.random() * selectedOrderIdUpdateArray.length);
+        // updateOrderData = selectedOrderIdUpdateArray[editIndex];
+
+        // Use VU number for sequential selection within the VU's assigned array
+        const editIndex = __VU % selectedOrderIdUpdateArray.length; // Cycle through the array based on VU number
+        updateOrderData = selectedOrderIdUpdateArray[editIndex]; // Pick the order at the calculated index
+
     } else {
         console.error(`VU ${__VU}: Selected orderId array (Index ${depotIndex}) is empty or undefined! Cannot select order for edit/update.`);
     }
@@ -170,8 +178,8 @@ export default function () {
     // sleep(1);
     // ordersCreateFlow(authToken, flowConfigData);
 
-    // sleep(1); // issue order edit
-    // ordersEditFlow(authToken, flowConfigData);
+    sleep(1);
+    ordersEditFlow(authToken, flowConfigData);
 
     // sleep(1);
     // ordersUpdateFlow(authToken, flowConfigData); 
@@ -179,8 +187,11 @@ export default function () {
     // sleep(1);
     // ordersUpdateToDeliveredFlow(authToken, flowConfigData);
 
-    sleep(1);
-    ordersEditWithRetryFlow(authToken, flowConfigData);
+    // sleep(1);
+    // ordersEditWithRetryFlow(authToken, flowConfigData);
+
+    // sleep(1);
+    // ordersInvoiceFlow(authToken, flowConfigData);
 
     // sleep(1);
     // ordersFilterFlow(authToken, flowConfigData);
@@ -240,6 +251,9 @@ export function handleSummary(data) {
     }
     if (data.metrics.order_update_to_delivered_success_rate) {
         console.log(`Order Update To Delivered Success Rate: ${(data.metrics.order_update_to_delivered_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.order_invoice_success_rate) {
+        console.log(`Order Invoice Success Rate: ${(data.metrics.order_invoice_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_filter_success_rate) {
         console.log(`Order Filter Success Rate: ${(data.metrics.order_filter_success_rate.values.rate * 100).toFixed(2)}%`);

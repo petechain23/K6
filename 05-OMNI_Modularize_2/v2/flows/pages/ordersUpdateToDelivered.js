@@ -10,7 +10,7 @@ import {
     orderUpdateToDeliveredSuccessRate,
     orderUpdateToDeliveredRequestCount
 } from '../config.js'; // Adjust path as needed
-import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
+import { makeRequest, createHeaders, randomSleep } from '../utils.js'; // Adjust path as needed
 
 // Helper to add specific metrics for this flow
 function addMetrics(response, isSuccessCheck = null) {
@@ -21,12 +21,6 @@ function addMetrics(response, isSuccessCheck = null) {
     orderUpdateToDeliveredResponseTime.add(response.timings.duration, tags);
     orderUpdateToDeliveredSuccessRate.add(success, tags);
     orderUpdateToDeliveredRequestCount.add(1, tags);
-}
-
-// --- Helper function for random sleep ---
-function randomSleep(min = 1, max = 3) {
-    const duration = Math.random() * (max - min) + min;
-    sleep(duration);
 }
 
 export function ordersUpdateToDeliveredFlow(authToken, configData) {

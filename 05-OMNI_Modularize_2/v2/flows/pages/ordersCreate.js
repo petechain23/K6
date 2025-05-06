@@ -56,15 +56,15 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
         // Select Depot
         const numReadyResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-ready-invoiced?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-ready-invoiced (Select Depot)');
         addMetrics(numReadyResponse);
-        randomSleep(0.5);
+        sleep(0.5);
 
         const numActiveResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (Select Depot)');
         addMetrics(numActiveResponse);
-        randomSleep(0.5);
+        sleep(0.5);
 
         const numNeedReviewResponse = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (Select Depot)');
         addMetrics(numNeedReviewResponse);
-        randomSleep(0.5);
+        sleep(0.5);
 
         // Fetch the actual list of the first 20 orders, filtered by the selected depot
         const depotFilteredOrderCreate = makeRequest(
@@ -161,18 +161,15 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
             const postCreateNumActive = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-active?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-active (After Order Created)');
             
             addMetrics(postCreateNumActive);
-            randomSleep(0.5);
             
             const postCreateNumNeedReview = makeRequest('get', `${BASE_URL}/admin/orders/number-of-order-need-review?depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/number-of-order-need-review (After Order Created)');
             addMetrics(postCreateNumNeedReview);
-            randomSleep(0.5);
             
             const postCreateList = makeRequest('get', `${BASE_URL}/admin/orders?expand=outlet&fields=id,display_id,metadata,created_at,extended_status,outlet_id,credit_checked,inventory_checked,promotion_checked&order_type=standard&offset=0&limit=20&order=-created_at&include_count=false&depot_id=${depotId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List orders page, After Order Created)');
             addMetrics(postCreateList);
-            randomSleep(0.5);
         } else {
             console.warn(`VU ${__VU} Orders Create: Skipping post-create checks.`);
-            randomSleep(1);
+            sleep(1);
         }
     });
 }

@@ -4,10 +4,10 @@ import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { Trend, Rate, Counter } from 'k6/metrics'; // Keep Metric if used directly
 
 // --- Base URLs & Endpoints ---
-// export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net';
-// export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront-hotfix.azurewebsites.net/distributors';
-export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
-export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront.azurewebsites.net/distributors';
+export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net';
+export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront-hotfix.azurewebsites.net/distributors';
+// export const BASE_URL = __ENV.BASE_URL || 'https://hei-oms-apac-qa-id-backend.azurewebsites.net';
+// export const FRONTEND_URL = __ENV.FRONTEND_URL || 'https://hei-oms-apac-qa-id-storefront.azurewebsites.net/distributors';
 
 export const AUTH_URL = 'admin/auth';
 export const ORDER_CREATE_URL = 'admin/orders/create';
@@ -77,7 +77,7 @@ export const DEPOT_ID_FILTER = [
 // --- Hardcoded IDs ---
 export const REGION_ID = 'reg_01H5P3E6X97YGENVSW4Z7A5446';
 export const LOCATION_ID = 'sloc_01HGYYZND43JR5B4F1D0HG80Z9';// Klungkung
-export const VARIANT_ID_1 = 'variant_01H771AVVG9NQMV4VZZ2TK7DTB'; //variant_01H771AVVG9NQMV4VZZ2TK7DTB - ID Hotfix //variant_01H771AV5J5D62ZAKQ340JQJ7S E1830 - ID QA
+export const VARIANT_ID_1 = 'variant_01H771AV5J5D62ZAKQ340JQJ7S'; //variant_01H771AVVG9NQMV4VZZ2TK7DTB - ID Hotfix //variant_01H771AV5J5D62ZAKQ340JQJ7S E1830 - ID QA
 export const VARIANT_ID_2 = 'variant_01H729MHHAW56JTRXCC8HYCV1X';
 export const VARIANT_ID_3 = 'variant_01H7717GHMWJNHPHAEJVXRN8CS';
 export const VARIANT_ID_4 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
@@ -169,6 +169,7 @@ export const thresholdsSettings = {
         'http_req_duration{group:::Orders PL Scrolling}': ['p(95)<3000'],
         'http_req_duration{group:::Performance Distributor}': ['p(95)<3000'],
         'http_req_duration{group:::Orders Update To Delivered}': ['p(95)<4000'],
+        'http_req_duration{group:::Orders Update To Delivered}': ['p(95)<4000'],
 
         // --- Custom Metrics (For certain URL) ---
         // 'http_req_duration{name:/admin/auth - POST (Login)}': ['p(99)<1500'],
@@ -226,6 +227,11 @@ export const thresholdsSettings = {
         'order_editing_retry_success_rate': ['rate>0.80'],
         'order_editing_retry_response_time': ['p(95)<2000'],
 
+        // Orders Invoice Generation
+        'order_invoice_success_rate': ['rate>0.80'],
+        'order_invoice_response_time': ['p(95)<2000'],
+
+                
         // --- Performance Distributor - Specific Endpoints ---
         // Chart Settings
         'perf_dist_chart_settings_response_time': ['p(95)<1000'],
@@ -326,6 +332,10 @@ export const orderEditingRetryResponseTime = new Trend('order_editing_retry_resp
 export const orderEditingRetrySuccessRate = new Rate('order_editing_retry_success_rate');
 export const orderEditingRetryRequestCount = new Counter('order_editing_retry_request_count');
 
+// Orders Invoice Generation
+export const orderInvoiceResponseTime = new Trend('order_invoice_response_time');
+export const orderInvoiceSuccessRate = new Rate('order_invoice_success_rate');
+export const orderInvoiceRequestCount = new Counter('order_invoice_request_count');
 
 // --- Performance Distributor ---
 export const performanceDistributorResponseTime = new Trend('performance_distributor_response_time', true);

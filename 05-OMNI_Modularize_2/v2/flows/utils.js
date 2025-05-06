@@ -1,6 +1,6 @@
 // v2/utils.js
 import http from 'k6/http'; // Ensure http is imported
-import { check } from 'k6';
+import { check, sleep  } from 'k6';
 import {
     FRONTEND_URL, defaultCustomResponseTime, defaultCustomSuccessRate, defaultCustomRequestCount
 } from './config.js';
@@ -34,6 +34,13 @@ export function createHeaders(authToken, specificHeaders = {}) {
     }
     return headers;
 }
+
+// --- Helper function for random sleep ---
+export function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
+
 
 /**
  * Makes an HTTP request, adds basic checks, and records GENERIC metrics.

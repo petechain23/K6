@@ -227,3 +227,32 @@ https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders/order_0
 
 https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net/admin/orders/order_01JTA2CEA2HVAHAKQ3AWA5YZYA
 ?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description
+
+
+
+{
+  "errors": [],
+  "downloaded": [
+    {
+      "invoice": {
+        "order_id": "order_01JT2PEAAPAW0A7862R5JTX7Z6",
+        ...
+        },
+        "number": "INV_order_01JT2PEAAPAW0A7862R5JTX7Z6_1746506254062",
+        "status": "open",
+        ...
+        "invoice_serial_number": "BGSI2505000122",
+        "expected_delivery_date": "2025-05-06T04:37:29.443Z",
+        "term_of_payments": "current_credit_terms",
+        "id": "invoice_01JTHY52BCCJPAFPDDHJA5EMWH"
+      },
+      "response": {
+        "order_id": "order_01JT2PEAAPAW0A7862R5JTX7Z6",
+        "file_name": "INV_order_01JT2PEAAPAW0A7862R5JTX7Z6_1746506254062.pdf",
+        "file_path": "invoices/order_01JT2PEAAPAW0A7862R5JTX7Z6/INV_order_01JT2PEAAPAW0A7862R5JTX7Z6_1746506254062.pdf",
+        "file_created_date": "6 May at 4:37"
+      },
+      "isCreated": true
+    }
+  ]
+}
