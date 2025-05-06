@@ -58,7 +58,7 @@ export function ordersUpdateFlow(authToken, configData) {
     // orderIdForStatusUpdate, depotId is required
     const { orderIdForStatusUpdate, depotId } = configData;
 
-    group('Orders Update Full', function () {
+    group('Orders Update', function () {
         // --- Initial Checks ---
         if (!authToken) {
             console.warn(`VU ${__VU} Orders Update: Skipping flow due to missing auth token.`);

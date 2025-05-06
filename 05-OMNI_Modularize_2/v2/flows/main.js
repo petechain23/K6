@@ -113,12 +113,12 @@ export default function () {
     let updateOrderData = null;
     if (selectedOrderIdUpdateArray && selectedOrderIdUpdateArray.length > 0) {
         // Use Math.random() for random selection in each iteration
-        // const editIndex = Math.floor(Math.random() * selectedOrderIdUpdateArray.length);
-        // updateOrderData = selectedOrderIdUpdateArray[editIndex];
+        const editIndex = Math.floor(Math.random() * selectedOrderIdUpdateArray.length);
+        updateOrderData = selectedOrderIdUpdateArray[editIndex];
 
         // Use VU number for sequential selection within the VU's assigned array
-        const editIndex = __VU % selectedOrderIdUpdateArray.length; // Cycle through the array based on VU number
-        updateOrderData = selectedOrderIdUpdateArray[editIndex]; // Pick the order at the calculated index
+        // const editIndex = __VU % selectedOrderIdUpdateArray.length; // Cycle through the array based on VU number
+        // updateOrderData = selectedOrderIdUpdateArray[editIndex]; // Pick the order at the calculated index
 
     } else {
         console.error(`VU ${__VU}: Selected orderId array (Index ${depotIndex}) is empty or undefined! Cannot select order for edit/update.`);
@@ -184,14 +184,14 @@ export default function () {
     // sleep(1);
     // ordersUpdateFlow(authToken, flowConfigData); 
 
-    // sleep(1);
-    // ordersUpdateToDeliveredFlow(authToken, flowConfigData);
+    sleep(1);
+    ordersUpdateToDeliveredFlow(authToken, flowConfigData);
 
     // sleep(1);
     // ordersEditWithRetryFlow(authToken, flowConfigData);
 
-    sleep(1);
-    ordersInvoiceFlow(authToken, flowConfigData);
+    // sleep(1);
+    // ordersInvoiceFlow(authToken, flowConfigData);
 
     // sleep(1);
     // ordersFilterFlow(authToken, flowConfigData);
@@ -217,10 +217,10 @@ export default function () {
     // sleep(1);
     // performanceDistributorFlow(authToken, flowConfigData);
 
-    sleep(1); // Think time before logout
+    // sleep(1); // Think time before logout
 
     // 3. Logout
-    logoutFlow(authToken);
+    // logoutFlow(authToken);
 
     console.log(`VU ${__VU} finished iteration.`);
 }
@@ -235,49 +235,49 @@ export function handleSummary(data) {
     console.log("-------------------- Custom Metrics Summary --------------------");
     // Log specific metrics if desired (check if metric exists first)
     if (data.metrics.login_success_rate) {
-        console.log(`Login Success Rate: ${(data.metrics.login_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`1.Login Success Rate: ${(data.metrics.login_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_creation_success_rate) {
-        console.log(`Order Creation Success Rate: ${(data.metrics.order_creation_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`2.Order Creation Success Rate: ${(data.metrics.order_creation_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_editing_success_rate) {
-        console.log(`Order Edit Success Rate:   ${(data.metrics.order_editing_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`3.Order Edit Success Rate:   ${(data.metrics.order_editing_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_editing_retry_success_rate) {
-        console.log(`Order Edit Retry Success Rate: ${(data.metrics.order_editing_retry_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`4.Order Edit Retry Success Rate: ${(data.metrics.order_editing_retry_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_updating_success_rate) {
-        console.log(`Order Update Success Rate: ${(data.metrics.order_updating_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`5.Order Update Success Rate: ${(data.metrics.order_updating_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_update_to_delivered_success_rate) {
-        console.log(`Order Update To Delivered Success Rate: ${(data.metrics.order_update_to_delivered_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`6.Order Update To Delivered Success Rate: ${(data.metrics.order_update_to_delivered_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_invoice_success_rate) {
-        console.log(`Order Invoice Success Rate: ${(data.metrics.order_invoice_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`7.Order Invoice Success Rate: ${(data.metrics.order_invoice_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_filter_success_rate) {
-        console.log(`Order Filter Success Rate: ${(data.metrics.order_filter_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`8.Order Filter Success Rate: ${(data.metrics.order_filter_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_scrolling_success_rate) {
-        console.log(`Order Scrolling Success Rate: ${(data.metrics.order_scrolling_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`9.Order Scrolling Success Rate: ${(data.metrics.order_scrolling_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_search_success_rate) {
-        console.log(`Order Search Success Rate: ${(data.metrics.order_search_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`10.Order Search Success Rate: ${(data.metrics.order_search_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_export_success_rate) {
-        console.log(`Order Export Success Rate: ${(data.metrics.order_export_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`11.Order Export Success Rate: ${(data.metrics.order_export_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.outlet_search_success_rate) {
-        console.log(`Outlet Search Success Rate: ${(data.metrics.outlet_search_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`12.Outlet Search Success Rate: ${(data.metrics.outlet_search_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.promo_get_list_success_rate) {
-        console.log(`Promo Get List Success Rate: ${(data.metrics.promo_get_list_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`13.Promo Get List Success Rate: ${(data.metrics.promo_get_list_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.pl_scrolling_success_rate) {
-        console.log(`Products List Scrolling Success Rate: ${(data.metrics.pl_scrolling_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`14.Products List Scrolling Success Rate: ${(data.metrics.pl_scrolling_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.performance_distributor_success_rate) {
-        console.log(`Products List Scrolling Success Rate: ${(data.metrics.performance_distributor_success_rate.values.rate * 100).toFixed(2)}%`);
+        console.log(`15.Products List Scrolling Success Rate: ${(data.metrics.performance_distributor_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     console.log("-----------------------------------------------------------------");
 

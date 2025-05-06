@@ -93,7 +93,7 @@ export const VARIANT_ID_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA';
 // --- Workload Settings ---
 export const pervuIterationsWorkload = {
     executor: 'per-vu-iterations', //thresdhold configures based this mode vus: 1, iterations: 2
-    vus: 3,
+    vus: 50,
     iterations: 1,
     // maxDuration: '30s' // default = 10m
 }
@@ -169,7 +169,7 @@ export const thresholdsSettings = {
         'http_req_duration{group:::Orders PL Scrolling}': ['p(95)<3000'],
         'http_req_duration{group:::Performance Distributor}': ['p(95)<3000'],
         'http_req_duration{group:::Orders Update To Delivered}': ['p(95)<4000'],
-        'http_req_duration{group:::Orders Update To Delivered}': ['p(95)<4000'],
+        'http_req_duration{group:::Orders Invoice Generation}': ['p(95)<4000'],
 
         // --- Custom Metrics (For certain URL) ---
         // 'http_req_duration{name:/admin/auth - POST (Login)}': ['p(99)<1500'],

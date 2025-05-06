@@ -57,12 +57,33 @@ export function makeRequest(method, url, body, params = {}, name) {
 
     // Stringify body if needed
     let requestBody = body;
-    if (typeof body === 'object' && body !== null && requestParams.headers && requestParams.headers['content-type'] === 'application/json') {
-        requestBody = JSON.stringify(body);
+
+    // if (typeof body === 'object' && body !== null && requestParams.headers && requestParams.headers['content-type'] === 'application/json') {
+    //     requestBody = JSON.stringify(body);
+    // }
+
+        // Ensure headers object exists if not provided
+    if (!requestParams.headers) {
+        requestParams.headers = {};
     }
 
     // const response = http[method](url, requestBody, requestParams);
     
+    // If body is a plain JavaScript object (and not null)
+    if (typeof body === 'object' && body !== null && body.constructor === Object) {
+        // And if Content-Type is not already specified, default to application/json
+        if (!requestParams.headers['Content-Type'] && !requestParams.headers['content-type']) {
+            requestParams.headers['Content-Type'] = 'application/json';
+        }
+    }
+
+    // If Content-Type is application/json, ensure body is stringified
+    if (requestParams.headers['Content-Type'] === 'application/json' || requestParams.headers['content-type'] === 'application/json') {
+        if (typeof requestBody !== 'string') { // Avoid double-stringifying
+            requestBody = JSON.stringify(body);
+        }
+    }
+
     // Ensure the method name is lowercase for k6's http object
     const response = http[method.toLowerCase()](url, requestBody, requestParams);
 

@@ -53,7 +53,7 @@ export function ordersUpdateToDeliveredFlow(authToken, configData) {
         console.log(`VU ${__VU} Orders Update To Delivered: Viewing order ${orderIdForStatusUpdate}`);
         const viewOrderRes = makeRequest('get', `${BASE_URL}/admin/orders/${orderIdForStatusUpdate}?expand=outlet&fields=id,display_id,status,extended_status`, null, { headers: headers, tags: groupTags }, '/admin/orders/{id} (View Order)');
         addMetrics(viewOrderRes);
-        randomSleep();
+        sleep(1);
 
         // Step 3: Conditional Logic based on status
         let orderStatus = null;
@@ -68,70 +68,75 @@ export function ordersUpdateToDeliveredFlow(authToken, configData) {
             console.error(`VU ${__VU} Orders Update To Delivered: Failed to parse view response. Error: ${e.message}`);
         }
 
-        if (orderStatus === 'pending') {
-            console.log(`VU ${__VU} Orders Update To Delivered: Order is pending, performing processing and checks.`);
+        if (orderStatus === 'pending' || orderStatus === 'processing') {
+            console.log(`VU ${__VU} Orders Update To Delivered: Proceeding with processing, checks, and update status to delivered.`);
 
             // Mark order as processing
-            const markProcessingPayload = { is_processing: true };
-            const markProcessingRes = makeRequest('post', `${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${orderIdForStatusUpdate}`, markProcessingPayload, { headers: postHeaders, tags: groupTags }, '/admin/orders/{id} (Mark Processing)');
-            addMetrics(markProcessingRes);
-            check(markProcessingRes, { 'Mark Processing - status is 2xx': (r) => r.status >= 200 && r.status < 300 });
-            randomSleep();
-
+            if (orderStatus === 'pending') {
+                const markProcessingPayload = { is_processing: true };
+                const markProcessingRes = makeRequest('post', `${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${orderIdForStatusUpdate}`, markProcessingPayload, { headers: postHeaders, tags: groupTags }, '/admin/orders/{id} (Mark Processing)');
+                addMetrics(markProcessingRes);
+                check(markProcessingRes, { 'Mark Processing - status is 2xx': (r) => r.status === 200 });
+                sleep(1);
+            }
+            
             // Perform Inventory Check
             const invCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${orderIdForStatusUpdate}`, null, { headers: headers, tags: groupTags }, '/admin/orders/inventory-checked/{id}');
             addMetrics(invCheckRes);
-            check(invCheckRes, { 'Inventory Check - status is 2xx': (r) => r.status >= 200 && r.status < 300 });
-            sleep(0.5);
+            check(invCheckRes, { 'Inventory Check - status is 2xx': (r) => r.status === 200 });
+            sleep(1);
 
             // Perform Credit Check
             const creditCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${orderIdForStatusUpdate}`, null, { headers: headers, tags: groupTags }, '/admin/orders/credit-checked/{id}');
             addMetrics(creditCheckRes);
-            check(creditCheckRes, { 'Credit Check - status is 2xx': (r) => r.status >= 200 && r.status < 300 });
-            sleep(0.5);
+            check(creditCheckRes, { 'Credit Check - status is 2xx': (r) => r.status === 200 });
+            sleep(1);
 
             // Perform Promotion Check
             const promoCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${orderIdForStatusUpdate}`, null, { headers: headers, tags: groupTags }, '/admin/orders/promotion-checked/{id}');
             addMetrics(promoCheckRes);
-            check(promoCheckRes, { 'Promotion Check - status is 2xx': (r) => r.status >= 200 && r.status < 300 });
-            sleep(0.5);
+            check(promoCheckRes, { 'Promotion Check - status is 2xx': (r) => r.status === 200 });
+            sleep(1);
 
+            // Step 4: Update status to Delivered
+            console.log(`VU ${__VU} Orders Update To Delivered: Attempting to update order ${orderIdForStatusUpdate} to 'delivered'.`);
+            // Assuming the API requires at least the order ID and status.
+            const updatePayload = {
+                order_ids: [orderIdForStatusUpdate],
+                status: "delivered",
+                expected_delivery_date: new Date().toISOString(), 
+                term_of_payments: "current_credit_terms" // Kept from original
+            };
+            const updateStatusRes = makeRequest('post', `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, updatePayload, { headers: postHeaders, tags: groupTags }, '/admin/order-extend-status/update (To Delivered)');
+            // Use specific success check
+            console.log('updateStatusRes', updateStatusRes.body);
+            addMetrics(updateStatusRes, updateStatusRes.status === 201);
+            check(updateStatusRes, {
+                [`[Update Status to Delivered] - status is 201:`]: (r) => r.status === 201,
+                [`[Update Status to Delivered] - extended_status is:`]: (r) => {
+                    try {
+                        const body = r.json();
+                        return body?.saved?.[0]?.extended_status === 'delivered';
+                    } catch (e) {
+                        console.error(`Update Status to Delivered error: ${e.message}, with body: ${updateStatusRes.body}`);
+                        return false; // Parsing failed or structure incorrect
+                    }
+                }
+            });
+            if (updateStatusRes.status !== 201) {
+                console.error(`VU ${__VU} [Orders Update To Delivered] FAILED for order: ${orderIdForStatusUpdate}. Status: ${updateStatusRes.status}, Body: ${updateStatusRes.body}`);
+            }
+            sleep(2);
         } else if (orderStatus !== null) {
             console.log(`VU ${__VU} Orders Update To Delivered: Order status is '${orderStatus}', skipping processing and checks.`);
         } else {
-            console.warn(`VU ${__VU} Orders Update To Delivered: Could not determine order status. Skipping processing and checks.`);
+            console.warn(`VU ${__VU} Could not determine order status for ${orderIdForStatusUpdate}. Skipping processing and checks.`);
         }
+        // sleep(5);
+        // // Get order events after update attempt
+        // const orderEventsRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${orderIdForStatusUpdate}`, null, { headers: headers, tags: groupTags }, '/admin/order-event (After Update)');
+        // addMetrics(orderEventsRes);
+        // sleep(1);
 
-        // Step 4: Update status to Delivered
-        console.log(`VU ${__VU} Orders Update To Delivered: Attempting to update order ${orderIdForStatusUpdate} to 'delivered'.`);
-        // Assuming the API requires at least the order ID and status.
-        const updatePayload = {
-            order_ids: [orderIdForStatusUpdate],
-            status: "delivered",
-            expected_delivery_date: new Date().toISOString(), 
-            term_of_payments: "current_credit_terms" // Kept from original
-        };
-        const updateStatusRes = makeRequest('post', `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, updatePayload, { headers: postHeaders, tags: groupTags }, '/admin/order-extend-status/update (To Delivered)');
-        // Use specific success check
-        console.log('updateStatusRes', updateStatusRes.body);
-        addMetrics(updateStatusRes, updateStatusRes.status === 201);
-        check(updateStatusRes, {
-            'Update Status to Delivered - status is 201': (r) => r.status === 201,
-            'Update Status to Delivered - response body shows delivered': (r) => {
-                try {
-                    const body = r.json();
-                    return body?.order?.extended_status === 'delivered';
-                } catch (e) {
-                    return false; // Parsing failed or structure incorrect
-                }
-            }
-        });
-        randomSleep();
-
-        // Get order events after update attempt
-        const orderEventsRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${orderIdForStatusUpdate}`, null, { headers: headers, tags: groupTags }, '/admin/order-event (After Update)');
-        addMetrics(orderEventsRes);
-        randomSleep();
-
-    }); // End group
+    });
 }

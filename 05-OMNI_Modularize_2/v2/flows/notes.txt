@@ -4,6 +4,11 @@ page prompt:
 - Add randomSleep
 - Add Metric and Check
 
+"expected_delivery_date=2025-05-06T14%3A28%3A57.637Z&order_ids=order_01JTA2AR8YQ3RVGYKQJDMPYEB9&term_of_payments=current_credit_terms"
+"expected_delivery_date=2025-05-06T14%3A28%3A57.637Z&order_ids=order_01JTA2AR8YQ3RVGYKQJDMPYEB9&term_of_payments=current_credit_terms"
+2025-05-06T14:32:59.688Z
+
+
 outletId,depot_id,depot_External_Id,outlet_External_Id
 
 issue GET 2 API khi search order number: 
