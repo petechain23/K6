@@ -178,8 +178,8 @@ export default function () {
     // sleep(1);
     // ordersCreateFlow(authToken, flowConfigData);
 
-    sleep(1);
-    ordersEditFlow(authToken, flowConfigData);
+    // sleep(1);
+    // ordersEditFlow(authToken, flowConfigData);
 
     // sleep(1);
     // ordersUpdateFlow(authToken, flowConfigData); 
@@ -190,8 +190,8 @@ export default function () {
     // sleep(1);
     // ordersEditWithRetryFlow(authToken, flowConfigData);
 
-    // sleep(1);
-    // ordersInvoiceFlow(authToken, flowConfigData);
+    sleep(1);
+    ordersInvoiceFlow(authToken, flowConfigData);
 
     // sleep(1);
     // ordersFilterFlow(authToken, flowConfigData);

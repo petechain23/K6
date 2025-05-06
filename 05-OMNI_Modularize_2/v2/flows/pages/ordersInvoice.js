@@ -23,9 +23,7 @@ export function ordersInvoiceFlow(authToken, configData) {
   // Extract needed data from configData passed by main.js
   const { orderIdForStatusUpdate, depotId } = configData; // Use the specific order ID for this flow
 
-  group(
-    'Orders Invoice',
-    function () {
+  group( 'Orders Invoice', function () {
       // --- Initial Checks ---
       if (!authToken) {
         console.warn(`VU ${__VU} Orders Invoice: Skipping flow due to missing auth token.`);
@@ -43,12 +41,12 @@ export function ordersInvoiceFlow(authToken, configData) {
       console.log(`VU ${__VU} Orders Invoice: Processing order ${orderIdForStatusUpdate}, Using Depot ${depotId}`);
       const groupTags = { group: 'Orders Invoice' };
       // Define common headers once
-      const headers = createHeaders(authToken);
-      const postHeaders = createHeaders(authToken, { 'content-type': 'application/json' });
+      // const headers = createHeaders(authToken);
+      // const postHeaders = createHeaders(authToken, { 'content-type': 'application/json' });
       let res;
       // --- 1. Get Order Details ---
       const getOrderUrl = `${BASE_URL}/admin/orders/${orderIdForStatusUpdate}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description`;
-      res = makeRequest('get', getOrderUrl, null, { headers: headers, tags: groupTags }, '/admin/orders/{id} (View Order)');
+      res = makeRequest('get', getOrderUrl, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/{id} (View Order)');
       const getOrderCheck = check(res, { 'Get Order Details - status 200': (r) => r.status === 200 });
       addMetrics(res, getOrderCheck);
       randomSleep(0.8, 1.2); // Replaced sleep(1)
@@ -74,7 +72,7 @@ export function ordersInvoiceFlow(authToken, configData) {
           if (orderStatus === 'pending') {
               const setProcessingUrl = `${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${orderIdForStatusUpdate}`;
               const setProcessingPayload = { is_processing: true };
-              res = makeRequest('post', setProcessingUrl, setProcessingPayload, { headers: postHeaders, tags: groupTags }, '/admin/orders/{id} (Mark Processing)');
+              res = makeRequest('post', setProcessingUrl, setProcessingPayload, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/{id} (Mark Processing)');
               addMetrics(res, res.status === 200); // Assuming 200 is success
               check(res, { 'Set Order Processing - status 200': (r) => r.status === 200 });
               randomSleep(1.5, 2.5); // Replaced sleep(2)
@@ -82,41 +80,45 @@ export function ordersInvoiceFlow(authToken, configData) {
 
           // --- 2b. Mark Inventory Checked ---
           const inventoryCheckUrl = `${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${orderIdForStatusUpdate}`;
-          res = makeRequest('post', inventoryCheckUrl, null, { headers: headers, tags: groupTags }, '/admin/orders/inventory-checked/{id}');
+          res = makeRequest('post', inventoryCheckUrl, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/inventory-checked/{id}');
           addMetrics(res, res.status === 200); // Assuming 200 is success
           check(res, { 'Mark Inventory Checked - status 200': (r) => r.status === 200 });
           randomSleep(0.8, 1.2); // Replaced sleep(1)
 
           // --- 2c. Mark Credit Checked ---
           const creditCheckUrl = `${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${orderIdForStatusUpdate}`;
-          res = makeRequest('post', creditCheckUrl, null, { headers: headers, tags: groupTags }, '/admin/orders/credit-checked/{id}');
+          res = makeRequest('post', creditCheckUrl, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/credit-checked/{id}');
           addMetrics(res, res.status === 200); // Assuming 200 is success
           check(res, { 'Mark Credit Checked - status 200': (r) => r.status === 200 });
           randomSleep(0.8, 1.2); // Replaced sleep(1)
 
           // --- 2d. Mark Promotion Checked ---
           const promoCheckUrl = `${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${orderIdForStatusUpdate}`;
-          res = makeRequest('post', promoCheckUrl, null, { headers: headers, tags: groupTags }, '/admin/orders/promotion-checked/{id}');
+          res = makeRequest('post', promoCheckUrl, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/promotion-checked/{id}');
           addMetrics(res, res.status === 200); // Assuming 200 is success
           check(res, { 'Mark Promotion Checked - status 200': (r) => r.status === 200 });
           randomSleep(0.8, 1.2); // Replaced sleep(1)
-
-      } else {
+      } 
+      else {
           console.log(`VU ${__VU} Orders Invoice: Order status is '${orderStatus}'. Skipping processing and checks.`);
           // Optionally add a sleep here if needed when skipping steps
           randomSleep(1, 2);
       }
       // --- End Conditional Block ---
-
       // --- 6. Generate Invoice ---
       const generateInvoiceUrl = `${BASE_URL}/${ORDER_INVOICE_GENERATE_URL}`;
       const invoicePayload = {
-        order_ids: [orderIdForStatusUpdate],
+        // order_ids: [orderIdForStatusUpdate],
+        order_ids: [String(orderIdForStatusUpdate)], // Convert to string
         expected_delivery_date: new Date().toISOString(),
         term_of_payments: "current_credit_terms"
+
+        // {"order_ids":["order_01JTF9SY5KBQJNCHYGG36XGFXX"],"expected_delivery_date":"2025-05-07T10:00:19.247Z","term_of_payments":"current_credit_terms"}
+
       };
       // Note: Using postHeaders which includes content-type: application/json
-      res = makeRequest('post', generateInvoiceUrl, invoicePayload, { headers: postHeaders, tags: groupTags }, '/admin/invoices/generate');
+      res = makeRequest('post', generateInvoiceUrl, invoicePayload, { headers: createHeaders(authToken), tags: groupTags }, '/admin/invoices/generate');
+      console.log(res.body);
       const generateInvoiceSuccess = res.status === 201;
       addMetrics(res, generateInvoiceSuccess);
       check(res, {
@@ -137,7 +139,10 @@ export function ordersInvoiceFlow(authToken, configData) {
       });
       if (!generateInvoiceSuccess) {
         console.error(`VU ${__VU} Orders Invoice: Failed to generate invoice for order ${orderIdForStatusUpdate}. Status: ${res.status}, Body: ${res.body}`);
+      } else {
+        console.log(`VU ${__VU} Orders Invoice: Successfully generated invoice for order ${orderIdForStatusUpdate}`);
       }
+      
     }
   );
 }

@@ -93,7 +93,7 @@ export const VARIANT_ID_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA';
 // --- Workload Settings ---
 export const pervuIterationsWorkload = {
     executor: 'per-vu-iterations', //thresdhold configures based this mode vus: 1, iterations: 2
-    vus: 50,
+    vus: 3,
     iterations: 1,
     // maxDuration: '30s' // default = 10m
 }
