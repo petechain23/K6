@@ -52,7 +52,7 @@ export function ordersExportFlow(authToken, configData = {}) {
                     skip: 0,
                     take: 100, // Consider parameterizing or increasing
                     order: { order_created_at: 'DESC' },
-                    select: [ /*2898 line item in ID-Hotfix */
+                    select: [ /*2973 line item in ID-Hotfix */
                         'line_item_id', 'order_id', 'order_display_id', 'order_status',
                         'order_created_at', 'order_currency_code', 'order_fulfillment_status',
                         'order_payment_status', 'order_extended_status', 'order_external_number',
@@ -80,8 +80,8 @@ export function ordersExportFlow(authToken, configData = {}) {
                 },
                 filterable_fields: {
                     created_at: {
-                        gt: configData.exportStartDate || '2025-03-01T00:00:00.000Z',
-                        lt: configData.exportEndDate || '2025-03-31T23:59:59.999Z'
+                        gt: configData.exportStartDate || '2025-04-01T00:00:00.000Z',
+                        lt: configData.exportEndDate || '2025-04-30T23:59:59.999Z'
                     },
                     depot_id: [depotId] // Use the depotId from configData
                 }

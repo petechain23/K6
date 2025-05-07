@@ -1,7 +1,8 @@
 import { SharedArray } from 'k6/data';
 import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { Trend, Rate, Counter, Metric } from 'k6/metrics';
-export const BASE_URL = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net'
+// export const BASE_URL = 'https://hei-oms-apac-qa-id-backend.azurewebsites.net'
+export const BASE_URL =  'https://hei-oms-apac-qa-id-backend-hotfix.azurewebsites.net';
 export const AUTH_URL = 'admin/auth'
 export const ORDER_CREATE_URL = 'admin/orders/create'
 export const ORDER_EDIT_URL = 'admin/orders/edit'
@@ -43,7 +44,7 @@ export const outlet_depot = new SharedArray('outlet_depot', function () {
 //Settings for different workloads
 export const pervuiterations = {
     executor: 'per-vu-iterations',
-    vus: 2,
+    vus: 20,
     iterations: 1,
     // maxDuration: '30s'
 }

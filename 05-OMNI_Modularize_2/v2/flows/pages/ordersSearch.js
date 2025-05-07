@@ -5,7 +5,7 @@ import {
     // Import specific metrics for this flow (We'll add these to config.js later)
     orderSearchResponseTime, orderSearchSuccessRate, orderSearchRequestCount
 } from '../config.js'; // Adjust path as needed
-import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
+import { makeRequest, createHeaders, randomSleep } from '../utils.js'; // Adjust path as needed
 
 // Helper to add specific metrics for this flow
 function addMetrics(response, isSuccessCheck = null) {
@@ -17,12 +17,6 @@ function addMetrics(response, isSuccessCheck = null) {
     orderSearchResponseTime.add(response.timings.duration, tags);
     orderSearchSuccessRate.add(success, tags);
     orderSearchRequestCount.add(1, tags);
-}
-
-// --- Helper function for random sleep ---
-function randomSleep(min = 1, max = 3) {
-    const duration = Math.random() * (max - min) + min;
-    sleep(duration);
 }
 
 // Helper function to view details of the first search result (Optional)
@@ -92,13 +86,13 @@ export function ordersSearchFlow(authToken, configData) {
         });
 
         addMetrics(searchNumericRes);
-        randomSleep();
+        sleep(2);
         // viewFirstSearchResult(searchNumericRes, authToken, groupTags, numericSearchTerm);
         
         // Clear Search
         const clearSearch1Res = makeRequest('get', `${BASE_URL}/admin/orders?${baseListParams}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search1)');;
         addMetrics(clearSearch1Res);
-        randomSleep();
+        sleep(2);
         
         // --- Search by Text ---
         const textSearchTerm = 'OMS';
@@ -108,13 +102,12 @@ export function ordersSearchFlow(authToken, configData) {
         });
 
         addMetrics(searchTextRes);
-        randomSleep();
+        sleep(2);
         // viewFirstSearchResult(searchTextRes, authToken, groupTags, textSearchTerm);
 
         // Clear Search
         const clearSearch2Res = makeRequest('get', `${BASE_URL}/admin/orders?${baseListParams}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders (List After Clear Search2)');
-
         addMetrics(clearSearch2Res);
-        randomSleep();
+        sleep(2);
     });
 }
