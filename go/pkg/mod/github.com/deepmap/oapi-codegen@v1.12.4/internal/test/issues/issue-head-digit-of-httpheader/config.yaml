@@ -1,7 +1,0 @@
----
-package: headdigitofhttpheader
-generate:
-  strict-server: true
-output: issue.gen.go
-output-options:
-  skip-prune: true
