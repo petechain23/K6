@@ -1,2 +1,4 @@
 k6.exe
 go/
+.scripts
+.vscode
