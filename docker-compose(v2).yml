@@ -1,3 +1,5 @@
+#version: "3.8"
+
 services:
   influxdb:
     image: influxdb:2.7
@@ -11,7 +13,7 @@ services:
       DOCKER_INFLUXDB_INIT_PASSWORD: admin123
       DOCKER_INFLUXDB_INIT_ORG: omni-org
       DOCKER_INFLUXDB_INIT_BUCKET: omni-bucket
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba # CHANGE THIS!
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       interval: 5s
@@ -24,28 +26,27 @@ services:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards # Mount dashboards
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin123
-      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/14801_rev2.json
+      GF_DASHBOARDS_PROVIDERS_ENABLE_UPDATE: "true" # Allow dashboard updates
+      GF_DASHBOARDS_PROVIDERS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/14801_rev2.json # set default dashboard
     depends_on:
       influxdb:
         condition: service_healthy
 
   k6:
-    image: grafana/k6:latest
-    volumes:
-      - ./scripts:/scripts
-    depends_on:
-      influxdb:
-        condition: service_healthy
-    entrypoint: ["/bin/sh", "-c"]
-    command: >
-       K6_INFLUXDB_ORG=omni-org
-       K6_INFLUXDB_BUCKET=omni-bucket
-       K6_INFLUXDB_TOKEN=a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba
-       k6 run -o xk6-influxdb=http://influxdb:8086/ /scripts/script.js
+      image: grafana/k6:latest
+      volumes:
+        - .scripts:/script.js
+      environment:
+        K6_INFLUXDB_ORGANIZATION: omni-org
+        K6_INFLUXDB_TOKEN: a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba # CHANGE THIS!
+      depends_on:
+        influxdb:
+          condition: service_healthy
+      command: run -o xk6-influxdb=http://influxdb:8086/omni-bucket /scripts:/script.js
 
 volumes:
   influxdb-data:
