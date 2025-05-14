@@ -211,7 +211,7 @@ export function ordersEditWithRetryFlow(authToken, configData) {
         const RETRY_SLEEP_DURATION = 2; // seconds
 
         if (retryNeeded) {
-            console.warn(`VU ${__VU} Orders Edit: Initial edit for ${orderIdToEdit} failed with 409. Initiating retries.`);
+            console.warn(`VU ${__VU} Orders Edit: Initial edit for ${orderIdToEdit} failed with unexpected status ${finalEditResponse.status} and BodyRequetst: ${JSON.stringify(editPayload)}. Initiating retries.`);
         }
 
         while (retryNeeded && retryCount < MAX_RETRIES) {
@@ -233,7 +233,7 @@ export function ordersEditWithRetryFlow(authToken, configData) {
                             finalEditResponse.body.includes('could not serialize access due to read') || finalEditResponse.body.includes('current transaction is aborted') ||
                             finalEditResponse.body.includes('QueryRunnerAlreadyReleasedError'))
                            )) {
-                console.warn(`VU ${__VU} Orders Edit: Retry attempt ${retryCount} for ${orderIdToEdit} failed again with 409.`);
+                console.warn(`VU ${__VU} Orders Edit: Retry attempt ${retryCount} for ${orderIdToEdit} failed again with unexpected status ${finalEditResponse.status} and BodyRequetst: ${JSON.stringify(editPayload)}`);
             } else {
                 console.error(`VU ${__VU} Orders Edit: Retry attempt ${retryCount} for ${orderIdToEdit} failed with unexpected status ${finalEditResponse.status}. Stopping retries for this order.`);
                 retryNeeded = false; // Stop retrying on unexpected errors

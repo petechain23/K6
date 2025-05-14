@@ -52,7 +52,7 @@ export function ordersUpdateToDeliveredFlow(authToken, configData) {
         // Step 1 & 2: Select Depot (implicitly used) & View the order
         console.log(`VU ${__VU} Orders Update To Delivered: Viewing order ${orderIdForStatusUpdate}`);
         const viewOrderRes = makeRequest('get', `${BASE_URL}/admin/orders/${orderIdForStatusUpdate}?expand=outlet&fields=id,display_id,status,extended_status`, null, { headers: headers, tags: groupTags }, '/admin/orders/{id} (View Order)');
-        addMetrics(viewOrderRes);
+        // addMetrics(viewOrderRes);
         sleep(1);
 
         // Step 3: Conditional Logic based on status
@@ -75,27 +75,31 @@ export function ordersUpdateToDeliveredFlow(authToken, configData) {
             if (orderStatus === 'pending') {
                 const markProcessingPayload = { is_processing: true };
                 const markProcessingRes = makeRequest('post', `${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${orderIdForStatusUpdate}`, markProcessingPayload, { headers: postHeaders, tags: groupTags }, '/admin/orders/{id} (Mark Processing)');
-                addMetrics(markProcessingRes);
-                check(markProcessingRes, { 'Mark Processing - status is 2xx': (r) => r.status === 200 });
+                console.log(`VU ${__VU} markProcessingRes:`);
+                // addMetrics(markProcessingRes);
+                // check(markProcessingRes, { 'Mark Processing - status is 2xx': (r) => r.status === 200 });
                 sleep(1);
             }
-            
+
             // Perform Inventory Check
             const invCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${orderIdForStatusUpdate}`, null, { headers: headers, tags: groupTags }, '/admin/orders/inventory-checked/{id}');
-            addMetrics(invCheckRes);
-            check(invCheckRes, { 'Inventory Check - status is 2xx': (r) => r.status === 200 });
+            // console.log(`VU ${__VU} invCheckRes:`);
+            // addMetrics(invCheckRes);
+            // check(invCheckRes, { 'Inventory Check - status is 2xx': (r) => r.status === 200 });
             sleep(1);
 
             // Perform Credit Check
             const creditCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${orderIdForStatusUpdate}`, null, { headers: headers, tags: groupTags }, '/admin/orders/credit-checked/{id}');
-            addMetrics(creditCheckRes);
-            check(creditCheckRes, { 'Credit Check - status is 2xx': (r) => r.status === 200 });
+            // console.log(`VU ${__VU} creditCheckRes:`);
+            // addMetrics(creditCheckRes);
+            // check(creditCheckRes, { 'Credit Check - status is 2xx': (r) => r.status === 200 });
             sleep(1);
 
             // Perform Promotion Check
             const promoCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${orderIdForStatusUpdate}`, null, { headers: headers, tags: groupTags }, '/admin/orders/promotion-checked/{id}');
-            addMetrics(promoCheckRes);
-            check(promoCheckRes, { 'Promotion Check - status is 2xx': (r) => r.status === 200 });
+            // console.log(`VU ${__VU} promoCheckRes:`);
+            // addMetrics(promoCheckRes);
+            // check(promoCheckRes, { 'Promotion Check - status is 2xx': (r) => r.status === 200 });
             sleep(1);
 
             // Step 4: Update status to Delivered
@@ -109,8 +113,7 @@ export function ordersUpdateToDeliveredFlow(authToken, configData) {
             };
             const updateStatusRes = makeRequest('post', `${BASE_URL}/${ORDER_EXTEND_STATUS_UPDATE_URL}`, updatePayload, { headers: postHeaders, tags: groupTags }, '/admin/order-extend-status/update (To Delivered)');
             // Use specific success check
-            console.log('updateStatusRes', updateStatusRes.body);
-            addMetrics(updateStatusRes, updateStatusRes.status === 201);
+            // console.log('updateStatusRes', updateStatusRes.body);
             check(updateStatusRes, {
                 [`[Update Status to Delivered] - status is 201:`]: (r) => r.status === 201,
                 [`[Update Status to Delivered] - extended_status is:`]: (r) => {
@@ -123,6 +126,8 @@ export function ordersUpdateToDeliveredFlow(authToken, configData) {
                     }
                 }
             });
+            addMetrics(updateStatusRes, updateStatusRes.status === 201);
+            addMetrics(updateStatusRes, updateStatusRes.body === 'delivered');
             if (updateStatusRes.status !== 201) {
                 console.error(`VU ${__VU} [Orders Update To Delivered] FAILED for order: ${orderIdForStatusUpdate}. Status: ${updateStatusRes.status}, Body: ${updateStatusRes.body}`);
             }

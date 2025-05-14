@@ -44,3 +44,103 @@ docker logs grafana-omni (check log on http://localhost:3000)
 
 
 command: run -o xk6-influxdb=http://influxdb:8086/omni-bucket -e K6_INFLUXDB_ORGANIZATION=omni-org -e K6_INFLUXDB_TOKEN=a0819353436a3df600c6c84cb16625c503e4b7b2cdd2f6311d751a505e2c9dba /scripts:/script.js
+
+
+
+-----------
+
+
+
+k6-xk6-output-token
+Csuv_SJt0QokxvjzJF-BVLNph4bcVczLeNTbiy7LNqmkEF4eP7nJLZr9pAu4JIHRjVp4Gfrvn7zYteZUcViIWg==
+
+Step 1: Ensure Your Target InfluxDB 2.x Instance is Running Correctly:
+
+1.Stop any other InfluxDB containers that might be conflicting on port 8086.
+
+docker ps # List running containers
+# If you see other influxdb instances, stop them, e.g.:
+# docker stop influxdb-grafana-k6
+# docker stop influxdb-omni
+
+2.Start or Recreate my-influxdb2: If it's already created and you're confident in its setup:
+
+docker start my-influxdb2
+docker stop my-influxdb2
+docker rm my-influxdb2
+PS D:\Testing\03-Performance Testing\01-K6 Load Test> docker run -d -p 8086:8086 `
+>>   --name my-influxdb2 `
+>>   -e DOCKER_INFLUXDB_INIT_MODE=setup `
+>>   -e DOCKER_INFLUXDB_INIT_USERNAME=k6admin `
+>>   -e DOCKER_INFLUXDB_INIT_PASSWORD=k6password `
+>>   -e DOCKER_INFLUXDB_INIT_ORG=k6org `
+>>   -e DOCKER_INFLUXDB_INIT_BUCKET=k6bucket `
+>>   influxdb:2.7
+
+3.Get a Fresh API Token for k6org / k6bucket:
+Go to http://localhost:8086.
+Log in with k6admin / k6password.
+Navigate to Load Data -> API Tokens.
+Click "+ GENERATE API TOKEN" -> "All Access API Token".
+Description: k6-xk6-output-token.
+Click Save.
+Copy the new token immediately and save it temporarily.
+
+
+Step 2: Build k6 with the xk6-output-influxdb Extension
+1.Open PowerShell.
+2.Navigate to a directory where you want to build your custom k6 binary (or stay where you are if you don't mind it being created in the current directory).
+3.Run the xk6 build command:
+xk6 build --with github.com/grafana/xk6-output-influxdb@latest
+
+Step 3: Set Environment Variables for InfluxDB 2.x
+$env:K6_INFLUXDB_ADDR="http://localhost:8086"
+$env:K6_INFLUXDB_ORGANIZATION="k6org"
+$env:K6_INFLUXDB_BUCKET="k6bucket"
+$env:K6_INFLUXDB_TOKEN="Csuv_SJt0QokxvjzJF-BVLNph4bcVczLeNTbiy7LNqmkEF4eP7nJLZr9pAu4JIHRjVp4Gfrvn7zYteZUcViIWg=="
+
+Verify them:
+Get-ChildItem Env:K6_INFLUXDB*
+
+
+Now, you'll configure the connection. This is where the details of your my-influxdb2 setup are crucial:
+
+Name: Give your data source a descriptive name, for example: k6 InfluxDB (v2)
+Query Language: This is very important! Select Flux. (Your my-influxdb2 is InfluxDB 2.x, which uses Flux as its primary query language).
+HTTP Section:
+URL: http://localhost:8086
+Important Docker Networking Note: Since Grafana is also running in a Docker container, localhost inside the Grafana container refers to the Grafana container itself, not your Windows host. Docker Desktop for Windows provides a special DNS name host.docker.internal that resolves to your host machine's IP address. So, if http://localhost:8086 doesn't work when you test the connection, try: http://host.docker.internal:8086
+Auth Section:
+Leave "Basic auth" toggled OFF.
+Toggle "With token" ON. (This is for InfluxDB 2.x API token authentication).
+InfluxDB Details Section:
+Organization: k6org (This is the organization you set up for my-influxdb2).
+Token: Paste the token you generated for k6org/k6bucket. From your notes, this is: Csuv_SJt0QokxvjzJF-BVLNph4bcVczLeNTbiy7LNqmkEF4eP7nJLZr9pAu4JIHRjVp4Gfrvn7zYteZUcViIWg==
+Default Bucket: k6bucket (This is the bucket where k6 is writing data).
+Min time interval: You can leave this as is, or set it to 1s if you want Grafana to be able to query at that granularity.
+Scroll to the bottom and click the "Save & Test" button.
+
+You should see a green notification saying something like "Data source is working" or "Bucket found."
+If you get an error:
+Double-check the URL (try http://host.docker.internal:8086 if http://localhost:8086 failed).
+Verify the Organization, Token, and Default Bucket are exactly as you set them up for my-influxdb2 and used in your k6 environment variables.
+Ensure your my-influxdb2 Docker container is actually running (docker ps).
+
+
+Step 4: Import a k6 Dashboard
+Grafana Labs and the k6 community provide excellent pre-built dashboards that work well with the metrics k6 sends.
+
+On the left-hand sidebar in Grafana, hover over the "+" icon (Create) and click on "Import".
+In the "Import via grafana.com" field, you can enter a dashboard ID. Here are a couple of good ones for k6 and InfluxDB 2.x (Flux):
+18839 (k6 Prometheus & InfluxDB v2 Dashboard by Grafana k6) - This is a very comprehensive one.
+14599 (k6 Load Testing Results by Grafana k6) - The official k6 dashboard, also excellent.
+Enter one of those IDs and click the "Load" button.
+On the next page (Import options):
+You can change the dashboard name if you wish.
+Very Important: There will be a dropdown or a field (often named after the data source type, like "InfluxDB" or "Prometheus") where you need to select the InfluxDB data source you just created (e.g., k6 InfluxDB (v2)).
+Click the "Import" button.
+
+
+Step 4: Run Your k6 Test with the Custom Output
+PS D:\Testing\03-Performance Testing\01-K6 Load Test> .\k6.exe run -o xk6-influxdb .\05-OMNI_Modularize_2\v2\flows\main.js
+k6 run --out influxdb=http://localhost:8086/k6bucket .\05-OMNI_Modularize_2\v2\flows\main.js

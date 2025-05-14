@@ -43,8 +43,8 @@ export const options = {
     },
     scenarios: {
         // Choose one or more scenarios
-        debug_run: pervuIterationsWorkload,
-        // load_run: ramupWorkload,
+        // debug_run: pervuIterationsWorkload,
+        load_run: ramupWorkload,
         // endurance_run: constantWorkload
     },
     thresholds: thresholdsSettings.thresholds, // Use thresholds from config
@@ -98,12 +98,12 @@ export default function () {
     let editOrderData = null;
     if (selectedOrderIdEditArray && selectedOrderIdEditArray.length > 0) {
         // Use Math.random() for random selection in each iteration
-        // const editIndex = Math.floor(Math.random() * selectedOrderIdEditArray.length);
-        // editOrderData = selectedOrderIdEditArray[editIndex];
+        const editIndex = Math.floor(Math.random() * selectedOrderIdEditArray.length);
+        editOrderData = selectedOrderIdEditArray[editIndex];
 
         // Use VU number for sequential selection within the VU's assigned array
-        const editIndex = __VU % selectedOrderIdEditArray.length; // Cycle through the array based on VU number
-        editOrderData = selectedOrderIdEditArray[editIndex]; // Pick the order at the calculated index
+        // const editIndex = __VU % selectedOrderIdEditArray.length; // Cycle through the array based on VU number
+        // editOrderData = selectedOrderIdEditArray[editIndex]; // Pick the order at the calculated index
     } else {
         console.error(`VU ${__VU}: Selected orderId array (Index ${depotIndex}) is empty or undefined! Cannot select order for edit/update.`);
     }
@@ -184,11 +184,11 @@ export default function () {
     // sleep(1);
     // ordersUpdateFlow(authToken, flowConfigData); 
 
-    sleep(1);
-    ordersUpdateToDeliveredFlow(authToken, flowConfigData);
-
     // sleep(1);
-    // ordersEditWithRetryFlow(authToken, flowConfigData);
+    // ordersUpdateToDeliveredFlow(authToken, flowConfigData);
+
+    sleep(1);
+    ordersEditWithRetryFlow(authToken, flowConfigData);
 
     // sleep(1);
     // ordersInvoiceFlow(authToken, flowConfigData);
@@ -222,7 +222,7 @@ export default function () {
     // 3. Logout
     // logoutFlow(authToken);
 
-    console.log(`VU ${__VU} finished iteration.`);
+    //console.log(`VU ${__VU} finished iteration.`);
 }
 
 // --- handleSummary ---
@@ -230,7 +230,7 @@ export default function () {
 export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
     // Adjust report name as needed
-    const reportName = `./reports/summary_report_${timestamp}.html`;
+    const reportName = `./reports/id_qa/summary_report_${timestamp}.html`;
 
     console.log("-------------------- Custom Metrics Summary --------------------");
     // Log specific metrics if desired (check if metric exists first)
@@ -248,6 +248,18 @@ export function handleSummary(data) {
     }
     if (data.metrics.order_updating_success_rate) {
         console.log(`5.Order Update Success Rate: ${(data.metrics.order_updating_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.order_update_rfd_success_rate) {
+        console.log(`5a.Order Update RFD Success Rate: ${(data.metrics.order_update_rfd_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.order_update_shipped_success_rate) {
+        console.log(`5b.Order Update Shipped Success Rate: ${(data.metrics.order_update_shipped_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.order_update_delivered_success_rate) {
+        console.log(`5c.Order Update Delivered Success Rate: ${(data.metrics.order_update_delivered_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.order_update_paid_success_rate) {
+        console.log(`5d.Order Update Paid Success Rate: ${(data.metrics.order_update_paid_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_update_to_delivered_success_rate) {
         console.log(`6.Order Update To Delivered Success Rate: ${(data.metrics.order_update_to_delivered_success_rate.values.rate * 100).toFixed(2)}%`);

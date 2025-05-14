@@ -68,7 +68,7 @@ export const outlet_depot = new SharedArray('outlet_depot', function () {
 
 
 export const DEPOT_ID_FILTER = [
-    'depot_01HGYXPR1M5HQ229XGC8RDQSJE', // Klungkung 302-BBI-D02-MAIN masterdata
+    'depot_01HGYXPR1M5HQ229XGC8RDQSJE' // Klungkung 302-BBI-D02-MAIN masterdata
     // 'depot_01H6X2SJQBKCBW1HKAEFSB42WD' /// NUSA DUA 302-BBI-D03-MAIN masterdata_2
     // 'depot_01HH18JASWRK89BAGE3VN59SK1', // Singagar 302-BBI-001-MAIN masterdata_3
     // 'depot_01H77DYEYMRGXJ86ZRZF7WJM87' // D01-MAIN - test invalid case
@@ -77,30 +77,53 @@ export const DEPOT_ID_FILTER = [
 // --- Hardcoded IDs ---
 export const REGION_ID = 'reg_01H5P3E6X97YGENVSW4Z7A5446';
 export const LOCATION_ID = 'sloc_01HGYYZND43JR5B4F1D0HG80Z9';// Klungkung
-export const VARIANT_ID_1 = 'variant_01H771AV5J5D62ZAKQ340JQJ7S'; //variant_01H771AVVG9NQMV4VZZ2TK7DTB - ID Hotfix //variant_01H771AV5J5D62ZAKQ340JQJ7S E1830 - ID QA
-export const VARIANT_ID_2 = 'variant_01H729MHHAW56JTRXCC8HYCV1X';
-export const VARIANT_ID_3 = 'variant_01H7717GHMWJNHPHAEJVXRN8CS';
-export const VARIANT_ID_4 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
-export const VARIANT_ID_5 = 'variant_01H7717FZZYW6JD56EZP6D58YF';
-export const VARIANT_ID_6 = 'variant_01H5PMESX1AR52H7BJ4CTHHE80';
-export const VARIANT_ID_7 = 'variant_01H77192YY9TWRM0GB6F479YQX';
-export const VARIANT_ID_8 = 'variant_01HAB20FVGTTJVH12WRE725AC0';
-export const VARIANT_ID_9 = 'variant_01HKPZ9PVK8WZQZNYJ76MBNNJ9';
-export const VARIANT_ID_10 = 'variant_01H5PMH3V5H3BQDM49D8K88MMJ';
-export const VARIANT_ID_11 = 'variant_01H5XTJ97RNCWNM9HAR02D257T';
-export const VARIANT_ID_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA';
+export const VARIANT_ID_1 = 'variant_01H771AVVG9NQMV4VZZ2TK7DTB'; //variant_01H771AVVG9NQMV4VZZ2TK7DTB - ID Hotfix //variant_01H771AV5J5D62ZAKQ340JQJ7S E1830 - ID QA
+export const VARIANT_ID_2 = 'variant_01H729MHHAW56JTRXCC8HYCV1X'; //E1838
+export const VARIANT_ID_3 = 'variant_01H7717GHMWJNHPHAEJVXRN8CS'; //E1819C
+export const VARIANT_ID_4 = 'variant_01H7717FZZYW6JD56EZP6D58YF'; //E1819
+export const VARIANT_ID_5 = 'variant_01H7717FZZYW6JD56EZP6D58YF'; //E1819
+export const VARIANT_ID_6 = 'variant_01H5PMESX1AR52H7BJ4CTHHE80'; //10163
+export const VARIANT_ID_7 = 'variant_01H77192YY9TWRM0GB6F479YQX'; //1884
+export const VARIANT_ID_8 = 'variant_01HAB20FVGTTJVH12WRE725AC0'; //65398
+export const VARIANT_ID_9 = 'variant_01HKPZ9PVK8WZQZNYJ76MBNNJ9'; //L65403
+export const VARIANT_ID_10 = 'variant_01H5PMH3V5H3BQDM49D8K88MMJ'; //10164
+export const VARIANT_ID_11 = 'variant_01H5XTJ97RNCWNM9HAR02D257T'; //53076
+export const VARIANT_ID_12 = 'variant_01H5XWXT9KJ7DN1MFSVX778KDA'; //54026
 
+
+//Create
+// items: [
+//     { variant_id: VARIANT_ID_6, quantity: 1, metadata: {} },
+//     { variant_id: VARIANT_ID_10, quantity: 2, metadata: {} },
+//     { variant_id: VARIANT_ID_11, quantity: 3, metadata: {} },
+//     { variant_id: VARIANT_ID_12, quantity: 4, metadata: {} }
+// ]
+
+//Edit
+// [	[
+//       "E1830",	  "variant_01H771AVVG9NQMV4VZZ2TK7DTB",
+//       "E1819",	  "variant_01H7717FZZYW6JD56EZP6D58YF",
+//       "E1838",	  "variant_01H729MHHAW56JTRXCC8HYCV1X",
+//       "E1819C",	  "variant_01H7717GHMWJNHPHAEJVXRN8CS",
+//       "E1819",	  "variant_01H7717FZZYW6JD56EZP6D58YF",
+//       "65398",	  "variant_01HAB20FVGTTJVH12WRE725AC0",
+//       "10163",	  "variant_01H5PMESX1AR52H7BJ4CTHHE80",
+//       "10164",	  "variant_01H5PMH3V5H3BQDM49D8K88MMJ",
+//       "L65403",	  "variant_01HKPZ9PVK8WZQZNYJ76MBNNJ9",
+//       "1884"	      "variant_01H77192YY9TWRM0GB6F479YQX"
+//     ]	]
+    
 // --- Workload Settings ---
 export const pervuIterationsWorkload = {
     executor: 'per-vu-iterations', //thresdhold configures based this mode vus: 1, iterations: 2
     vus: 50,
-    iterations: 1,
-    maxDuration: '60s' // default = 10m
+    iterations: 1
+    // maxDuration: '1m' // default = 10m
 }
 
 export const constantWorkload = {
     executor: 'constant-vus',
-    vus: 5,
+    vus: 15,
     duration: '5m'
 }
 
@@ -109,9 +132,9 @@ export const ramupWorkload = {
     // gracefulStop: '5s',
     stages: [
         { target: 50, duration: '1m' },  // Ramp up to 5 VUs over 1 min
-        // { target: 10, duration: '10m' }, // Ramp up from 5 to 10 VUs over 10 mins
+        // { target: 20, duration: '10m' }, // Ramp up from 5 to 10 VUs over 10 mins
         // { target: 15, duration: '10m' }, // Ramp up from 10 to 15 VUs over 10 mins
-        // // { target: 20, duration: '15m' }, // Ramp up from 15 to 20 VUs over 15 mins
+        // { target: 20, duration: '15m' }, // Ramp up from 15 to 20 VUs over 15 mins
         // // { target: 30, duration: '20m' }, // Ramp up from 20 to 30 VUs over 20 mins
         // { target: 0, duration: '1m' },   // Ramp down from 30 to 5 VUs over 1 min
     ],
@@ -188,8 +211,15 @@ export const thresholdsSettings = {
         'order_editing_response_time': ['p(95)<1800'],
 
         // Order Update
+        // These will now primarily cover the initial checks (inventory, credit, promo) in ordersUpdateFlow
         'order_updating_success_rate': ['rate>0.95'],
         'order_updating_response_time': ['p(95)<1500'],
+
+        // Order Update - Specific Statuses
+        'order_update_rfd_success_rate': ['rate>0.95'],         'order_update_rfd_response_time': ['p(95)<1500'],
+        'order_update_shipped_success_rate': ['rate>0.95'],     'order_update_shipped_response_time': ['p(95)<1500'],
+        'order_update_delivered_success_rate': ['rate>0.95'],   'order_update_delivered_response_time': ['p(95)<1500'],
+        'order_update_paid_success_rate': ['rate>0.95'],        'order_update_paid_response_time': ['p(95)<1500'],
 
         // Order Filter
         'order_filter_success_rate': ['rate>0.99'],
@@ -286,6 +316,27 @@ export const orderEditingRequestCount = new Counter('order_editing_request_count
 export const orderUpdatingResponseTime = new Trend('order_updating_response_time');
 export const orderUpdatingSuccessRate = new Rate('order_updating_success_rate');
 export const orderUpdatingRequestCount = new Counter('order_updating_request_count');
+
+// Orders Update - Ready For Delivery status
+export const orderUpdateReadyForDeliveryResponseTime = new Trend('order_update_rfd_response_time');
+export const orderUpdateReadyForDeliverySuccessRate = new Rate('order_update_rfd_success_rate');
+export const orderUpdateReadyForDeliveryRequestCount = new Counter('order_update_rfd_request_count');
+
+// Orders Update - Shipped status
+export const orderUpdateShippedResponseTime = new Trend('order_update_shipped_response_time');
+export const orderUpdateShippedSuccessRate = new Rate('order_update_shipped_success_rate');
+export const orderUpdateShippedRequestCount = new Counter('order_update_shipped_request_count');
+
+// Orders Update - Delivered status
+export const orderUpdateDeliveredResponseTime = new Trend('order_update_delivered_response_time');
+export const orderUpdateDeliveredSuccessRate = new Rate('order_update_delivered_success_rate');
+export const orderUpdateDeliveredRequestCount = new Counter('order_update_delivered_request_count');
+
+// Orders Update - Paid status
+export const orderUpdatePaidResponseTime = new Trend('order_update_paid_response_time');
+export const orderUpdatePaidSuccessRate = new Rate('order_update_paid_success_rate');
+export const orderUpdatePaidRequestCount = new Counter('order_update_paid_request_count');
+
 
 // Orders Filter
 export const orderFilterResponseTime = new Trend('order_filter_response_time');

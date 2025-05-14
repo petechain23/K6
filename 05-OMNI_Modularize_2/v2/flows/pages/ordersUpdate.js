@@ -4,19 +4,51 @@ import {
     BASE_URL, // Base config - depotId will come from configData
     ORDER_EXTEND_STATUS_UPDATE_URL, ORDER_PENDINGTOPROCESSING_URL, // Specific URLs
     ORDER_INVENTORY_CHECK_URL, ORDER_CREDIT_CHECK_URL, ORDER_PROMOTION_CHECK_URL,
-    orderUpdatingRequestCount, orderUpdatingResponseTime, orderUpdatingSuccessRate
+    // Original metrics for initial checks
+    orderUpdatingRequestCount, orderUpdatingResponseTime, orderUpdatingSuccessRate,
+    // New status-specific metrics
+    orderUpdateReadyForDeliveryResponseTime, orderUpdateReadyForDeliverySuccessRate, orderUpdateReadyForDeliveryRequestCount,
+    orderUpdateShippedResponseTime, orderUpdateShippedSuccessRate, orderUpdateShippedRequestCount,
+    orderUpdateDeliveredResponseTime, orderUpdateDeliveredSuccessRate, orderUpdateDeliveredRequestCount,
+    orderUpdatePaidResponseTime, orderUpdatePaidSuccessRate, orderUpdatePaidRequestCount
 } from '../config.js'; // Adjust path as needed
 import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
 
 // Helper to add specific metrics for this flow
-function addMetrics(response, isSuccessCheck = null) {
+function addMetrics(response, operationIdentifier, isSuccessCheck = null) {
     // Default success is 2xx or 3xx, allow overriding for specific checks (e.g., 201 Created)
     const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
-    const tags = { status: response.status }; // Add basic tags for specific metrics
+    const tags = { status: response.status }; // Basic tag, operation is identified by metric name
 
-    orderUpdatingResponseTime.add(response.timings.duration, tags);
-    orderUpdatingSuccessRate.add(success, tags);
-    orderUpdatingRequestCount.add(1, tags);
+    switch (operationIdentifier) {
+        case 'ready_for_delivery':
+            orderUpdateReadyForDeliveryResponseTime.add(response.timings.duration, tags);
+            orderUpdateReadyForDeliverySuccessRate.add(success, tags);
+            orderUpdateReadyForDeliveryRequestCount.add(1, tags);
+            break;
+        case 'shipped':
+            orderUpdateShippedResponseTime.add(response.timings.duration, tags);
+            orderUpdateShippedSuccessRate.add(success, tags);
+            orderUpdateShippedRequestCount.add(1, tags);
+            break;
+        case 'delivered':
+            orderUpdateDeliveredResponseTime.add(response.timings.duration, tags);
+            orderUpdateDeliveredSuccessRate.add(success, tags);
+            orderUpdateDeliveredRequestCount.add(1, tags);
+            break;
+        case 'paid':
+            orderUpdatePaidResponseTime.add(response.timings.duration, tags);
+            orderUpdatePaidSuccessRate.add(success, tags);
+            orderUpdatePaidRequestCount.add(1, tags);
+            break;
+        default: // For initial checks like 'inventory_check', 'credit_check', 'promotion_check'
+            // Add the operationIdentifier as a tag to the generic orderUpdating metrics
+            const genericTags = { status: response.status, operation: operationIdentifier };
+            orderUpdatingResponseTime.add(response.timings.duration, genericTags);
+            orderUpdatingSuccessRate.add(success, genericTags);
+            orderUpdatingRequestCount.add(1, genericTags);
+            break;
+    }
 }
 
 // --- Helper function for random sleep ---
@@ -25,7 +57,7 @@ function randomSleep(min = 1, max = 3) {
     sleep(duration);
 }
 
-// --- Helper function for status updates ---
+// --- Helper function for status updates (includes verification from response) ---
 function updateOrderStatus(authToken, orderId, targetStatus, groupTags) {
     const statusUpdatePayload = { order_ids: [orderId], status: targetStatus };
     const requestName = `/admin/order-extend-status/update (${targetStatus})`;
@@ -39,19 +71,45 @@ function updateOrderStatus(authToken, orderId, targetStatus, groupTags) {
         { headers: createHeaders(authToken, { 'content-type': 'application/json' }), tags: groupTags },
         requestName
     );
-    randomSleep();
-    addMetrics(response, response.status === 201);
+    // REMOVED: randomSleep(); // Sleep will be handled by the calling flow
 
-    const isSuccess = check(response, {
-        [`Orders Update (${targetStatus}) - status is 201`]: (r) => r.status === 201,
+    let isUpdateVerified = false;
+    let actualStatusInResponse = null;
+
+    if (response.status === 201) {
+        console.log(`VU ${__VU} Orders Update (Order: ${orderId}, Target: ${targetStatus}): API Status 201. Full Response Body: ${response.body}`); // Log raw body
+        try {
+            const body = response.json();
+            // console.log(`VU ${__VU} Orders Update (Order: ${orderId}, Target: ${targetStatus}): API Status 201. Parsed Body: ${JSON.stringify(body)}`); // Log parsed body
+            if (body && body.saved && Array.isArray(body.saved) && body.saved.length > 0) {
+                actualStatusInResponse = body.saved[0]?.extended_status;
+                if (actualStatusInResponse === targetStatus) {
+                    isUpdateVerified = true;
+                } else {
+                    console.warn(`VU ${__VU} Orders Update (Order: ${orderId}, Target: ${targetStatus}): API status 201, but extended_status in response ('${actualStatusInResponse}') !== targetStatus ('${targetStatus}').`);
+                }
+            } else {
+                console.warn(`VU ${__VU} Orders Update: Update to ${targetStatus} for ${orderId} - API status 201, but response body structure unexpected: ${response.body}`);
+            }
+        } catch (e) {
+            console.error(`VU ${__VU} Orders Update: Update to ${targetStatus} for ${orderId} - API status 201, but failed to parse response JSON. Error: ${e.message}, Body: ${response.body}`);
+        }
+    }
+
+    // Metrics should reflect the full success (API call + content verification)
+    addMetrics(response, targetStatus, isUpdateVerified); // Pass targetStatus for tagging
+
+    // Check should also reflect the full success
+    const checkPassed = check(response, {
+        [`Orders Update (${targetStatus}) - status is 201 AND extended_status is ${targetStatus}`]: () => isUpdateVerified,
     });
 
-    if (isSuccess) {
-        console.log(`VU ${__VU} Orders Update: Update to ${targetStatus} successful for ${orderId}.`);
+    if (isUpdateVerified) {
+        console.log(`VU ${__VU} Orders Update: Update to ${targetStatus} successful and verified for ${orderId}.`);
     } else {
-        console.error(`VU ${__VU} Orders Update: Update to ${targetStatus} FAILED (Status: ${response.status}). Body: ${response.body}`);
+        console.error(`VU ${__VU} Orders Update: Update to ${targetStatus} FAILED verification for ${orderId}. API Status: ${response.status}, Expected Status in Body: ${targetStatus}, Actual in Body: ${actualStatusInResponse}, Body: ${response.body}`);
     }
-    return isSuccess; // Return true if status was 201, false otherwise
+    return isUpdateVerified;
 }
 
 export function ordersUpdateFlow(authToken, configData) {
@@ -84,17 +142,17 @@ export function ordersUpdateFlow(authToken, configData) {
         // Perform Checks
         const invCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_INVENTORY_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/inventory-checked/{id}');
         sleep(0.5)
-        addMetrics(invCheckRes, invCheckRes.status === 200);
+        addMetrics(invCheckRes, 'inventory_check', invCheckRes.status === 200); // Tag initial checks too
 
         // Credit Checks
         const creditCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_CREDIT_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/credit-checked/{id}');
         sleep(0.5)
-        addMetrics(creditCheckRes, creditCheckRes.status === 200);
+        addMetrics(creditCheckRes, 'credit_check', creditCheckRes.status === 200);
 
         // Promotion Checks
         const promoCheckRes = makeRequest('post', `${BASE_URL}/${ORDER_PROMOTION_CHECK_URL}/${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, '/admin/orders/promotion-checked/{id}');
         sleep(0.5)
-        addMetrics(promoCheckRes, promoCheckRes.status === 200);
+        addMetrics(promoCheckRes, 'promotion_check', promoCheckRes.status === 200);
 
         // --- Chained Status Updates ---
         let isPreviousStatusUpdateSuccessful = true; // Start assuming success to enter the first update
@@ -108,45 +166,19 @@ export function ordersUpdateFlow(authToken, configData) {
                 isPreviousStatusUpdateSuccessful = updateOrderStatus(authToken, targetProcessingOrderId, targetStatus, groupTags);
 
                 if (isPreviousStatusUpdateSuccessful) {
-                    // --- Verification Step ---
-                    // Fetch order details again to verify the status update
-                    const verifyStatusRes = makeRequest(
-                        'get',
-                        `${BASE_URL}/admin/orders/${targetProcessingOrderId}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,items.variant.product.brand,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description,source_system`,
-                        null,
-                        { headers: createHeaders(authToken), tags: groupTags },
-                        `/admin/orders/{id} (Verify Status: ${targetStatus})`
-                    );
-                    check(verifyStatusRes, {
-                        [`Verify Status Update (${targetStatus}) - status is 200`]: (r) => r.status === 200,
-                        [`Verify Status Update (${targetStatus}) - extended_status is ${targetStatus}`]: (r) => {
-                            if (r.status !== 200) return false; // Don't check body if status failed
-                            try {
-                                const actualStatus = r.json('order.extended_status');
-                                const passes = actualStatus === targetStatus;
-                                if (!passes) {
-                                    console.warn(`VU ${__VU} Verify Check Fail (${targetStatus}): Expected ${targetStatus}, Got ${actualStatus}. Body: ${r.body}`);
-                                }
-                                return passes;
-                            } catch (e) { return false; /* JSON parsing failed */ }
-                        },
-                    });
-  
-                    addMetrics(verifyStatusRes); // Add metrics for the verification request
-                    randomSleep();
-                    
-                    // --- End Verification Step ---
+                    // Verification is now part of updateOrderStatus.
+                    // The helper function already logged success.
 
                     // Fetch order events (optional)
-                    const eventAfterUpdateRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
-                    
-                    addMetrics(eventAfterUpdateRes);
-                    randomSleep();
+                    // const eventAfterUpdateRes = makeRequest('get', `${BASE_URL}/admin/order-event?order_id=${targetProcessingOrderId}`, null, { headers: createHeaders(authToken), tags: groupTags }, `/admin/order-event (After ${targetStatus})`);
+                    // addMetrics(eventAfterUpdateRes);
+                    // randomSleep();
 
+                    // Sleep *after* successful update and verification
                     if (targetStatus === 'paid') {
                         sleep(1);
                     } else {
-                        randomSleep();
+                        randomSleep(); // Main "think time" after a successful step
                     }
                 } else {
                     // If update failed, log is handled in helper. Halt further updates.
@@ -156,7 +188,7 @@ export function ordersUpdateFlow(authToken, configData) {
                         sleep(1);
                     } else {
                         randomSleep();
-                    }
+                    } // Sleep even on failure to maintain some pacing
                     break; // Exit the loop
                 }
             } else {

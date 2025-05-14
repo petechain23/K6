@@ -153,7 +153,7 @@ export function ordersEditFlow(authToken, configData) {
                 console.error(`VU ${__VU} DepotVariants Error: Status ${depotVariantsEditRes.status}, Body: ${depotVariantsEditRes.body}`);
             }
             sleep(1);
-
+            
             // Perform Edit - Using the provided orderIdToEdit
             const editPayload = {
                 metadata: { external_doc_number: `editing order` },
@@ -251,7 +251,7 @@ export function ordersEditFlow(authToken, configData) {
                 // addMetrics(orderEventAfterEditRes);
                 sleep(0.5);
             } else {
-                console.warn(`VU ${__VU} Orders Edit: Edit failed for order ${orderIdToEdit} (Status: ${editResponse.status}) (Boby: ${editResponse.body}).. Skipping post-edit checks.`);
+                console.warn(`VU ${__VU} Orders Edit: Edit failed for order ${orderIdToEdit} (Status: ${editResponse.status}) (Boby: ${editResponse.body}) (BodyRequetst: ${JSON.stringify(editPayload)})).. Skipping post-edit checks.`);
                 sleep(1); // Compensate for skipped sleep
             }
             // --- End Conditional Refresh ---

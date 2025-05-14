@@ -11,7 +11,7 @@ import {
     orderInvoiceSuccessRate,
     orderInvoiceRequestCount
 } from '../config.js'; // Adjust path as needed
-import { makeRequest, createHeaders, randomSleep} from '../utils.js'; // Adjust path as needed
+import { makeRequest, createHeaders, randomSleep } from '../utils.js'; // Adjust path as needed
 
 // Helper to add specific metrics for this flow
 function addMetrics(response, isSuccessCheck = null) {
@@ -47,10 +47,10 @@ export function ordersInvoiceFlow(authToken, configData) {
         console.log(`VU ${__VU} Processing order ${orderIdForStatusUpdate}`);
         const groupTags = { group: 'Orders Invoice Generation' };
         const headers = createHeaders(authToken);
-        
+
         // 1. View Order (Optional, but good for context)
         const viewOrderRes = makeRequest('get', `${BASE_URL}/admin/orders/${orderIdForStatusUpdate}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description`,
-             null, { headers: headers, tags: groupTags }, '/admin/orders/{id} (View Order)');
+            null, { headers: headers, tags: groupTags }, '/admin/orders/{id} (View Order)');
         // addMetrics(viewOrderRes);
         // check(viewOrderRes, { 'View Order - status is 200': (r) => r.status === 200 });
         sleep(1);
@@ -107,24 +107,53 @@ export function ordersInvoiceFlow(authToken, configData) {
                 expected_delivery_date: new Date().toISOString(), // Use current date/time // expected_delivery_date: "2025-05-06T14:32:59.688Z",
                 term_of_payments: "current_credit_terms"
             };
-            
+
             const generateInvoiceRes = makeRequest(
-              'post',
-              `${BASE_URL}/${ORDER_INVOICE_GENERATE_URL}`, generateInvoicePayload, { headers: headers, tags: groupTags },
-              '/admin/invoices/generate');
+                'post',
+                `${BASE_URL}/${ORDER_INVOICE_GENERATE_URL}`, generateInvoicePayload, { headers: headers, tags: groupTags },
+                '/admin/invoices/generate');
 
             // console.log(generateInvoiceRes);
             // Use specific success check for 201 Created
             check(generateInvoiceRes, {
                 '[Generate Invoice] Status is 201': (r) => r.status === 201,
-                '[Generate Invoice] Body is valid JSON': (r) => { try { r.json(); ; return true; } catch (e) { console.error(`Errors: ${e.message}, with body: ${generateInvoiceRes.body}`); return false; } },
+                '[Generate Invoice] Body is valid JSON': (r) => {
+                    try {
+                        r.json();
+                        return true;
+                    } catch (e) {
+                        console.error(`Errors: ${e.message}, with body: ${generateInvoiceRes.body}`);
+                        return false;
+                    }
+                },
                 //'[Generate Invoice] Errors array is empty': (r) => { try { return r.json('errors.length') === 0; } catch (e) { return false; } },
                 //'[Generate Invoice] Downloaded array exists and is not empty': (r) => { try { return Array.isArray(r.json('downloaded')) && r.json('downloaded.length') > 0; } catch (e) { return false; } },
                 //'[Generate Invoice] First downloaded item has invoice object': (r) => { try { return typeof r.json('downloaded.0.invoice') === 'object' && r.json('downloaded.0.invoice') !== null; } catch (e) { return false; } },
                 // '[Generate Invoice] Invoice object has ID': (r) => { try { return typeof r.json('downloaded.0.invoice.id') === 'string' && r.json('downloaded.0.invoice.id').startsWith('invoice_'); } catch (e) { return false; } },
-                '[Generate Invoice] Invoice object has correct order_id': (r) => { try { return r.json('downloaded.0.invoice.order_id') === orderIdForStatusUpdate; } catch (e) { return false; } },
-                '[Generate Invoice] Invoice object has status': (r) => { try { return typeof r.json('downloaded.0.invoice.status') === 'string' && r.json('downloaded.0.invoice.status').length > 0; } catch (e) { return false; } },
-                '[Generate Invoice] First downloaded item has response object with file_name': (r) => { try { return typeof r.json('downloaded.0.response.file_name') === 'string' && r.json('downloaded.0.response.file_name').length > 0; } catch (e) { return false; } },
+                '[Generate Invoice] Invoice object has correct order_id': (r) => {
+                    try {
+                        return r.json('downloaded.0.invoice.order_id') === orderIdForStatusUpdate;
+                    } catch (e) {
+                        console.error(`Errors: ${e.message}, with body: ${generateInvoiceRes.body}`);
+                        return false;
+                    }
+                },
+                '[Generate Invoice] Invoice object has status': (r) => {
+                    try {
+                        return typeof r.json('downloaded.0.invoice.status') === 'string' && r.json('downloaded.0.invoice.status').length > 0;
+                    } catch (e) {
+                        console.error(`Errors: ${e.message}, with body: ${generateInvoiceRes.body}`);
+                        return false;
+                    }
+                },
+                '[Generate Invoice] First downloaded item has response object with file_name': (r) => {
+                    try {
+                        return typeof r.json('downloaded.0.response.file_name') === 'string' && r.json('downloaded.0.response.file_name').length > 0;
+                    } catch (e) {
+                        console.error(`Errors: ${e.message}, with body: ${generateInvoiceRes.body}`);
+                        return false;
+                    }
+                },
             });
             addMetrics(generateInvoiceRes, generateInvoiceRes.status === 201);
             if (generateInvoiceRes.status !== 201) {
@@ -143,3 +172,4 @@ export function ordersInvoiceFlow(authToken, configData) {
         }
     });
 }
+

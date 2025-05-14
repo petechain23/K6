@@ -44,7 +44,7 @@ export const outlet_depot = new SharedArray('outlet_depot', function () {
 //Settings for different workloads
 export const pervuiterations = {
     executor: 'per-vu-iterations',
-    vus: 20,
+    vus: 50,
     iterations: 1,
     // maxDuration: '30s'
 }
