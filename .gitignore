@@ -2,3 +2,5 @@ k6.exe
 go/
 .scripts
 .vscode
+./DS_Store
+k6
