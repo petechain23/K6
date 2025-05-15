@@ -52,5 +52,11 @@ k6 cloud run main.js -e WORKLOAD=rampup
 ----export logs to Text file-----
 k6 run main.js > logs.txt 2>&1
 
+K6_INFLUXDB_ORGANIZATION="omni-org" \
+K6_INFLUXDB_BUCKET="omni-bucket" \
+K6_INFLUXDB_TOKEN="k0x9ja4hQRD8B_T9rWSvmsbU7I2v2KUtJlNd-HErmZrJxgKDH5_zxeoR-IdaAlOShB_VNGK93qmyNgw0iaaO6Q==" \
+K6_INFLUXDB_ADDR="http://localhost:8086" \
+k6 run -o xk6-influxdb=http://localhost:8086/omni-bucket ./scripts/script.js
+
 ----InfluxDB-----
 k6 run --out influxdb=http://localhost:8086/k6 main.js

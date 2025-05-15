@@ -40,12 +40,14 @@ services:
     depends_on:
       influxdb:
         condition: service_healthy
+    environment:
+      K6_INFLUXDB_ADDR: http://influxdb:8086
+      K6_INFLUXDB_ORG: omni-org
+      K6_INFLUXDB_BUCKET: omni-bucket
+      K6_INFLUXDB_TOKEN: SSU7o4kMPfkVgdnbFSyG-0POxLOL7T5bDvmsnt38Gn22abN46vxyQv0TQeUY-mZSGK3FFjLZT32d5OMxovBmmw==
     entrypoint: ["/bin/sh", "-c"]
     command: >
-       K6_INFLUXDB_ORG=omni-org
-       K6_INFLUXDB_BUCKET=omni-bucket
-       K6_INFLUXDB_TOKEN=SSU7o4kMPfkVgdnbFSyG-0POxLOL7T5bDvmsnt38Gn22abN46vxyQv0TQeUY-mZSGK3FFjLZT32d5OMxovBmmw==
-       k6 run -o xk6-influxdb=http://influxdb:8086/ /scripts/script.js
+      k6 run scripts/script.js
 
 volumes:
   influxdb-data:
