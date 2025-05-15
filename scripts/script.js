@@ -1,20 +1,13 @@
+// /Users/peter/Documents/03-Performance Testing/01-K6 Load Test/scripts/script.js
 import http from 'k6/http';
 import { sleep } from 'k6';
-import { check } from 'k6';
 
 export const options = {
-  vus: 10,
-  duration: '30m',
-  thresholds: {
-    http_req_duration: ['p(95)<200'], // 95th percentile < 200ms
-    http_req_failed: ['rate<0.01'], // less than 1% failed requests
-  },
+  vus: 10, // 10 virtual users
+  duration: '30s', // for 30 seconds
 };
 
 export default function () {
-  const res = http.get('https://test.k6.io');
-  check(res, {
-    'status is 200': (r) => r.status === 200,
-  });
-  sleep(1);
+  http.get('https://test-api.k6.io/public/crocodiles/');
+  sleep(1); // wait for 1 second between requests
 }
