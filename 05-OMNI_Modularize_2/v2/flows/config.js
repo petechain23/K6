@@ -129,16 +129,16 @@ export const constantWorkload = {
 
 export const ramupWorkload = {
     executor: 'ramping-vus',
-    // gracefulStop: '5s',
+    gracefulStop: '30s',
     stages: [
-        { target: 50, duration: '1m' },  // Ramp up to 5 VUs over 1 min
-        // { target: 20, duration: '10m' }, // Ramp up from 5 to 10 VUs over 10 mins
-        // { target: 15, duration: '10m' }, // Ramp up from 10 to 15 VUs over 10 mins
-        // { target: 20, duration: '15m' }, // Ramp up from 15 to 20 VUs over 15 mins
-        // // { target: 30, duration: '20m' }, // Ramp up from 20 to 30 VUs over 20 mins
-        // { target: 0, duration: '1m' },   // Ramp down from 30 to 5 VUs over 1 min
+        { target: 5, duration: '1m' },  // Ramp up to 5 VUs over 1 min
+        { target: 10, duration: '10m' }, // Ramp up from 5 to 10 VUs over 10 mins
+        { target: 10, duration: '15m' }, // Ramp up from 10 to 15 VUs over 10 mins
+        { target: 15, duration: '15m' }, // Ramp up from 15 to 20 VUs over 15 mins
+        { target: 10, duration: '5mm' }, // Ramp up from 20 to 30 VUs over 20 mins
+        { target: 0, duration: '1m' },   // Ramp down from 30 to 5 VUs over 1 min
     ],
-    // gracefulRampDown: '5s'
+    gracefulRampDown: '30s'
 }
 
 export const constantArrivalRateWorkload = {
