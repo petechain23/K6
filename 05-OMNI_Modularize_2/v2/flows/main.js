@@ -43,8 +43,8 @@ export const options = {
     },
     scenarios: {
         // Choose one or more scenarios
-        // debug_run: pervuIterationsWorkload,
-        load_run: ramupWorkload,
+        debug_run: pervuIterationsWorkload,
+        // load_run: ramupWorkload,
         // endurance_run: constantWorkload
     },
     thresholds: thresholdsSettings.thresholds, // Use thresholds from config
@@ -98,12 +98,12 @@ export default function () {
     let editOrderData = null;
     if (selectedOrderIdEditArray && selectedOrderIdEditArray.length > 0) {
         // Use Math.random() for random selection in each iteration
-        const editIndex = Math.floor(Math.random() * selectedOrderIdEditArray.length);
-        editOrderData = selectedOrderIdEditArray[editIndex];
+        // const editIndex = Math.floor(Math.random() * selectedOrderIdEditArray.length);
+        // editOrderData = selectedOrderIdEditArray[editIndex];
 
         // Use VU number for sequential selection within the VU's assigned array
-        // const editIndex = __VU % selectedOrderIdEditArray.length; // Cycle through the array based on VU number
-        // editOrderData = selectedOrderIdEditArray[editIndex]; // Pick the order at the calculated index
+        const editIndex = __VU % selectedOrderIdEditArray.length; // Cycle through the array based on VU number
+        editOrderData = selectedOrderIdEditArray[editIndex]; // Pick the order at the calculated index
     } else {
         console.error(`VU ${__VU}: Selected orderId array (Index ${depotIndex}) is empty or undefined! Cannot select order for edit/update.`);
     }
@@ -230,7 +230,7 @@ export default function () {
 export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
     // Adjust report name as needed
-    const reportName = `./reports/id_qa/summary_report_${timestamp}.html`;
+    const reportName = `./reports/id_hotfix/summary_report_${timestamp}.html`;
 
     console.log("-------------------- Custom Metrics Summary --------------------");
     // Log specific metrics if desired (check if metric exists first)
@@ -245,6 +245,15 @@ export function handleSummary(data) {
     }
     if (data.metrics.order_editing_retry_success_rate) {
         console.log(`4.Order Edit Retry Success Rate: ${(data.metrics.order_editing_retry_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.order_editing_retry1_success_rate) {
+        console.log(`4a.Order Edit Retry 1 Success Rate: ${(data.metrics.order_editing_retry1_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.order_editing_retry2_success_rate) {
+        console.log(`4b.Order Edit Retry 2 Success Rate: ${(data.metrics.order_editing_retry2_success_rate.values.rate * 100).toFixed(2)}%`);
+    }
+    if (data.metrics.order_editing_retry3_success_rate) {
+        console.log(`4c.Order Edit Retry 3 Success Rate: ${(data.metrics.order_editing_retry3_success_rate.values.rate * 100).toFixed(2)}%`);
     }
     if (data.metrics.order_updating_success_rate) {
         console.log(`5.Order Update Success Rate: ${(data.metrics.order_updating_success_rate.values.rate * 100).toFixed(2)}%`);

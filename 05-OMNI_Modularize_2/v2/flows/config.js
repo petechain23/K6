@@ -383,6 +383,19 @@ export const orderEditingRetryResponseTime = new Trend('order_editing_retry_resp
 export const orderEditingRetrySuccessRate = new Rate('order_editing_retry_success_rate');
 export const orderEditingRetryRequestCount = new Counter('order_editing_retry_request_count');
 
+// --- Retry-specific metrics for each retry attempt ---
+export const orderEditingRetry1ResponseTime = new Trend('order_editing_retry1_response_time');
+export const orderEditingRetry1SuccessRate = new Rate('order_editing_retry1_success_rate');
+export const orderEditingRetry1RequestCount = new Counter('order_editing_retry1_request_count');
+
+export const orderEditingRetry2ResponseTime = new Trend('order_editing_retry2_response_time');
+export const orderEditingRetry2SuccessRate = new Rate('order_editing_retry2_success_rate');
+export const orderEditingRetry2RequestCount = new Counter('order_editing_retry2_request_count');
+
+export const orderEditingRetry3ResponseTime = new Trend('order_editing_retry3_response_time');
+export const orderEditingRetry3SuccessRate = new Rate('order_editing_retry3_success_rate');
+export const orderEditingRetry3RequestCount = new Counter('order_editing_retry3_request_count');
+
 // Orders Invoice Generation
 export const orderInvoiceResponseTime = new Trend('order_invoice_response_time');
 export const orderInvoiceSuccessRate = new Rate('order_invoice_success_rate');

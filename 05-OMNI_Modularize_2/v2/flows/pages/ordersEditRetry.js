@@ -1,27 +1,60 @@
 import { group, check, sleep } from 'k6';
 import {
-    BASE_URL, ORDER_EDIT_URL, ORDER_PENDINGTOPROCESSING_URL, LOCATION_ID, // Assuming LOCATION_ID is a fallback
-    // Import ALL variant IDs used in the edit payload from config.js
+    BASE_URL, ORDER_EDIT_URL, ORDER_PENDINGTOPROCESSING_URL, LOCATION_ID,
     VARIANT_ID_1, VARIANT_ID_2, VARIANT_ID_3, VARIANT_ID_4,
     VARIANT_ID_5, VARIANT_ID_6, VARIANT_ID_7, VARIANT_ID_8,
-    VARIANT_ID_9, VARIANT_ID_10, VARIANT_ID_11, VARIANT_ID_12, // Ensure all needed are imported
-    // Import specific metrics for this flow
-    orderEditingRequestCount, orderEditingSuccessRate, orderEditingResponseTime,
-    // Import NEW retry-specific metrics
-    orderEditingRetryRequestCount, orderEditingRetrySuccessRate, orderEditingRetryResponseTime
+    VARIANT_ID_9, VARIANT_ID_10, VARIANT_ID_11, VARIANT_ID_12,
+    // Only import retry metrics, not the base orderEditing* metrics
+    orderEditingRetryRequestCount, orderEditingRetrySuccessRate, orderEditingRetryResponseTime,
+    orderEditingRetry1RequestCount, orderEditingRetry1SuccessRate, orderEditingRetry1ResponseTime,
+    orderEditingRetry2RequestCount, orderEditingRetry2SuccessRate, orderEditingRetry2ResponseTime,
+    orderEditingRetry3RequestCount, orderEditingRetry3SuccessRate, orderEditingRetry3ResponseTime
+} from '../config.js';
+import { makeRequest, createHeaders } from '../utils.js';
 
-} from '../config.js'; // Adjust path as needed
-import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
+// Helper function for initial edit metrics
+function addInitialEditMetrics(response) {
+    const success = response.status === 200;
+    const tags = { 
+        status: response.status,
+        type: 'initial'
+    };
+    
+    // Only add to overall retry metrics for initial attempt
+    orderEditingRetryResponseTime.add(response.timings.duration, tags);
+    orderEditingRetrySuccessRate.add(success, tags);
+    orderEditingRetryRequestCount.add(1, tags);
+}
 
-// Helper to add specific metrics for the INITIAL edit attempt
-function addMetrics(response, isSuccessCheck = null) {
-    // Default success is 2xx or 3xx, allow overriding (e.g., for the actual edit POST)
-    const success = isSuccessCheck !== null ? isSuccessCheck : (response.status >= 200 && response.status < 400);
-    const tags = { status: response.status }; // Add basic tags for specific metrics
+// Helper function specifically for retry metrics
+function addRetryMetrics(response, retryAttempt) {
+    // Only add metrics for actual retry attempts
+    if (retryAttempt > 0) {
+        const success = response.status === 200;
+        const tags = { 
+            status: response.status,
+            retry_attempt: retryAttempt
+        };
 
-    orderEditingResponseTime.add(response.timings.duration, tags);
-    orderEditingSuccessRate.add(success, tags);
-    orderEditingRequestCount.add(1, tags);
+        // Only add specific retry attempt metrics (not the overall metrics)
+        switch(retryAttempt) {
+            case 1:
+                orderEditingRetry1ResponseTime.add(response.timings.duration, tags);
+                orderEditingRetry1SuccessRate.add(success, tags);
+                orderEditingRetry1RequestCount.add(1, tags);
+                break;
+            case 2:
+                orderEditingRetry2ResponseTime.add(response.timings.duration, tags);
+                orderEditingRetry2SuccessRate.add(success, tags);
+                orderEditingRetry2RequestCount.add(1, tags);
+                break;
+            case 3:
+                orderEditingRetry3ResponseTime.add(response.timings.duration, tags);
+                orderEditingRetry3SuccessRate.add(success, tags);
+                orderEditingRetry3RequestCount.add(1, tags);
+                break;
+        }
+    }
 }
 
 // --- Helper function for random sleep ---
@@ -57,18 +90,17 @@ function performEditPostRetry(authToken, orderIdToEdit, locationIdToEdit, depotI
         `${BASE_URL}/${ORDER_EDIT_URL}/${orderIdToEdit}`,
         editPayload,
         {
-            headers: createHeaders(authToken, { 'content-type': 'application/json' }),
-            tags: { ...groupTags, retry_attempt: retryAttempt } // Add a tag indicating retry attempt number
+            headers: createHeaders(authToken, { 
+                'content-type': 'application/json',
+                'x-retry-attempt': `${retryAttempt}`
+            }),
+            tags: { ...groupTags, retry_attempt: retryAttempt }
         },
         `/admin/orders/edit/{id} (Perform Edit - Retry ${retryAttempt})`
     );
 
-    // --- Add RETRY-SPECIFIC metrics directly ---
-    const isRetrySuccess = editResponse.status === 200;
-    const retryTags = { status: editResponse.status, retry_attempt: retryAttempt };
-    orderEditingRetryResponseTime.add(editResponse.timings.duration, retryTags);
-    orderEditingRetrySuccessRate.add(isRetrySuccess, retryTags);
-    orderEditingRetryRequestCount.add(1, retryTags);
+    // Use the retry-specific metrics function
+    addRetryMetrics(editResponse, retryAttempt);
 
     // Basic check for the retry attempt
     check(editResponse, {
@@ -122,7 +154,6 @@ export function ordersEditWithRetryFlow(authToken, configData) {
             { headers: headers, tags: groupTags },
             '/admin/orders/{id} (View Before Edit)'
         );
-        addMetrics(viewOrderRes);
         randomSleep();
 
         // --- Mark as Processing ---
@@ -135,7 +166,6 @@ export function ordersEditWithRetryFlow(authToken, configData) {
             { headers: postHeaders, tags: groupTags },
             '/admin/orders/{id} (Mark Processing)'
         );
-        addMetrics(markProcessingRes);
         check(markProcessingRes, { 'Mark Processing - status is 2xx': (r) => r.status >= 200 && r.status < 300 });
         randomSleep();
 
@@ -147,8 +177,7 @@ export function ordersEditWithRetryFlow(authToken, configData) {
             { headers: headers, tags: groupTags },
             '/admin/orders/number-of-order-active (Before Edit)'
         );
-        addMetrics(numActiveRes);
-        randomSleep(0.5, 1); // Shorter sleep
+        randomSleep();
 
         // --- Perform Initial Edit Attempt ---
         const editPayload = {
@@ -174,7 +203,9 @@ export function ordersEditWithRetryFlow(authToken, configData) {
             { headers: postHeaders, tags: groupTags },
             '/admin/orders/edit/{id} (Perform Edit)'
         );
-        addMetrics(editResponse, editResponse.status === 200); // Add metrics for the initial attempt
+        
+        // Add metrics for initial attempt only
+        addInitialEditMetrics(editResponse);
         randomSleep();
 
         // --- Initial Edit Check ---
@@ -255,7 +286,6 @@ export function ordersEditWithRetryFlow(authToken, configData) {
                 { headers: headers, tags: groupTags },
                 '/admin/orders/{id} (View After Edit)'
             );
-            addMetrics(viewAfterEditRes);
             randomSleep();
 
             // Get order events after successful edit
@@ -266,7 +296,6 @@ export function ordersEditWithRetryFlow(authToken, configData) {
                 { headers: headers, tags: groupTags },
                 '/admin/order-event (After Edit)'
             );
-            addMetrics(orderEventAfterEditRes);
             randomSleep();
 
         } else {
