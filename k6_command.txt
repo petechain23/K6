@@ -28,7 +28,7 @@ powershell
 $env:K6_WEB_DASHBOARD = 'true'
 $env:K6_WEB_DASHBOARD_EXPORT = 'html-report.html'
 k6 run main.js
-
+$env:K6_SCENARIOS="test_10vus"; k6 run "d:\Testing\03-Performance Testing\01-K6 Load Test\05-OMNI_Modularize_2\v2\flows\main.js"
 
 Generate report from the command line
 K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run script.js

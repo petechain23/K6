@@ -4,7 +4,7 @@ import {
     BASE_URL, ORDER_EXPORT_URL, // Config constants
     orderExportResponseTime, orderExportSuccessRate, orderExportRequestCount // Specific metrics
 } from '../config.js'; // Adjust path as needed
-import { makeRequest, createHeaders, randomSleep } from '../utils.js'; // Adjust path as needed
+import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
 
 // Helper to add specific metrics for this flow
 function addMetrics(response, isSuccessCheck = null) {
@@ -17,11 +17,11 @@ function addMetrics(response, isSuccessCheck = null) {
     orderExportRequestCount.add(1, tags);
 }
 
-// // --- Helper function for random sleep ---
-// function randomSleep(min = 1, max = 3) {
-//     const duration = Math.random() * (max - min) + min;
-//     sleep(duration);
-// }
+// --- Helper function for random sleep ---
+function randomSleep(min = 1, max = 3) {
+    const duration = Math.random() * (max - min) + min;
+    sleep(duration);
+}
 
 // configData might be used in the future to parameterize the export payload (dates, filters)
 export function ordersExportFlow(authToken, configData = {}) {
@@ -52,89 +52,39 @@ export function ordersExportFlow(authToken, configData = {}) {
                     skip: 0,
                     take: 100, // Consider parameterizing or increasing
                     order: { order_created_at: 'DESC' },
-                    select: [ /*107930 line item in ID-QA, completed export within 3minutes */
-                        'line_item_id',
-                        'order_id',
-                        'order_display_id',
-                        'order_status',
-                        'order_created_at',
-                        'order_currency_code',
-                        'order_fulfillment_status',
-                        'order_payment_status',
-                        'order_extended_status',
-                        'order_external_number',
-                        'order_source_system',
-                        'order_promotion_code',
-                        'order_coupon_code',
-                        'order_current_invoiced_number',
-                        'order_historical_invoiced_number',
-                        'address_address_1',
-                        'address_address_2',
-                        'address_country_code',
-                        'address_city',
-                        'address_postal_code',
-                        'store_depot_name',
-                        'outlet_outlet_id',
-                        'outlet_outlet_name',
-                        'outlet_external_id',
-                        'outlet_customer_type',
-                        'outlet_business_organizational_segment',
-                        'outlet_channels',
-                        'outlet_sub_channels',
-                        'outlet_business_segments',
-                        'outlet_classifications',
-                        'depot_external_id',
-                        'delivery_date',
-                        'order_subtotal',
-                        'order_shipping_total',
-                        'order_discount_total',
-                        'order_gift_card_total',
-                        'order_refunded_total',
-                        'order_tax_total',
-                        'order_total',
-                        'order_region_id',
-                        'customer_id',
-                        'customer_first_name',
-                        'customer_last_name',
-                        'customer_email',
-                        'variant_sku',
-                        'product_title',
-                        'line_item_quantity',
-                        'line_item_total',
-                        'line_item_total_volume',
-                        'uom',
-                        'product_volume',
-                        'order_external_doc_number',
-                        'order_invoiced_date',
-                        'brand_name',
-                        'product_pack_size',
-                        'variant_sku_type',
-                        'geographical_location_region',
-                        'order_invoiced_status',
-                        'depot_business_unit',
-                        'outlet_sale_area',
-                        'contact_external_id',
-                        'order_cancellation_reason',
-                        'order_cancellation_reason_others_description',
-                        'order_type',
-                        'location_name',
-                        'order_discount_percentage',
-                        'order_discount_amount',
-                        'order_tax_rate',
-                        'line_item_unit_price',
-                        'line_item_discount_percentage',
-                        'line_item_discount_amount',
-                        'order_invoice_due_date'
+                    select: [ /*2973 line item in ID-Hotfix */
+                        'line_item_id', 'order_id', 'order_display_id', 'order_status',
+                        'order_created_at', 'order_currency_code', 'order_fulfillment_status',
+                        'order_payment_status', 'order_extended_status', 'order_external_number',
+                        'order_source_system', 'order_promotion_code', 'order_coupon_code',
+                        'order_current_invoiced_number', 'order_historical_invoiced_number',
+                        'address_address_1', 'address_address_2', 'address_country_code',
+                        'address_city', 'address_postal_code', 'store_depot_name',
+                        'outlet_outlet_id', 'outlet_outlet_name', 'outlet_external_id',
+                        'outlet_customer_type', 'outlet_business_organizational_segment',
+                        'outlet_channels', 'outlet_sub_channels', 'outlet_business_segments',
+                        'outlet_classifications', 'depot_external_id', 'delivery_date',
+                        'order_subtotal', 'order_shipping_total', 'order_discount_total',
+                        'order_gift_card_total', 'order_refunded_total', 'order_tax_total',
+                        'order_total', 'order_region_id', 'customer_id', 'customer_first_name',
+                        'customer_last_name', 'customer_email', 'variant_sku', 'product_title',
+                        'line_item_quantity', 'line_item_total', 'line_item_total_volume',
+                        'uom', 'product_volume', 'order_external_doc_number', 'order_invoiced_date',
+                        'brand_name', 'product_pack_size', 'variant_sku_type',
+                        'geographical_location_region', 'order_invoiced_status',
+                        'depot_business_unit', 'outlet_sale_area', 'contact_external_id',
+                        'order_cancellation_reason', 'order_cancellation_reason_others_description'
                     ],
                     relations: ['customer', 'shipping_address'],
                     export_type: 'csv'
                 },
                 filterable_fields: {
                     created_at: {
-                        // Reproduce PROD, line- items 107930 including promotion codes
+                        // Test, don't edit
                         gt: configData.exportStartDate || '2025-04-01T00:00:00.000Z',
-                        lt: configData.exportEndDate || '2025-06-01T23:59:59.999Z'
-                    }
+                        lt: configData.exportEndDate || '2025-04-30T23:59:59.999Z'
+                    },
+                    depot_id: [depotId] // Use the depotId from configData
                 }
             }
         };
@@ -175,9 +125,6 @@ export function ordersExportFlow(authToken, configData = {}) {
             // Stop this group if trigger fails, as polling depends on it
             return;
         }
-
-        // randomSleep(10,20);
-        sleep(15);
 
         // // --- Poll Batch Job Status (Only if Trigger was successful) ---
         // if (batchJobId) {

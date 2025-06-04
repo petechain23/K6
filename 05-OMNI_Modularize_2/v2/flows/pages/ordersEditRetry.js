@@ -10,7 +10,7 @@ import {
     orderEditingRetry2RequestCount, orderEditingRetry2SuccessRate, orderEditingRetry2ResponseTime,
     orderEditingRetry3RequestCount, orderEditingRetry3SuccessRate, orderEditingRetry3ResponseTime
 } from '../config.js';
-import { makeRequest, createHeaders } from '../utils.js';
+import { makeRequest, createHeaders, randomSleep } from '../utils.js';
 
 // Helper function for initial edit metrics
 function addInitialEditMetrics(response) {
@@ -57,12 +57,6 @@ function addRetryMetrics(response, retryAttempt) {
     }
 }
 
-// --- Helper function for random sleep ---
-function randomSleep(min = 1, max = 3) {
-    const duration = Math.random() * (max - min) + min;
-    sleep(duration);
-}
-
 // --- Helper function specifically for retrying the edit POST ---
 function performEditPostRetry(authToken, orderIdToEdit, locationIdToEdit, depotId, groupTags, retryAttempt) {
     console.log(`VU ${__VU} Orders Edit (Retry ${retryAttempt}): Performing POST for order ${orderIdToEdit}`);
@@ -96,7 +90,7 @@ function performEditPostRetry(authToken, orderIdToEdit, locationIdToEdit, depotI
             }),
             tags: { ...groupTags, retry_attempt: retryAttempt }
         },
-        `/admin/orders/edit/{id} (Perform Edit - Retry ${retryAttempt})`
+        `(Perform Edit - Retry ${retryAttempt})`
     );
 
     // Use the retry-specific metrics function
@@ -106,7 +100,7 @@ function performEditPostRetry(authToken, orderIdToEdit, locationIdToEdit, depotI
     check(editResponse, {
         [`Edit Order (Retry ${retryAttempt}) - status is 200`]: (r) => r.status === 200,
         // Added body check for retry
-        [`Edit Order (Retry ${retryAttempt}) - external_doc_number updated`]: (r) => {
+        [`Edit Order (Retry ${retryAttempt}) - check external_doc_number updated`]: (r) => {
             try {
                 if (r.status !== 200) return false; // Don't check body if status isn't 200
                 const body = r.json();
@@ -152,9 +146,9 @@ export function ordersEditWithRetryFlow(authToken, configData) {
             `${BASE_URL}/admin/orders/${orderIdToEdit}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description`,
             null,
             { headers: headers, tags: groupTags },
-            '/admin/orders/{id} (View Before Edit)'
+            '(View Before Edit)'
         );
-        randomSleep();
+        randomSleep(0.5, 1);
 
         // --- Mark as Processing ---
         // Note: Removed idempotency key from original script for simplicity
@@ -164,10 +158,10 @@ export function ordersEditWithRetryFlow(authToken, configData) {
             `${BASE_URL}/${ORDER_PENDINGTOPROCESSING_URL}/${orderIdToEdit}`,
             markProcessingPayload,
             { headers: postHeaders, tags: groupTags },
-            '/admin/orders/{id} (Mark Processing)'
+            '(Mark Processing)'
         );
         check(markProcessingRes, { 'Mark Processing - status is 2xx': (r) => r.status >= 200 && r.status < 300 });
-        randomSleep();
+        randomSleep(0.5, 1);
 
         // --- Get Active Order Count ---
         const numActiveRes = makeRequest(
@@ -177,7 +171,7 @@ export function ordersEditWithRetryFlow(authToken, configData) {
             { headers: headers, tags: groupTags },
             '/admin/orders/number-of-order-active (Before Edit)'
         );
-        randomSleep();
+        randomSleep(0.5, 1);
 
         // --- Perform Initial Edit Attempt ---
         const editPayload = {
@@ -201,7 +195,7 @@ export function ordersEditWithRetryFlow(authToken, configData) {
             `${BASE_URL}/${ORDER_EDIT_URL}/${orderIdToEdit}`,
             editPayload,
             { headers: postHeaders, tags: groupTags },
-            '/admin/orders/edit/{id} (Perform Edit)'
+            '(Perform Edit)'
         );
         
         // Add metrics for initial attempt only
@@ -284,7 +278,7 @@ export function ordersEditWithRetryFlow(authToken, configData) {
                 `${BASE_URL}/admin/orders/${orderIdToEdit}?expand=outlet,outlet.geographicalLocations,items,items.variant,items.variant.product,fulfillments,invoices,customer,depot,payments,cancellation_reason&fields=id,display_id,credit_checked,inventory_checked,promotion_checked,currency_code,status,region,metadata,customer_id,fulfillment_status,extended_status,order_type,external_doc_number,order_reference_number,refundable_amount,refunded_total,refunds,location_id,cancellation_reason_others_description`,
                 null,
                 { headers: headers, tags: groupTags },
-                '/admin/orders/{id} (View After Edit)'
+                '(View After Edit)'
             );
             randomSleep();
 

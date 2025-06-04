@@ -42,16 +42,14 @@ cloud: {
         apm: [],
     },
     scenarios: {
-        // Choose one or more scenarios
-        // debug_run: pervuIterationsWorkload,
-        load_run: ramupWorkload,
+        debug_run: { ...pervuIterationsWorkload, exec: 'debugScenario' },
+        load_run: { ...ramupWorkload, exec: 'loadScenario' },
         // endurance_run: constantWorkload
     },
     thresholds: thresholdsSettings.thresholds, // Use thresholds from config
 };
 
-// --- Main VU Function ---
-export default function () {
+function getVUData() {
     // --- Data Selection ---
     // Select user data
     const currentUser = users[__VU % users.length];
@@ -62,7 +60,6 @@ export default function () {
     // Select the Depot ID based on the index
     const currentDepotId = DEPOT_ID_FILTER[depotIndex];
 
-    // --- UPDATED: Select appropriate master data AND orderId arrays based on depot index ---
     let selectedMasterDataArray;
     let selectedOrderIdEditArray; // Variable to hold the chosen orderId array
     let selectedOrderIdUpdateArray; // Variable to hold the chosen orderId array
@@ -70,31 +67,26 @@ export default function () {
     if (depotIndex === 0) {
         selectedMasterDataArray = masterData;
         selectedOrderIdEditArray = orderId; // Use orderId for index 0
-        selectedOrderIdUpdateArray = orderIdUpdate; // Use orderId for index 0
-        // console.log(`VU ${__VU}: Using masterData and orderId (Index 0)`);
+        selectedOrderIdUpdateArray = orderIdUpdate;
     } else if (depotIndex === 1) {
         selectedMasterDataArray = masterData_2;
         selectedOrderIdEditArray = orderId_2; // Use orderId for index 1
-        selectedOrderIdUpdateArray = orderIdUpdate_2; // Use orderId_2 for index 1
-        // console.log(`VU ${__VU}: Using masterData_2 and orderId_2 (Index 1)`);
+        selectedOrderIdUpdateArray = orderIdUpdate_2;
     } else { // Assuming index 2 (or any other index if DEPOT_ID_FILTER grows)
         selectedMasterDataArray = masterData_3;
         selectedOrderIdEditArray = orderId_3; // Use orderId for index 2
-        selectedOrderIdUpdateArray = orderIdUpdate_3; // Use orderId_3 for index 2
-        // console.log(`VU ${__VU}: Using masterData_3 and orderId_3 (Index 2)`);
+        selectedOrderIdUpdateArray = orderIdUpdate_3;
     }
-    // --- END UPDATED SELECTION ---
-    // Select RANDOM master data (e.g., outlet for creation) FROM THE CHOSEN ARRAY
+
     let currentMasterData = null;
     if (selectedMasterDataArray && selectedMasterDataArray.length > 0) {
         const randomIndex = Math.floor(Math.random() * selectedMasterDataArray.length);
         currentMasterData = selectedMasterDataArray[randomIndex];
     } else {
         console.error(`VU ${__VU}: Selected master data array (Index ${depotIndex}) is empty or undefined! Halting iteration.`);
-        return; // Stop iteration if data source is invalid
+        return null; 
     }
 
-    // --- UPDATED: Select RANDOM order for editing FROM THE CHOSEN orderId ARRAY ---
     let editOrderData = null;
     if (selectedOrderIdEditArray && selectedOrderIdEditArray.length > 0) {
         // Use Math.random() for random selection in each iteration
@@ -107,9 +99,7 @@ export default function () {
     } else {
         console.error(`VU ${__VU}: Selected orderId array (Index ${depotIndex}) is empty or undefined! Cannot select order for edit/update.`);
     }
-    // --- END UPDATED SELECTION ---
 
-    // --- UPDATED: Select RANDOM order for updating FROM THE CHOSEN orderId ARRAY ---
     let updateOrderData = null;
     if (selectedOrderIdUpdateArray && selectedOrderIdUpdateArray.length > 0) {
         // Use Math.random() for random selection in each iteration
@@ -123,9 +113,7 @@ export default function () {
     } else {
         console.error(`VU ${__VU}: Selected orderId array (Index ${depotIndex}) is empty or undefined! Cannot select order for edit/update.`);
     }
-    // --- END UPDATED SELECTION ---
 
-    // Select specific depot/outlet external IDs for promotions (unchanged)
     let promoData = null;
     if (outlet_depot && outlet_depot.length > 0) {
         const randomPromoIndex = Math.floor(Math.random() * outlet_depot.length);
@@ -133,8 +121,6 @@ export default function () {
     } else {
         console.error(`VU ${__VU}: outlet_depot SharedArray is empty or undefined! Cannot select data for promotions.`);
     }
-    // --- End Data Selection ---
-
 
     // Prepare config data object to pass to flows
     const flowConfigData = {       
@@ -160,69 +146,74 @@ export default function () {
     // Check if essential data like outletId is present before proceeding
     if (!flowConfigData.outletId) {
         console.error(`VU ${__VU}: Missing outletId after data selection. Halting iteration.`);
-        return;
+        return null;
     }
+    return { currentUser, flowConfigData };
+}
 
-    // Log the randomly selected outlet ID and potentially the edit/update order ID
-    // console.log(`VU ${__VU} starting iteration with User ${currentUser.username}, using Depot ${currentDepotId}, Outlet Id ${currentMasterData?.outlet_id}, Edit Order ${editOrderData?.order_id || 'N/A'}, Update Order ${updateOrderData?.order_id || 'N/A'}, Promo Depot ${promoData?.depot_external_id || 'N/A'}`);
+// --- Main VU Function (default - can be used if no specific scenario exec is defined) ---
+export default function () {
+    console.log(`VU ${__VU} running default function - this will execute all flows if not overridden by a scenario 'exec'.`);
+    const vuData = getVUData();
+    if (!vuData) return;
+    const { currentUser, flowConfigData } = vuData;
 
-    // 1. Login
     const authToken = loginFlow(currentUser.username, currentUser.password);
-
     if (!authToken) {
         console.error(`VU ${__VU} - Halting iteration due to login failure.`);
         return; // Stop this iteration if login failed
     }
 
-    // 2. Execute Order Flows (Add sleeps for think time)
+    // Default execution runs a sequence of flows
     sleep(1);
     ordersCreateFlow(authToken, flowConfigData);
+    sleep(1);
+    ordersEditFlow(authToken, flowConfigData);
+    sleep(1);
+    ordersExportFlow(authToken, flowConfigData);
+    // ... add other flows if this default function is intended to run more
 
+    // logoutFlow(authToken);
+}
+
+// --- Scenario Specific Execution Functions ---
+export function debugScenario() {
+    console.log(`VU ${__VU} executing debugScenario (OrdersExport).`);
+    const vuData = getVUData();
+    if (!vuData) return; // Stop if essential data missing
+    const { currentUser, flowConfigData } = vuData;
+
+    const authToken = loginFlow(currentUser.username, currentUser.password);
+    if (!authToken) {
+        console.error(`VU ${__VU} [debugScenario] - Halting iteration due to login failure.`);
+        return;
+    }
+
+    sleep(1);
+    ordersExportFlow(authToken, flowConfigData);
+
+    // logoutFlow(authToken);
+    // console.log(`VU ${__VU} [debugScenario] finished iteration.`);
+}
+
+export function loadScenario() {
+    console.log(`VU ${__VU} executing loadScenario (OrdersCreate, OrdersEdit).`);
+    const vuData = getVUData();
+    if (!vuData) return; // Stop if essential data missing
+    const { currentUser, flowConfigData } = vuData;
+
+    const authToken = loginFlow(currentUser.username, currentUser.password);
+    if (!authToken) {
+        console.error(`VU ${__VU} [loadScenario] - Halting iteration due to login failure.`);
+        return;
+    }
+    sleep(1);
+    ordersCreateFlow(authToken, flowConfigData);
     sleep(1);
     ordersEditFlow(authToken, flowConfigData);
 
-    // sleep(1);
-    // ordersUpdateFlow(authToken, flowConfigData); 
-
-    // sleep(1);
-    //ordersUpdateToDeliveredFlow(authToken, flowConfigData);
-
-    //sleep(1);
-    // ordersEditWithRetryFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // ordersInvoiceFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // ordersFilterFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // ordersScrollingFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // ordersSearchFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // ordersExportFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // ordersPromoGetListFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // outletsSearchFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // ordersPLScrollingFlow(authToken, flowConfigData);
-
-    // sleep(1);
-    // performanceDistributorFlow(authToken, flowConfigData);
-
-    // sleep(1); // Think time before logout
-
-    // 3. Logout
     // logoutFlow(authToken);
-
-    //console.log(`VU ${__VU} finished iteration.`);
+    // console.log(`VU ${__VU} [loadScenario] finished iteration.`);
 }
 
 // Import reporting utilities

@@ -4,19 +4,24 @@ import {
     BASE_URL, ORDER_CREATE_URL, REGION_ID,
     VARIANT_ID_6, VARIANT_ID_10, VARIANT_ID_11, VARIANT_ID_12, // Use IDs from config
     orderCreationRequestCount, orderCreationResponseTime, orderCreationSuccessRate, // Specific metrics
-} from '../config.js'; // Adjust path
-import { makeRequest, createHeaders, randomSleep } from '../utils.js'; // Adjust path
+} from '../v2/flows/config.js'; // Adjust path
+import { makeRequest, createHeaders, randomSleep } from '../v2/flows/utils.js'; // Adjust path
 
 // Helper to add specific metrics for this flow
-function addMetrics(response, isSuccessCheck = null) {
+function addMetrics(response, requestType, isSuccessCheck = null) {
     const success = isSuccessCheck !== null ? isSuccessCheck : (response.status === 200);
-    const tags = { status: response.status };
+    const tags = { 
+        status: response.status,
+        type: requestType 
+    };
 
-    orderCreationResponseTime.add(response.timings.duration, tags);
-    orderCreationSuccessRate.add(success, tags);
-    orderCreationRequestCount.add(1, tags);
+    // Only track creation metrics for actual order creation requests
+    if (requestType === 'order_creation') {
+        orderCreationResponseTime.add(response.timings.duration, tags);
+        orderCreationSuccessRate.add(success, tags);
+        orderCreationRequestCount.add(1, tags);
+    }
 }
-
 
 export function ordersCreateFlow(authToken, configData) { // Pass configData like outletId
     const { outletId, depotId, userEmail, customerId, locationId } = configData;
@@ -136,12 +141,11 @@ export function ordersCreateFlow(authToken, configData) { // Pass configData lik
             tags: groupTags,
             compression: "gzip", // Enable compression for request body
             timeout: '120s' // Override default timeout for order creation
-        }, '(Orders Create)');
-        check(createOrderResponse, {
+        }, '(Orders Create)');        check(createOrderResponse, {
             'Create Order - status is 200': (r) => r.status === 200,
             'Create Order - body contains display_id': (r) => r.body && r.body.includes('display_id'),
         });
-        addMetrics(createOrderResponse, createOrderResponse.status === 200);
+        addMetrics(createOrderResponse, 'order_creation', createOrderResponse.status === 200);
         randomSleep();
         // console.log(createOrderResponse.body);
         // console.log(createOrderResponse.status);

@@ -9,7 +9,7 @@ import {
     // Import specific metrics for this flow
     orderEditingRequestCount, orderEditingSuccessRate, orderEditingResponseTime
 } from '../config.js'; // Adjust path as needed
-import { makeRequest, createHeaders } from '../utils.js'; // Adjust path as needed
+import { makeRequest, createHeaders, randomSleep } from '../utils.js'; // Adjust path as needed
 
 // Helper to add specific metrics for this flow
 function addMetrics(response, isSuccessCheck = null) {
@@ -20,12 +20,6 @@ function addMetrics(response, isSuccessCheck = null) {
     orderEditingResponseTime.add(response.timings.duration, tags);
     orderEditingSuccessRate.add(success, tags);
     orderEditingRequestCount.add(1, tags);
-}
-
-// --- Helper function for random sleep ---
-function randomSleep(min = 1, max = 3) {
-    const duration = Math.random() * (max - min) + min;
-    sleep(duration);
 }
 
 export function ordersEditFlow(authToken, configData) {

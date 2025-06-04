@@ -2,7 +2,8 @@
 import http from 'k6/http'; // Ensure http is imported
 import { check, sleep  } from 'k6';
 import {
-    FRONTEND_URL, defaultCustomResponseTime, defaultCustomSuccessRate, defaultCustomRequestCount
+    FRONTEND_URL, defaultCustomResponseTime, defaultCustomSuccessRate, defaultCustomRequestCount,
+    requestConfig // Import request configuration with timeout
 } from './config.js';
 
 // ... createHeaders function remains the same ...
@@ -52,7 +53,10 @@ export function randomSleep(min = 1, max = 3) {
  * @returns {object} The k6 response object.
  */
 export function makeRequest(method, url, body, params = {}, name) {
-    const requestParams = { ...params }; // Clone params
+    const requestParams = { 
+        ...requestConfig, // Apply global request config including timeout
+        ...params, // Allow overriding per request
+    }; 
     requestParams.tags = { ...requestParams.tags, name: name }; // Add name tag
 
     // Stringify body if needed

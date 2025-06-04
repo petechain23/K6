@@ -125,14 +125,9 @@ export function ordersUpdateToDeliveredFlow(authToken, configData) {
                         return false; // Parsing failed or structure incorrect
                     }
                 }
-            });            let isSuccess = false;
-            try {
-                const body = updateStatusRes.json();
-                isSuccess = updateStatusRes.status === 201 && body?.saved?.[0]?.extended_status === 'delivered';
-            } catch (e) {
-                console.error(`Metrics check error: ${e.message}, with body: ${updateStatusRes.body}`);
-            }
-            addMetrics(updateStatusRes, isSuccess);
+            });
+            addMetrics(updateStatusRes, updateStatusRes.status === 201);
+            addMetrics(updateStatusRes, updateStatusRes.body === 'delivered');
             if (updateStatusRes.status !== 201) {
                 console.error(`VU ${__VU} [Orders Update To Delivered] FAILED for order: ${orderIdForStatusUpdate}. Status: ${updateStatusRes.status}, Body: ${updateStatusRes.body}`);
             }
